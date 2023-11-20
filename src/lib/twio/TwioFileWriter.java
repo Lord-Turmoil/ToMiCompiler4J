@@ -4,7 +4,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
-public class TwioFileWriter implements IWriter {
+public class TwioFileWriter implements ITwioWriter {
     private final PrintStream impl;
 
     public TwioFileWriter(OutputStream stream) {

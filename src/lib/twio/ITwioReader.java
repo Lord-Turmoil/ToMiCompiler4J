@@ -1,6 +1,6 @@
 package lib.twio;
 
-public interface IReader {
+public interface ITwioReader {
     boolean hasNext();
     int read();
     int rewind();

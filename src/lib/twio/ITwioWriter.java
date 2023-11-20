@@ -1,9 +1,8 @@
 package lib.twio;
 
 import java.io.InputStream;
-import java.io.OutputStream;
 
-public interface IWriter {
+public interface ITwioWriter {
     void write(int ch);
     void write(char ch);
     void write(String str);

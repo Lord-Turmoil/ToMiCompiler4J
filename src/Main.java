@@ -1,4 +1,4 @@
-import lib.twio.IWriter;
+import lib.twio.ITwioWriter;
 import lib.twio.TwioFileWriter;
 import lib.twio.TwioReader;
 
@@ -8,7 +8,7 @@ import java.io.FileOutputStream;
 public class Main {
     public static void main(String[] args) throws FileNotFoundException {
         TwioReader reader = new TwioReader(System.in);
-        IWriter writer = new TwioFileWriter(new FileOutputStream("output.txt"));
+        ITwioWriter writer = new TwioFileWriter(new FileOutputStream("output.txt"));
 
         while (reader.hasNext()) {
             writer.write(reader.read());

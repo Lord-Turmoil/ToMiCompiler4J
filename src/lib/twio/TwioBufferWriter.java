@@ -4,7 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-public class TwioBufferWriter implements IWriter {
+public class TwioBufferWriter implements ITwioWriter {
     private final StringBuffer buffer = new StringBuffer();
 
 

@@ -6,7 +6,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Stack;
 
-public class TwioReader implements IReader {
+public class TwioReader implements ITwioReader {
     private final ArrayList<Character> buffer = new ArrayList<>();
     private final Stack<Integer> lastChar = new Stack<>();
 
