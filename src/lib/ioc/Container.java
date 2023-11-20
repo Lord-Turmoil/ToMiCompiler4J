@@ -4,14 +4,13 @@
 
 package lib.ioc;
 
-import java.util.Dictionary;
-import java.util.Hashtable;
-import java.util.function.Supplier;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 
 public class Container implements IContainer {
     private static Container globalContainer = null;
 
-    private final Dictionary<Class<?>, Item> pool = new Hashtable<>();
+    private final Dictionary<Class<?>, Entry> pool = new Hashtable<>();
 
     public static Container getGlobal() {
         if (globalContainer == null) {
@@ -25,71 +24,82 @@ public class Container implements IContainer {
      */
     @Override
     public IContainer addSingleton(Class<?> cls, Object instance) {
-        pool.put(cls, new Item(true, instance, null));
+        pool.put(cls, new Entry(instance));
         return this;
     }
 
     @Override
-    public IContainer addSingleton(Class<?> cls, Supplier<?> supplier) {
-        pool.put(cls, new Item(true, null, supplier));
+    public IContainer addTransient(Class<?> cls, Class<?>... dependencies) {
+        pool.put(cls, new Entry(cls, dependencies));
         return this;
-    }
-
-    @Override
-    public IContainer addTransient(Class<?> cls, Supplier<?> supplier) {
-        pool.put(cls, new Item(false, null, supplier));
-        return null;
     }
 
     @Override
     public <T> T resolve(Class<T> cls) {
-        return mapResolve(cls);
-    }
-
-    @Override
-    public <T> T mapResolve(Class<?> cls) {
-        var item = pool.get(cls);
-        if (item == null) {
+        var entry = pool.get(cls);
+        if (entry == null) {
             return null;
         }
-
         try {
-            if (item.isSingleton) {
-                if (item.instance == null) {
-                    item.instance = item.supplier.get();
-                }
-                return (T) item.instance;
-            } else {
-                return (T) item.supplier.get();
-            }
-        } catch (ClassCastException e) {
+            return (T) entry.getInstance();
+        } catch (NoSuchItemException e) {
             return null;
         }
     }
 
     @Override
     public <T> T resolveRequired(Class<T> cls) throws NoSuchItemException {
-        return mapResolveRequired(cls);
-    }
-
-    @Override
-    public <T> T mapResolveRequired(Class<?> cls) {
-        var obj = this.<T>mapResolve(cls);
-        if (obj == null) {
-            throw new NoSuchItemException(cls + " not registered");
+        var entry = pool.get(cls);
+        if (entry == null) {
+            throw new NoSuchItemException("Class not registered");
         }
-        return obj;
+        return (T) entry.getInstance();
     }
 
-    private static class Item {
-        public final boolean isSingleton;
-        public final Supplier<?> supplier;
-        public Object instance;
+    private class Entry {
+        public final Class<?> cls;
+        public final List<Class<?>> dependencies;
+        public final Object instance;
 
-        public Item(boolean isSingleton, Object instance, Supplier<?> supplier) {
-            this.isSingleton = isSingleton;
+        public Entry(Object instance) {
+            this(instance.getClass(), null, instance);
+        }
+
+        public Entry(Class<?> cls, Class<?>... dependencies) {
+            this(cls, Arrays.stream(dependencies).toList(), null);
+        }
+
+        public Entry(Class<?> cls) {
+            this(cls, null, null);
+        }
+
+        public Entry(Class<?> cls, List<Class<?>> dependencies, Object instance) {
+            this.cls = cls;
+            this.dependencies = dependencies;
             this.instance = instance;
-            this.supplier = supplier;
+        }
+
+        public Object getInstance() {
+            try {
+                if (dependencies == null || dependencies.isEmpty()) {
+                    return cls.getConstructor().newInstance();
+                }
+
+                List<Object> objects = new ArrayList<>();
+                for (Class<?> dep : dependencies) {
+                    objects.add(resolve(dep));
+                }
+                var ctor = cls.getConstructor((Class<?>[]) dependencies.toArray());
+                return ctor.newInstance(objects.toArray());
+            } catch (NoSuchMethodException e) {
+                throw new NoSuchItemException(e);
+            } catch (InvocationTargetException e) {
+                throw new NoSuchItemException(e);
+            } catch (InstantiationException e) {
+                throw new NoSuchItemException(e);
+            } catch (IllegalAccessException e) {
+                throw new NoSuchItemException(e);
+            }
         }
     }
 }
