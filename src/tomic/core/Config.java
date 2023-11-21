@@ -1,16 +1,16 @@
 package tomic.core;
 
 public class Config {
-    public static class TargetTypes {
-        public static final int Initial = 0;
-        public static final int Preprocess = 1;
-        public static final int Syntactic = 2;
-        public static final int Semantic = 3;
-        public static final int IR = 4;
-        public static final int ASM = 5;
+    public enum TargetTypes {
+        Initial,
+        Preprocess,
+        Syntactic,
+        Semantic,
+        IR,
+        ASM,
     }
 
-    public int target;
+    public TargetTypes target;
 
     // basic
     public String input;
@@ -49,20 +49,20 @@ public class Config {
     @Override
     public String toString() {
         return "Config {" +
-                "\n\ttarget=" + target +
-                ",\n\tinput='" + input + '\'' +
-                ",\n\toutput='" + output + '\'' +
-                ",\n\tenableCompleteAst=" + enableCompleteAst +
-                ",\n\temitAst=" + emitAst +
-                ",\n\tastOutput='" + astOutput + '\'' +
-                ",\n\temitLlvm=" + emitLlvm +
-                ",\n\tenableVerboseLlvm=" + enableVerboseLlvm +
-                ",\n\tllvmOutput='" + llvmOutput + '\'' +
-                ",\n\tenableLog=" + enableLog +
-                ",\n\tlogOutput='" + logOutput + '\'' +
-                ",\n\tenableError=" + enableError +
-                ",\n\tenableVerboseError=" + enableVerboseError +
-                ",\n\terrorOutput='" + errorOutput + '\'' +
+                "\n\ttarget = " + target +
+                ",\n\tinput = '" + input + '\'' +
+                ",\n\toutput = '" + output + '\'' +
+                ",\n\tenableCompleteAst = " + enableCompleteAst +
+                ",\n\temitAst = " + emitAst +
+                ",\n\tastOutput = '" + astOutput + '\'' +
+                ",\n\temitLlvm = " + emitLlvm +
+                ",\n\tenableVerboseLlvm = " + enableVerboseLlvm +
+                ",\n\tllvmOutput = '" + llvmOutput + '\'' +
+                ",\n\tenableLog = " + enableLog +
+                ",\n\tlogOutput = '" + logOutput + '\'' +
+                ",\n\tenableError = " + enableError +
+                ",\n\tenableVerboseError = " + enableVerboseError +
+                ",\n\terrorOutput = '" + errorOutput + '\'' +
                 "\n}";
     }
 }

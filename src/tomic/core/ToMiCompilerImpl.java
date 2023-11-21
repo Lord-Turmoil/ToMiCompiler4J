@@ -33,7 +33,7 @@ class ToMiCompilerImpl {
 
     void compile() {
         // Preprocess
-        if (config.target < Config.TargetTypes.Preprocess) {
+        if (config.target.ordinal() < Config.TargetTypes.Preprocess.ordinal()) {
             return;
         }
         ITwioWriter writer = preprocess();
