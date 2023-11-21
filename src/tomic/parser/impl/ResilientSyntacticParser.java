@@ -1787,6 +1787,7 @@ public class ResilientSyntacticParser implements ISyntacticParser {
 
         if (getLookahead().is(UNARY_OP_FIRST)) {
             root.insertEndChild(tree.newTerminalNode(getNext()));
+            return root;
         }
 
         return null;
