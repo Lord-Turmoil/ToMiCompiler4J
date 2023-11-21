@@ -110,8 +110,8 @@ public class XmlAstPrinter implements IAstPrinter, IAstVisitor {
             }
         }
         writer.write('\'');
-        writer.write(String.format(" line=%d", node.getToken().lineNo));
-        writer.write(String.format(" char=%d", node.getToken().charNo));
+        writer.write(String.format(" line='%d'", node.getToken().lineNo));
+        writer.write(String.format(" char='%d'", node.getToken().charNo));
 
         for (var attr : node.getAttributes().entrySet()) {
             writer.write(String.format(" %s='%s'", attr.getKey(), attr.getValue()));

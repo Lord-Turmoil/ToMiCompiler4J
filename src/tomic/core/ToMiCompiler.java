@@ -16,6 +16,14 @@ import tomic.logger.debug.impl.DumbLogger;
 import tomic.logger.error.IErrorLogger;
 import tomic.logger.error.IErrorMapper;
 import tomic.logger.error.impl.*;
+import tomic.parser.ISyntacticParser;
+import tomic.parser.ast.mapper.CompleteSyntaxMapper;
+import tomic.parser.ast.mapper.ISyntaxMapper;
+import tomic.parser.ast.mapper.ReducedSyntaxMapper;
+import tomic.parser.ast.printer.IAstPrinter;
+import tomic.parser.ast.printer.StandardAstPrinter;
+import tomic.parser.ast.printer.XmlAstPrinter;
+import tomic.parser.impl.ResilientSyntacticParser;
 import tomic.utils.StringExt;
 
 public class ToMiCompiler {
@@ -65,6 +73,30 @@ public class ToMiCompiler {
             service.addTransient(ITokenMapper.class, DefaultTokenMapper.class)
                     .addTransient(ILexicalAnalyzer.class, DefaultLexicalAnalyzer.class, ITokenMapper.class)
                     .addTransient(ILexicalParser.class, DefaultLexicalParser.class, ILexicalAnalyzer.class, IErrorLogger.class, IDebugLogger.class);
+        });
+
+        //////////////////// Ast Printer
+        impl.configure(service -> {
+            if (config.emitAst) {
+                if (StringExt.isNullOrEmpty(config.astOutput)) {
+                    config.astOutput = "ast.xml";
+                }
+                if (config.astOutput.endsWith(".xml")) {
+                    service.addTransient(IAstPrinter.class, XmlAstPrinter.class, ITokenMapper.class, ISyntaxMapper.class);
+                } else {
+                    service.addTransient(IAstPrinter.class, StandardAstPrinter.class, ITokenMapper.class, ISyntaxMapper.class);
+                }
+            }
+        });
+        //////////////////// Syntactic
+        impl.configure(service -> {
+            if (config.enableCompleteAst) {
+                service.addTransient(ISyntaxMapper.class, CompleteSyntaxMapper.class);
+            } else {
+                service.addTransient(ISyntaxMapper.class, ReducedSyntaxMapper.class);
+            }
+            service.addTransient(ISyntacticParser.class, ResilientSyntacticParser.class,
+                    ILexicalParser.class, ITokenMapper.class, ISyntaxMapper.class, IErrorLogger.class, IDebugLogger.class);
         });
 
         return this;

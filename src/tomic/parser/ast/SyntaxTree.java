@@ -17,7 +17,17 @@ public class SyntaxTree {
         return node;
     }
 
+    public SyntaxNode newEpsilonNode() {
+        var node = new EpsilonSyntaxNode();
+        node.tree = this;
+        return node;
+    }
+
     public void deleteNode(SyntaxNode node) {
+        if (node == null) {
+            return;
+        }
+
         if (node == root) {
             root = null;
         }

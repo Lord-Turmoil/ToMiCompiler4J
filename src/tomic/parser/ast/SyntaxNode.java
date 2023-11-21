@@ -2,6 +2,7 @@ package tomic.parser.ast;
 
 import tomic.lexer.token.Token;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public abstract class SyntaxNode {
@@ -15,9 +16,9 @@ public abstract class SyntaxNode {
     //// AST properties
     protected SyntaxTypes type;
     protected Token token;
-    protected Map<String, String> attributes;
+    protected final Map<String, String> attributes = new HashMap<>();
     ///// Type identification
-    private SyntaxNodeTypes nodeType;
+    private final SyntaxNodeTypes nodeType;
 
     SyntaxNode(SyntaxNodeTypes nodeType, SyntaxTypes type) {
         this(nodeType, type, null);
@@ -39,6 +40,10 @@ public abstract class SyntaxNode {
 
     public boolean isTerminal() {
         return nodeType == SyntaxNodeTypes.TERMINAL;
+    }
+
+    public boolean isEpsilon() {
+        return nodeType == SyntaxNodeTypes.EPSILON;
     }
 
     public Token getToken() {
@@ -247,6 +252,7 @@ public abstract class SyntaxNode {
 
     enum SyntaxNodeTypes {
         NON_TERMINAL,
-        TERMINAL
+        TERMINAL,
+        EPSILON
     }
 }

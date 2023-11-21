@@ -116,7 +116,7 @@ public class Compiler {
         return true;
     }
 
-    private static String HELP = """
+    private static final String HELP = """
             Usage: ToMiCompiler <input> [-o output]
                       --target=(syntactic | semantic | ir | asm)
                       --enable-logger[=filename]

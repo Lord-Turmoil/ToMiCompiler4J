@@ -1,5 +1,7 @@
 package tomic.lexer.token;
 
+import java.util.Collection;
+
 public class Token {
     public TokenTypes type;  // The type of the token/
     public String lexeme;   // The actual string of the token.
@@ -24,5 +26,35 @@ public class Token {
     @Override
     public String toString() {
         return "(" + lineNo + ":" + charNo + ") " + type + " " + lexeme.replace("\n", "\\n");
+    }
+
+    public boolean is(TokenTypes type) {
+        return this.type == type;
+    }
+
+    public boolean is(TokenTypes... types) {
+        for (var type : types) {
+            if (this.type == type) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean is(Collection<TokenTypes> types) {
+        return types.contains(this.type);
+    }
+
+    public boolean isNot(TokenTypes type) {
+        return this.type != type;
+    }
+
+    public boolean isNot(TokenTypes... types) {
+        for (var type : types) {
+            if (this.type == type) {
+                return false;
+            }
+        }
+        return true;
     }
 }

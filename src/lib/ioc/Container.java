@@ -64,7 +64,7 @@ public class Container implements IContainer {
     public <T> T resolveRequired(Class<T> cls) throws NoSuchItemException {
         var entry = pool.get(cls);
         if (entry == null) {
-            throw new NoSuchItemException("Class not registered");
+            throw new NoSuchItemException("Class " + cls.getSimpleName() + " not registered");
         }
         return (T) entry.getInstance();
     }

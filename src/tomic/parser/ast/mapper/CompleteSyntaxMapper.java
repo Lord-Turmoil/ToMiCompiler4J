@@ -2,6 +2,7 @@ package tomic.parser.ast.mapper;
 
 import tomic.parser.ast.SyntaxTypes;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class CompleteSyntaxMapper implements ISyntaxMapper {
@@ -17,6 +18,8 @@ public class CompleteSyntaxMapper implements ISyntaxMapper {
     }
 
     private void init() {
+        descriptions = new HashMap<>();
+
         descriptions.put(SyntaxTypes.UNKNOWN, "Unknown");
         descriptions.put(SyntaxTypes.EPSILON, "Epsilon");
         descriptions.put(SyntaxTypes.TERMINATOR, "Terminator");
