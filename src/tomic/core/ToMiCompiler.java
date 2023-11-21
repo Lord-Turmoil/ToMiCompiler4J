@@ -7,6 +7,9 @@ import tomic.logger.debug.IDebugLogger;
 import tomic.logger.debug.LogLevel;
 import tomic.logger.debug.impl.DefaultLogger;
 import tomic.logger.debug.impl.DumbLogger;
+import tomic.logger.error.IErrorLogger;
+import tomic.logger.error.IErrorMapper;
+import tomic.logger.error.impl.*;
 import tomic.utils.StringExt;
 
 public class ToMiCompiler {
@@ -28,6 +31,21 @@ public class ToMiCompiler {
                 }
             } else {
                 service.addSingleton(IDebugLogger.class, DumbLogger.class);
+            }
+        });
+
+        //////////////////// Error logger
+        impl.configure(service -> {
+            if (config.enableError) {
+                if (config.enableVerboseError) {
+                    service.addSingleton(IErrorMapper.class, VerboseErrorMapper.class)
+                            .addSingleton(IErrorLogger.class, VerboseErrorLogger.class);
+                } else {
+                    service.addSingleton(IErrorMapper.class, StandardErrorMapper.class)
+                            .addSingleton(IErrorLogger.class, StandardErrorLogger.class);
+                }
+            } else {
+                service.addSingleton(IErrorLogger.class, DumbErrorLogger.class);
             }
         });
 
