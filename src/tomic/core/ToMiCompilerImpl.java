@@ -1,13 +1,17 @@
 package tomic.core;
 
 import lib.ioc.Container;
-import lib.twio.*;
+import lib.ioc.IContainer;
+import lib.twio.ITwioReader;
+import lib.twio.ITwioWriter;
+import lib.twio.TwioBufferWriter;
 import tomic.lexer.IPreprocessor;
+import tomic.logger.debug.IDebugLogger;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.util.function.Consumer;
+
+import static lib.twio.TwioExt.buildReader;
+import static lib.twio.TwioExt.buildWriter;
 
 /**
  * Restrict access to the implementation of the ToMiCompiler class.
@@ -21,14 +25,12 @@ class ToMiCompilerImpl {
         config = null;
     }
 
-    ToMiCompilerImpl configure(Config config) {
+    void configure(Config config) {
         this.config = config;
-        return this;
     }
 
-    ToMiCompilerImpl configure(Consumer<Config> action) {
-        action.accept(this.config);
-        return this;
+    void configure(Consumer<IContainer> config) {
+        config.accept(container);
     }
 
     void compile() {
@@ -40,6 +42,8 @@ class ToMiCompilerImpl {
     }
 
     ITwioWriter preprocess() {
+        var logger = container.resolveRequired(IDebugLogger.class);
+
         ITwioReader reader = buildReader(config.input);
         ITwioWriter writer;
         if (config.target == Config.TargetTypes.Preprocess) {
@@ -48,45 +52,13 @@ class ToMiCompilerImpl {
             writer = new TwioBufferWriter();
         }
 
+        logger.debug("Preprocessing " + config.input + "...");
         container.resolveRequired(IPreprocessor.class)
                 .setReader(reader)
                 .setWriter(writer)
                 .process();
+        logger.debug("Preprocess done");
 
         return writer;
-    }
-
-    private ITwioReader buildReader(String input) {
-        if (input == null || input.equals("null")) {
-            throw new IllegalArgumentException("input cannot be null");
-        }
-
-        if (input.equals("stdin")) {
-            return new TwioReader(System.in);
-        }
-
-        try {
-            return new TwioReader(new FileInputStream(input));
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private ITwioWriter buildWriter(String output) {
-        if (output == null || output.equals("null")) {
-            return new TwioBufferWriter();
-        }
-
-        if (output.equals("stdout")) {
-            return new TwioFileWriter(System.out);
-        } else if (output.equals("stderr")) {
-            return new TwioFileWriter(System.err);
-        }
-
-        try {
-            return new TwioFileWriter(new FileOutputStream(output));
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

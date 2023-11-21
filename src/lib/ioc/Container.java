@@ -29,8 +29,15 @@ public class Container implements IContainer {
     }
 
     @Override
-    public IContainer addTransient(Class<?> cls, Class<?>... dependencies) {
-        pool.put(cls, new Entry(cls, dependencies));
+    public IContainer addSingleton(Class<?> cls, Class<?> impl, Class<?>... dependencies) {
+        pool.put(cls, new Entry(impl, dependencies));
+        return this;
+    }
+
+
+    @Override
+    public IContainer addTransient(Class<?> cls, Class<?> impl, Class<?>... dependencies) {
+        pool.put(cls, new Entry(impl, dependencies));
         return this;
     }
 
@@ -59,28 +66,38 @@ public class Container implements IContainer {
     private class Entry {
         public final Class<?> cls;
         public final List<Class<?>> dependencies;
-        public final Object instance;
+        public Object instance;
+        public final boolean isSingleton;
 
         public Entry(Object instance) {
-            this(instance.getClass(), null, instance);
+            this(instance.getClass(), null, instance, true);
         }
 
         public Entry(Class<?> cls, Class<?>... dependencies) {
-            this(cls, Arrays.stream(dependencies).toList(), null);
+            this(cls, Arrays.stream(dependencies).toList(), null, false);
+        }
+
+        public Entry(Class<?> cls, boolean isSingleton, Class<?>... dependencies) {
+            this(cls, Arrays.stream(dependencies).toList(), null, isSingleton);
         }
 
         public Entry(Class<?> cls) {
-            this(cls, null, null);
+            this(cls, null, null, false);
         }
 
-        public Entry(Class<?> cls, List<Class<?>> dependencies, Object instance) {
+        public Entry(Class<?> cls, List<Class<?>> dependencies, Object instance, boolean isSingleton) {
             this.cls = cls;
             this.dependencies = dependencies;
             this.instance = instance;
+            this.isSingleton = isSingleton;
         }
 
         public Object getInstance() {
             try {
+                if (isSingleton && instance != null) {
+                    return instance;
+                }
+
                 if (dependencies == null || dependencies.isEmpty()) {
                     return cls.getConstructor().newInstance();
                 }
@@ -90,7 +107,11 @@ public class Container implements IContainer {
                     objects.add(resolve(dep));
                 }
                 var ctor = cls.getConstructor((Class<?>[]) dependencies.toArray());
-                return ctor.newInstance(objects.toArray());
+                var newInstance = ctor.newInstance(objects.toArray());
+                if (isSingleton) {
+                    instance = newInstance;
+                }
+                return newInstance;
             } catch (NoSuchMethodException e) {
                 throw new NoSuchItemException(e);
             } catch (InvocationTargetException e) {

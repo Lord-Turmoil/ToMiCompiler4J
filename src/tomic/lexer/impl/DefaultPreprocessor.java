@@ -121,6 +121,7 @@ public class DefaultPreprocessor implements IPreprocessor {
     private void processBlockCommentLeft(int ch) {
         switch (ch) {
             case '*' -> state.type = StateTypes.BLOCK_COMMENT_RIGHT;
+            case '\n' -> writer.writeLine();
             case Constants.EOF -> state.type = StateTypes.ANY;
             default -> writer.write(FILLING);
         }
@@ -128,7 +129,11 @@ public class DefaultPreprocessor implements IPreprocessor {
 
     private void processBlockCommentRight(int ch) {
         switch (ch) {
-            case '/' -> state.type = StateTypes.ANY;
+            case '/' -> {
+                state.type = StateTypes.ANY;
+                writer.write(FILLING);
+                writer.write(FILLING);
+            }
             case '*' -> {
                 state.type = StateTypes.BLOCK_COMMENT_RIGHT;
                 writer.write(FILLING);

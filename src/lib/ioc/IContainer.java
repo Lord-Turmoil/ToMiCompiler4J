@@ -7,7 +7,9 @@ package lib.ioc;
 public interface IContainer {
     IContainer addSingleton(Class<?> cls, Object instance);
 
-    IContainer addTransient(Class<?> cls, Class<?>... dependencies);
+    IContainer addSingleton(Class<?> cls, Class<?> impl, Class<?>... dependencies);
+
+    IContainer addTransient(Class<?> cls, Class<?> impl, Class<?>... dependencies);
 
     <T> T resolve(Class<T> cls);
 

@@ -10,10 +10,11 @@ public class ArgumentParser {
     public int optopt;
     public String longopt;
 
-    private int optind;
+    // It seems Java does not have the first argument?
+    private int optind = -1;
 
     public void reset() {
-        optind = 0;
+        optind = -1;
         opterr = 0;
         optarg = null;
         optmsg = null;

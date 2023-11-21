@@ -1,10 +1,11 @@
 import tomic.core.Config;
+import tomic.core.ToMiCompiler;
 
 import java.io.FileNotFoundException;
 
 import static tomic.utils.StringExt.isNullOrEmpty;
 
-public class Main {
+public class Compiler {
     private static boolean showHelp = false;
     public static void main(String[] args) throws FileNotFoundException {
         Config config = new Config();
@@ -12,11 +13,10 @@ public class Main {
             System.exit(1);
         }
 
-        System.out.println(config);
-
         if (showHelp) {
             printHelp();
         } else {
+            new ToMiCompiler().configure(config).compile();
         }
     }
 
