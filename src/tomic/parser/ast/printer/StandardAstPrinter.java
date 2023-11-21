@@ -52,6 +52,6 @@ public class StandardAstPrinter implements IAstPrinter, IAstVisitor {
 
         writer.write(descr);
         writer.write(" ");
-        writer.writeLine(token.lexeme);
+        writer.writeLine(token.lexeme.replace("\n", "\\n"));
     }
 }

@@ -102,9 +102,9 @@ public class XmlAstPrinter implements IAstPrinter, IAstVisitor {
         String lexeme = node.getToken().lexeme;
         for (int i = 0; i < lexeme.length(); i++) {
             switch (lexeme.charAt(i)) {
-                case '&' -> writer.write("&ampl");
+                case '&' -> writer.write("&amp;");
                 case '<' -> writer.write("&lt;");
-                case '>' -> writer.write("&gt");
+                case '>' -> writer.write("&gt;");
                 case '\n' -> writer.write("\\n");
                 default -> writer.write(lexeme.charAt(i));
             }
