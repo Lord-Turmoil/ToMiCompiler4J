@@ -29,6 +29,12 @@ public class Container implements IContainer {
     }
 
     @Override
+    public IContainer addSingleton(Class<?> cls, Class<?> impl) {
+        pool.put(cls, new Entry(impl, null, null, true));
+        return this;
+    }
+
+    @Override
     public IContainer addSingleton(Class<?> cls, Class<?> impl, Class<?>... dependencies) {
         pool.put(cls, new Entry(impl, dependencies));
         return this;
@@ -103,10 +109,13 @@ public class Container implements IContainer {
                 }
 
                 List<Object> objects = new ArrayList<>();
+                Class<?>[] depCls = new Class[dependencies.size()];
+                int i = 0;
                 for (Class<?> dep : dependencies) {
-                    objects.add(resolve(dep));
+                    objects.add(resolveRequired(dep));
+                    depCls[i++] = dep;
                 }
-                var ctor = cls.getConstructor((Class<?>[]) dependencies.toArray());
+                var ctor = cls.getConstructor(depCls);
                 var newInstance = ctor.newInstance(objects.toArray());
                 if (isSingleton) {
                     instance = newInstance;

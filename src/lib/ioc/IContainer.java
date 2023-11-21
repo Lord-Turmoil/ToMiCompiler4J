@@ -6,6 +6,7 @@ package lib.ioc;
 
 public interface IContainer {
     IContainer addSingleton(Class<?> cls, Object instance);
+    IContainer addSingleton(Class<?> cls, Class<?> impl);
 
     IContainer addSingleton(Class<?> cls, Class<?> impl, Class<?>... dependencies);
 
