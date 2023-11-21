@@ -53,8 +53,8 @@ public class ReducedSyntaxMapper implements ISyntaxMapper {
         descriptions.put(SyntaxTypes.COND, "Cond");
 //        descriptions.put(SyntaxTypes.IF_STMT, "IfStmt");
 //        descriptions.put(SyntaxTypes.FOR_STMT, "ForStmt");
-        descriptions.put(SyntaxTypes.FOR_INIT_STMT, "ForInitStmt");
-        descriptions.put(SyntaxTypes.FOR_STEP_STMT, "ForStepStmt");
+        descriptions.put(SyntaxTypes.FOR_INIT_STMT, "ForStmt");
+        descriptions.put(SyntaxTypes.FOR_STEP_STMT, "ForStmt");
 //        descriptions.put(SyntaxTypes.EXP_STMT, "ExpStmt");
 //        descriptions.put(SyntaxTypes.BREAK_STMT, "BreakStmt");
 //        descriptions.put(SyntaxTypes.CONTINUE_STMT, "ContinueStmt");
