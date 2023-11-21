@@ -1200,6 +1200,7 @@ public class ResilientSyntacticParser implements ISyntacticParser {
             postParseError(checkpoint, root);
             return null;
         }
+        root.insertEndChild(stmt);
 
         // 'else'
         if (getLookahead().is(TokenTypes.ELSE)) {
