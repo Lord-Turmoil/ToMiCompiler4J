@@ -40,7 +40,7 @@ public class ReducedSyntaxMapper implements ISyntaxMapper {
         descriptions.put(SyntaxTypes.FUNC_TYPE, "FuncType");
         descriptions.put(SyntaxTypes.FUNC_FPARAMS, "FuncFParams");
         descriptions.put(SyntaxTypes.FUNC_FPARAM, "FuncFParam");
-        descriptions.put(SyntaxTypes.FUNC_APARAMS, "FuncAParams");
+        descriptions.put(SyntaxTypes.FUNC_APARAMS, "FuncRParams");
 //        descriptions.put(SyntaxTypes.FUNC_APARAM, "FuncAParam");
         descriptions.put(SyntaxTypes.BLOCK, "Block");
 //        descriptions.put(SyntaxTypes.BLOCK_ITEM, "BlockItem");
@@ -71,8 +71,8 @@ public class ReducedSyntaxMapper implements ISyntaxMapper {
         descriptions.put(SyntaxTypes.PRIMARY_EXP, "PrimaryExp");
 //        descriptions.put(SyntaxTypes.FUNC_CALL, "FunctionCall");
         descriptions.put(SyntaxTypes.NUMBER, "Number");
-        descriptions.put(SyntaxTypes.OR_EXP, "OrExp");
-        descriptions.put(SyntaxTypes.AND_EXP, "AndExp");
+        descriptions.put(SyntaxTypes.OR_EXP, "LOrExp");
+        descriptions.put(SyntaxTypes.AND_EXP, "LAndExp");
         descriptions.put(SyntaxTypes.EQ_EXP, "EqExp");
         descriptions.put(SyntaxTypes.REL_EXP, "RelExp");
     }
