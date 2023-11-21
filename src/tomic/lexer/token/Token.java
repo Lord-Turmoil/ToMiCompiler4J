@@ -20,4 +20,9 @@ public class Token {
     public static TokenTypes type(Token token) {
         return token != null ? token.type : TokenTypes.UNKNOWN;
     }
+
+    @Override
+    public String toString() {
+        return "(" + lineNo + ":" + charNo + ") " + type + " " + lexeme.replace("\n", "\\n");
+    }
 }

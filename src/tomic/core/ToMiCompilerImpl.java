@@ -5,7 +5,10 @@ import lib.ioc.IContainer;
 import lib.twio.ITwioReader;
 import lib.twio.ITwioWriter;
 import lib.twio.TwioBufferWriter;
+import lib.twio.TwioReader;
+import tomic.lexer.ILexicalParser;
 import tomic.lexer.IPreprocessor;
+import tomic.lexer.token.TokenTypes;
 import tomic.logger.debug.IDebugLogger;
 
 import java.util.function.Consumer;
@@ -39,6 +42,12 @@ class ToMiCompilerImpl {
             return;
         }
         ITwioWriter writer = preprocess();
+
+        // Syntactic
+        if (config.target.ordinal() < Config.TargetTypes.Syntactic.ordinal()) {
+            return;
+        }
+        syntacticParse(new TwioReader(writer.yield()));
     }
 
     ITwioWriter preprocess() {
@@ -60,5 +69,22 @@ class ToMiCompilerImpl {
         logger.debug("Preprocess done");
 
         return writer;
+    }
+
+    void syntacticParse(ITwioReader reader) {
+        var logger = container.resolveRequired(IDebugLogger.class);
+
+        logger.debug("Parsing " + config.input + "...");
+
+        var parser = container.resolveRequired(ILexicalParser.class);
+        parser.setReader(reader);
+        var token = parser.next();
+        while (token != null) {
+            System.out.println(token);
+            if (token.type == TokenTypes.TERMINATOR) {
+                break;
+            }
+            token = parser.next();
+        }
     }
 }
