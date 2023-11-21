@@ -5,6 +5,7 @@ import tomic.lexer.token.ITokenMapper;
 import tomic.lexer.token.Token;
 import tomic.lexer.token.TokenTypes;
 import tomic.utils.Constants;
+import tomic.utils.StringExt;
 
 public class NumberLexicalTask extends LexicalTask {
     public NumberLexicalTask(ITokenMapper mapper) {
@@ -13,15 +14,15 @@ public class NumberLexicalTask extends LexicalTask {
 
     @Override
     public boolean beginsWith(int begin) {
-        return Constants.DIGITS.indexOf(begin) != -1;
+        return StringExt.contains(Constants.DIGITS, begin);
     }
 
     @Override
     public boolean endsWith(int end) {
         return (end == Constants.EOF) ||
-                (Constants.WHITESPACES.indexOf(end) != -1) ||
-                (Constants.DELIMITERS.indexOf(end) != -1) ||
-                (Constants.OPERATORS.indexOf(end) != -1);
+                StringExt.contains(Constants.WHITESPACES, end) ||
+                StringExt.contains(Constants.DELIMITERS, end) ||
+                StringExt.contains(Constants.OPERATORS, end);
     }
 
     @Override
@@ -31,7 +32,7 @@ public class NumberLexicalTask extends LexicalTask {
         int charNo = reader.getCharNo();
         StringBuilder lexeme = new StringBuilder();
 
-        while (ch != Constants.EOF && Constants.DIGITS.indexOf(ch) != -1) {
+        while (ch != Constants.EOF && StringExt.contains(Constants.DIGITS, ch)) {
             lexeme.append((char) ch);
             ch = reader.read();
         }

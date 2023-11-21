@@ -3,6 +3,7 @@ package tomic.lexer.impl.task;
 import lib.twio.ITwioReader;
 import tomic.lexer.token.ITokenMapper;
 import tomic.lexer.token.Token;
+import tomic.utils.StringExt;
 
 public class SingleOpLexicalTask extends LexicalTask {
     public SingleOpLexicalTask(ITokenMapper mapper) {
@@ -11,7 +12,7 @@ public class SingleOpLexicalTask extends LexicalTask {
 
     @Override
     public boolean beginsWith(int begin) {
-        return "+-*/%".indexOf(begin) != -1;
+        return StringExt.contains("+-*/%", begin);
     }
 
     @Override

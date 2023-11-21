@@ -4,6 +4,7 @@ import lib.twio.ITwioReader;
 import tomic.lexer.token.ITokenMapper;
 import tomic.lexer.token.Token;
 import tomic.utils.Constants;
+import tomic.utils.StringExt;
 
 public class DoubleOpLexicalTask extends LexicalTask {
     public DoubleOpLexicalTask(ITokenMapper mapper) {
@@ -12,7 +13,7 @@ public class DoubleOpLexicalTask extends LexicalTask {
 
     @Override
     public boolean beginsWith(int begin) {
-        return "&|=<>!".indexOf(begin) != -1;
+        return StringExt.contains("&|=<>!", begin);
     }
 
     @Override

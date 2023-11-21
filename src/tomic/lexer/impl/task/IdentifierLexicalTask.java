@@ -5,6 +5,7 @@ import tomic.lexer.token.ITokenMapper;
 import tomic.lexer.token.Token;
 import tomic.lexer.token.TokenTypes;
 import tomic.utils.Constants;
+import tomic.utils.StringExt;
 
 public class IdentifierLexicalTask extends LexicalTask {
     public IdentifierLexicalTask(ITokenMapper mapper) {
@@ -19,9 +20,9 @@ public class IdentifierLexicalTask extends LexicalTask {
     @Override
     public boolean endsWith(int end) {
         return (end == Constants.EOF) ||
-                (Constants.WHITESPACES.indexOf(end) != -1) ||
-                (Constants.DELIMITERS.indexOf(end) != -1) ||
-                (Constants.OPERATORS.indexOf(end) != -1);
+                StringExt.contains(Constants.WHITESPACES, end) ||
+                StringExt.contains(Constants.DELIMITERS, end) ||
+                StringExt.contains(Constants.OPERATORS, end);
     }
 
     @Override
