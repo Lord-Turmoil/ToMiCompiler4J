@@ -3,6 +3,7 @@ package tomic.lexer.impl.task;
 import lib.twio.ITwioReader;
 import tomic.lexer.token.ITokenMapper;
 import tomic.lexer.token.Token;
+import tomic.utils.Constants;
 
 public class DoubleOpLexicalTask extends LexicalTask {
     public DoubleOpLexicalTask(ITokenMapper mapper) {
@@ -33,7 +34,7 @@ public class DoubleOpLexicalTask extends LexicalTask {
                 next = reader.read();
                 if (next == ch) {
                     lexeme.append((char) ch);
-                } else if (next != EOF) {
+                } else if (next != Constants.EOF) {
                     reader.rewind();
                 }
             }
@@ -41,7 +42,7 @@ public class DoubleOpLexicalTask extends LexicalTask {
                 next = reader.read();
                 if (next == '=') {
                     lexeme.append((char) next);
-                } else if (next != EOF) {
+                } else if (next != Constants.EOF) {
                     reader.rewind();
                 }
             }

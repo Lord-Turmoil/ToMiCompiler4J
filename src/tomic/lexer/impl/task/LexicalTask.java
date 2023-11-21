@@ -5,11 +5,6 @@ import tomic.lexer.token.ITokenMapper;
 import tomic.lexer.token.Token;
 
 public abstract class LexicalTask {
-    protected static final String DIGITS = "0123456789";
-    protected static final String WHITESPACES = " \t\r\n\f";
-    protected static final String OPERATORS = "+-*/%&|!<>=";
-    protected static final String DELIMITERS = ",;()[]{}";
-    protected static final int EOF = -1;
     protected final ITokenMapper mapper;
 
     protected LexicalTask(ITokenMapper mapper) {

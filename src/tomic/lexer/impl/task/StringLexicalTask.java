@@ -4,6 +4,7 @@ import lib.twio.ITwioReader;
 import tomic.lexer.token.ITokenMapper;
 import tomic.lexer.token.Token;
 import tomic.lexer.token.TokenTypes;
+import tomic.utils.Constants;
 
 public class StringLexicalTask extends LexicalTask {
 
@@ -31,7 +32,7 @@ public class StringLexicalTask extends LexicalTask {
 
         lexeme.append((char) ch);
         ch = reader.read();
-        while (ch != EOF && ch != '"') {
+        while (ch != Constants.EOF && ch != '"') {
             if (isNormalChar(ch)) {
                 lexeme.append((char) ch);
             } else if (isNewLineChar(ch, reader)) {
@@ -47,7 +48,7 @@ public class StringLexicalTask extends LexicalTask {
             ch = reader.read();
         }
 
-        if (ch != EOF) {
+        if (ch != Constants.EOF) {
             lexeme.append((char) ch);
         } else {
             error = true;
@@ -72,7 +73,7 @@ public class StringLexicalTask extends LexicalTask {
             if (ch == 'n') {
                 ret = true;
             }
-            if (ch != EOF) {
+            if (ch != Constants.EOF) {
                 reader.rewind();
             }
         }
@@ -88,7 +89,7 @@ public class StringLexicalTask extends LexicalTask {
             if (ch == 'd') {
                 ret = true;
             }
-            if (ch != EOF) {
+            if (ch != Constants.EOF) {
                 reader.rewind();
             }
         }

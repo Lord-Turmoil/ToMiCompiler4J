@@ -3,6 +3,7 @@ package tomic.lexer.impl.task;
 import lib.twio.ITwioReader;
 import tomic.lexer.token.ITokenMapper;
 import tomic.lexer.token.Token;
+import tomic.utils.Constants;
 
 public class DelimiterLexicalTask extends LexicalTask {
     public DelimiterLexicalTask(ITokenMapper mapper) {
@@ -11,7 +12,7 @@ public class DelimiterLexicalTask extends LexicalTask {
 
     @Override
     public boolean beginsWith(int begin) {
-        return DELIMITERS.indexOf(begin) != -1;
+        return Constants.DELIMITERS.indexOf(begin) != -1;
     }
 
     @Override

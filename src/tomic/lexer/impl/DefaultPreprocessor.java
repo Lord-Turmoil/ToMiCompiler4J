@@ -3,13 +3,13 @@ package tomic.lexer.impl;
 import lib.twio.ITwioReader;
 import lib.twio.ITwioWriter;
 import tomic.lexer.IPreprocessor;
+import tomic.utils.Constants;
 
 public class DefaultPreprocessor implements IPreprocessor {
     private ITwioReader reader;
     private ITwioWriter writer;
     private final State state = new State();
     private static final char FILLING = ' ';
-    private static final int EOF = -1;
 
     @Override
     public void setReader(ITwioReader reader) {
@@ -43,7 +43,7 @@ public class DefaultPreprocessor implements IPreprocessor {
             if (ch != '\r') {
                 processImpl(ch);
             }
-        } while (ch != EOF);
+        } while (ch != Constants.EOF);
     }
 
     private void processImpl(int ch) {
@@ -69,7 +69,7 @@ public class DefaultPreprocessor implements IPreprocessor {
                 state.type = StateTypes.LINE_COMMENT;
                 writer.write(FILLING);
             }
-            case EOF -> {
+            case Constants.EOF -> {
             }
             default -> writer.write(ch);
         }
@@ -93,7 +93,7 @@ public class DefaultPreprocessor implements IPreprocessor {
                 writer.write('/');
                 writer.write(ch);
             }
-            case EOF -> {
+            case Constants.EOF -> {
                 state.type = StateTypes.ANY;
                 writer.write('/');
             }
@@ -111,7 +111,7 @@ public class DefaultPreprocessor implements IPreprocessor {
                 state.type = StateTypes.ANY;
                 writer.write('\n');
             }
-            case EOF -> state.type = StateTypes.ANY;
+            case Constants.EOF -> state.type = StateTypes.ANY;
             default -> writer.write(FILLING);
         }
     }
@@ -119,7 +119,7 @@ public class DefaultPreprocessor implements IPreprocessor {
     private void processBlockCommentLeft(int ch) {
         switch (ch) {
             case '*' -> state.type = StateTypes.BLOCK_COMMENT_RIGHT;
-            case EOF -> state.type = StateTypes.ANY;
+            case Constants.EOF -> state.type = StateTypes.ANY;
             default -> writer.write(FILLING);
         }
     }
@@ -136,7 +136,7 @@ public class DefaultPreprocessor implements IPreprocessor {
                 writer.write(FILLING);
                 writer.write('\n');
             }
-            case EOF -> writer.write(FILLING);
+            case Constants.EOF -> writer.write(FILLING);
             default -> {
                 state.type = StateTypes.BLOCK_COMMENT_LEFT;
                 writer.write(FILLING);
@@ -146,7 +146,7 @@ public class DefaultPreprocessor implements IPreprocessor {
     }
 
     private void processQuote(int ch) {
-        if (ch == EOF) {
+        if (ch == Constants.EOF) {
             state.type = StateTypes.ANY;
             return;
         }
