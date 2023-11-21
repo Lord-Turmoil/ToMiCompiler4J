@@ -4,8 +4,8 @@ import lib.twio.ITwioReader;
 import lib.twio.ITwioWriter;
 
 public interface IPreprocessor {
-    void setReader(ITwioReader reader);
-    void setWriter(ITwioWriter writer);
+    IPreprocessor setReader(ITwioReader reader);
+    IPreprocessor setWriter(ITwioWriter writer);
 
     ITwioReader getReader();
     ITwioWriter getWriter();

@@ -12,13 +12,15 @@ public class DefaultPreprocessor implements IPreprocessor {
     private static final char FILLING = ' ';
 
     @Override
-    public void setReader(ITwioReader reader) {
+    public DefaultPreprocessor setReader(ITwioReader reader) {
         this.reader = reader;
+        return this;
     }
 
     @Override
-    public void setWriter(ITwioWriter writer) {
+    public DefaultPreprocessor setWriter(ITwioWriter writer) {
         this.writer = writer;
+        return this;
     }
 
     @Override
