@@ -12,8 +12,8 @@ public class TwioReader implements ITwioReader {
 
     private int cursor = 0;
     private final int total;
-    private int lineNo = 0;
-    private int charNo = 0;
+    private int lineNo = 1;
+    private int charNo = 1;
 
     public TwioReader(InputStream stream) {
         InputStreamReader isr = new InputStreamReader(stream);
