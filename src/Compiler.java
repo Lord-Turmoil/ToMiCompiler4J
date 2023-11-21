@@ -1,23 +1,18 @@
 import tomic.core.Config;
 import tomic.core.ToMiCompiler;
 
-import java.io.FileNotFoundException;
-
 import static tomic.utils.StringExt.isNullOrEmpty;
 
 public class Compiler {
     private static boolean showHelp = false;
-    public static void main(String[] args) throws FileNotFoundException {
-        Config config = new Config();
-        if (!parseArgs(args.length, args, config)) {
-            System.exit(1);
-        }
 
-        if (showHelp) {
-            printHelp();
-        } else {
-            new ToMiCompiler().configure(config).compile();
-        }
+    public static void main(String[] args) {
+        Config config = new Config();
+        config.target = Config.TargetTypes.Syntactic;
+        config.input = "testfile.txt";
+        config.emitAst = true;
+        config.astOutput = "output.txt";
+        new ToMiCompiler().configure(config).compile();
     }
 
     private static boolean parseArgs(int argc, String[] argv, Config config) {
