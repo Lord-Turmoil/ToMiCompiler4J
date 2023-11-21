@@ -223,6 +223,10 @@ public abstract class SyntaxNode {
         return Boolean.getBoolean(attribute(name, String.valueOf(defaultValue)));
     }
 
+    public Map<String, String> getAttributes() {
+        return attributes;
+    }
+
     SyntaxNode setAttribute(String name, String value) {
         attributes.put(name, value);
         return this;

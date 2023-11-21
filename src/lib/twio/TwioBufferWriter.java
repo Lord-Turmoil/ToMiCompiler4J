@@ -27,7 +27,6 @@ public class TwioBufferWriter implements ITwioWriter {
     public void writeLine(String str) {
         buffer.append(str);
         buffer.append('\n');
-
     }
 
     @Override

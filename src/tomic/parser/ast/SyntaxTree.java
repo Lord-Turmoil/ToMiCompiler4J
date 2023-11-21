@@ -34,4 +34,8 @@ public class SyntaxTree {
     public void setRoot(SyntaxNode root) {
         this.root = root;
     }
+
+    public boolean accept(IAstVisitor visitor) {
+        return root.accept(visitor);
+    }
 }
