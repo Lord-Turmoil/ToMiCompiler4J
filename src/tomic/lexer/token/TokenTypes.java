@@ -1,6 +1,6 @@
 package tomic.lexer.token;
 
-public enum TokenType {
+public enum TokenTypes {
     UNKNOWN,        // unknown token
     TERMINATOR,     // terminator
 

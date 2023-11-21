@@ -1,11 +1,11 @@
 package tomic.lexer.token;
 
 public interface ITokenMapper {
-    TokenType type(String lexeme);
+    TokenTypes type(String lexeme);
 
-    String lexeme(TokenType type);
+    String lexeme(TokenTypes type);
 
-    String description(TokenType type);
+    String description(TokenTypes type);
 
     boolean isKeyword(String lexeme);
 }

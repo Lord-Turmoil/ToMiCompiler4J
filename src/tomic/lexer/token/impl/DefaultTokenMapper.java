@@ -1,15 +1,15 @@
 package tomic.lexer.token.impl;
 
 import tomic.lexer.token.ITokenMapper;
-import tomic.lexer.token.TokenType;
+import tomic.lexer.token.TokenTypes;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class DefaultTokenMapper implements ITokenMapper {
-    private Map<String, TokenType> lexemeToType;
-    private Map<TokenType, String> typeToLexeme;
-    private Map<TokenType, String> typeToDescription;
+    private Map<String, TokenTypes> lexemeToType;
+    private Map<TokenTypes, String> typeToLexeme;
+    private Map<TokenTypes, String> typeToDescription;
     private Map<String, Boolean> lexemeToIsKeyword;
 
     public DefaultTokenMapper() {
@@ -17,17 +17,17 @@ public class DefaultTokenMapper implements ITokenMapper {
     }
 
     @Override
-    public TokenType type(String lexeme) {
-        return lexemeToType.getOrDefault(lexeme, TokenType.UNKNOWN);
+    public TokenTypes type(String lexeme) {
+        return lexemeToType.getOrDefault(lexeme, TokenTypes.UNKNOWN);
     }
 
     @Override
-    public String lexeme(TokenType type) {
+    public String lexeme(TokenTypes type) {
         return typeToLexeme.getOrDefault(type, null);
     }
 
     @Override
-    public String description(TokenType type) {
+    public String description(TokenTypes type) {
         return typeToDescription.getOrDefault(type, null);
     }
 
@@ -46,52 +46,52 @@ public class DefaultTokenMapper implements ITokenMapper {
     private void initLexemeToType() {
         lexemeToType = new HashMap<>();
 
-        lexemeToType.put("main", TokenType.MAIN);
-        lexemeToType.put("return", TokenType.RETURN);
-        lexemeToType.put("getint", TokenType.GETINT);
-        lexemeToType.put("printf", TokenType.PRINTF);
+        lexemeToType.put("main", TokenTypes.MAIN);
+        lexemeToType.put("return", TokenTypes.RETURN);
+        lexemeToType.put("getint", TokenTypes.GETINT);
+        lexemeToType.put("printf", TokenTypes.PRINTF);
 
-        lexemeToType.put("if", TokenType.IF);
-        lexemeToType.put("else", TokenType.ELSE);
+        lexemeToType.put("if", TokenTypes.IF);
+        lexemeToType.put("else", TokenTypes.ELSE);
 
-        lexemeToType.put("for", TokenType.FOR);
-        lexemeToType.put("break", TokenType.BREAK);
-        lexemeToType.put("continue", TokenType.CONTINUE);
+        lexemeToType.put("for", TokenTypes.FOR);
+        lexemeToType.put("break", TokenTypes.BREAK);
+        lexemeToType.put("continue", TokenTypes.CONTINUE);
 
-        lexemeToType.put("const", TokenType.CONST);
-        lexemeToType.put("int", TokenType.INT);
-        lexemeToType.put("void", TokenType.VOID);
+        lexemeToType.put("const", TokenTypes.CONST);
+        lexemeToType.put("int", TokenTypes.INT);
+        lexemeToType.put("void", TokenTypes.VOID);
 
-        lexemeToType.put("!", TokenType.NOT);
-        lexemeToType.put("&&", TokenType.AND);
-        lexemeToType.put("||", TokenType.OR);
-        lexemeToType.put("+", TokenType.PLUS);
-        lexemeToType.put("-", TokenType.MINUS);
-        lexemeToType.put("*", TokenType.MULTIPLY);
-        lexemeToType.put("/", TokenType.DIVIDE);
-        lexemeToType.put("%", TokenType.MOD);
-        lexemeToType.put("<", TokenType.LESS);
-        lexemeToType.put("<=", TokenType.LESS_EQUAL);
-        lexemeToType.put(">", TokenType.GREATER);
-        lexemeToType.put(">=", TokenType.GREATER_EQUAL);
-        lexemeToType.put("==", TokenType.EQUAL);
-        lexemeToType.put("!=", TokenType.NOT_EQUAL);
-        lexemeToType.put("=", TokenType.ASSIGN);
+        lexemeToType.put("!", TokenTypes.NOT);
+        lexemeToType.put("&&", TokenTypes.AND);
+        lexemeToType.put("||", TokenTypes.OR);
+        lexemeToType.put("+", TokenTypes.PLUS);
+        lexemeToType.put("-", TokenTypes.MINUS);
+        lexemeToType.put("*", TokenTypes.MULTIPLY);
+        lexemeToType.put("/", TokenTypes.DIVIDE);
+        lexemeToType.put("%", TokenTypes.MOD);
+        lexemeToType.put("<", TokenTypes.LESS);
+        lexemeToType.put("<=", TokenTypes.LESS_EQUAL);
+        lexemeToType.put(">", TokenTypes.GREATER);
+        lexemeToType.put(">=", TokenTypes.GREATER_EQUAL);
+        lexemeToType.put("==", TokenTypes.EQUAL);
+        lexemeToType.put("!=", TokenTypes.NOT_EQUAL);
+        lexemeToType.put("=", TokenTypes.ASSIGN);
 
-        lexemeToType.put(";", TokenType.SEMICOLON);
-        lexemeToType.put(",", TokenType.COMMA);
+        lexemeToType.put(";", TokenTypes.SEMICOLON);
+        lexemeToType.put(",", TokenTypes.COMMA);
 
-        lexemeToType.put("(", TokenType.LEFT_PARENTHESIS);
-        lexemeToType.put(")", TokenType.RIGHT_PARENTHESIS);
-        lexemeToType.put("{", TokenType.LEFT_BRACE);
-        lexemeToType.put("}", TokenType.RIGHT_BRACE);
-        lexemeToType.put("[", TokenType.LEFT_BRACKET);
-        lexemeToType.put("]", TokenType.RIGHT_BRACKET);
+        lexemeToType.put("(", TokenTypes.LEFT_PARENTHESIS);
+        lexemeToType.put(")", TokenTypes.RIGHT_PARENTHESIS);
+        lexemeToType.put("{", TokenTypes.LEFT_BRACE);
+        lexemeToType.put("}", TokenTypes.RIGHT_BRACE);
+        lexemeToType.put("[", TokenTypes.LEFT_BRACKET);
+        lexemeToType.put("]", TokenTypes.RIGHT_BRACKET);
     }
 
     private void initTypeToLexeme() {
         typeToLexeme = new HashMap<>();
-        for (Map.Entry<String, TokenType> entry : lexemeToType.entrySet()) {
+        for (Map.Entry<String, TokenTypes> entry : lexemeToType.entrySet()) {
             typeToLexeme.put(entry.getValue(), entry.getKey());
         }
     }
@@ -99,51 +99,51 @@ public class DefaultTokenMapper implements ITokenMapper {
     private void initTypeToDescription() {
         typeToDescription = new HashMap<>();
 
-        typeToDescription.put(TokenType.UNKNOWN, "UNKNOWN");
-        typeToDescription.put(TokenType.IDENTIFIER, "IDENFR");
-        typeToDescription.put(TokenType.INTEGER, "INTCON");
-        typeToDescription.put(TokenType.FORMAT, "STRCON");
-        typeToDescription.put(TokenType.MAIN, "MAINTK");
-        typeToDescription.put(TokenType.RETURN, "RETURNTK");
-        typeToDescription.put(TokenType.GETINT, "GETINTTK");
-        typeToDescription.put(TokenType.PRINTF, "PRINTFTK");
+        typeToDescription.put(TokenTypes.UNKNOWN, "UNKNOWN");
+        typeToDescription.put(TokenTypes.IDENTIFIER, "IDENFR");
+        typeToDescription.put(TokenTypes.INTEGER, "INTCON");
+        typeToDescription.put(TokenTypes.FORMAT, "STRCON");
+        typeToDescription.put(TokenTypes.MAIN, "MAINTK");
+        typeToDescription.put(TokenTypes.RETURN, "RETURNTK");
+        typeToDescription.put(TokenTypes.GETINT, "GETINTTK");
+        typeToDescription.put(TokenTypes.PRINTF, "PRINTFTK");
 
-        typeToDescription.put(TokenType.IF, "IFTK");
-        typeToDescription.put(TokenType.ELSE, "ELSETK");
+        typeToDescription.put(TokenTypes.IF, "IFTK");
+        typeToDescription.put(TokenTypes.ELSE, "ELSETK");
 
-        typeToDescription.put(TokenType.FOR, "FORTK");
-        typeToDescription.put(TokenType.BREAK, "BREAKTK");
-        typeToDescription.put(TokenType.CONTINUE, "CONTINUETK");
+        typeToDescription.put(TokenTypes.FOR, "FORTK");
+        typeToDescription.put(TokenTypes.BREAK, "BREAKTK");
+        typeToDescription.put(TokenTypes.CONTINUE, "CONTINUETK");
 
-        typeToDescription.put(TokenType.CONST, "CONSTTK");
-        typeToDescription.put(TokenType.INT, "INTTK");
-        typeToDescription.put(TokenType.VOID, "VOIDTK");
+        typeToDescription.put(TokenTypes.CONST, "CONSTTK");
+        typeToDescription.put(TokenTypes.INT, "INTTK");
+        typeToDescription.put(TokenTypes.VOID, "VOIDTK");
 
-        typeToDescription.put(TokenType.NOT, "NOT");
-        typeToDescription.put(TokenType.AND, "AND");
-        typeToDescription.put(TokenType.OR, "OR");
-        typeToDescription.put(TokenType.PLUS, "PLUS");
-        typeToDescription.put(TokenType.MINUS, "MINU");
-        typeToDescription.put(TokenType.MULTIPLY, "MULT");
-        typeToDescription.put(TokenType.DIVIDE, "DIV");
-        typeToDescription.put(TokenType.MOD, "MOD");
-        typeToDescription.put(TokenType.LESS, "LSS");
-        typeToDescription.put(TokenType.LESS_EQUAL, "LEQ");
-        typeToDescription.put(TokenType.GREATER, "GRE");
-        typeToDescription.put(TokenType.GREATER_EQUAL, "GEQ");
-        typeToDescription.put(TokenType.EQUAL, "EQL");
-        typeToDescription.put(TokenType.NOT_EQUAL, "NEQ");
-        typeToDescription.put(TokenType.ASSIGN, "ASSIGN");
+        typeToDescription.put(TokenTypes.NOT, "NOT");
+        typeToDescription.put(TokenTypes.AND, "AND");
+        typeToDescription.put(TokenTypes.OR, "OR");
+        typeToDescription.put(TokenTypes.PLUS, "PLUS");
+        typeToDescription.put(TokenTypes.MINUS, "MINU");
+        typeToDescription.put(TokenTypes.MULTIPLY, "MULT");
+        typeToDescription.put(TokenTypes.DIVIDE, "DIV");
+        typeToDescription.put(TokenTypes.MOD, "MOD");
+        typeToDescription.put(TokenTypes.LESS, "LSS");
+        typeToDescription.put(TokenTypes.LESS_EQUAL, "LEQ");
+        typeToDescription.put(TokenTypes.GREATER, "GRE");
+        typeToDescription.put(TokenTypes.GREATER_EQUAL, "GEQ");
+        typeToDescription.put(TokenTypes.EQUAL, "EQL");
+        typeToDescription.put(TokenTypes.NOT_EQUAL, "NEQ");
+        typeToDescription.put(TokenTypes.ASSIGN, "ASSIGN");
 
-        typeToDescription.put(TokenType.SEMICOLON, "SEMICN");
-        typeToDescription.put(TokenType.COMMA, "COMMA");
+        typeToDescription.put(TokenTypes.SEMICOLON, "SEMICN");
+        typeToDescription.put(TokenTypes.COMMA, "COMMA");
 
-        typeToDescription.put(TokenType.LEFT_PARENTHESIS, "LPARENT");
-        typeToDescription.put(TokenType.RIGHT_PARENTHESIS, "RPARENT");
-        typeToDescription.put(TokenType.LEFT_BRACE, "LBRACE");
-        typeToDescription.put(TokenType.RIGHT_BRACE, "RBRACE");
-        typeToDescription.put(TokenType.LEFT_BRACKET, "LBRACK");
-        typeToDescription.put(TokenType.RIGHT_BRACKET, "RBRACK");
+        typeToDescription.put(TokenTypes.LEFT_PARENTHESIS, "LPARENT");
+        typeToDescription.put(TokenTypes.RIGHT_PARENTHESIS, "RPARENT");
+        typeToDescription.put(TokenTypes.LEFT_BRACE, "LBRACE");
+        typeToDescription.put(TokenTypes.RIGHT_BRACE, "RBRACE");
+        typeToDescription.put(TokenTypes.LEFT_BRACKET, "LBRACK");
+        typeToDescription.put(TokenTypes.RIGHT_BRACKET, "RBRACK");
     }
 
     private void initLexemeToIsKeyword() {
