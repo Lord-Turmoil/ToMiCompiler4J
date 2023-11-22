@@ -8,6 +8,10 @@ public class Compiler {
         Config config = new Config();
 
         // Override default config
+        config.target = Config.TargetTypes.IR;
+        config.input = "testfile.txt";
+        config.emitLlvm = true;
+        config.llvmOutput = "llvm_ir.txt";
 
         new ToMiCompiler().configure(config).compile();
     }
