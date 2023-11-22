@@ -1,43 +1,43 @@
 package tomic.llvm.asm;
 
 public interface IAsmWriter {
-    void push(char ch);
+    IAsmWriter push(char ch);
 
-    void push(String str);
+    IAsmWriter push(String str);
 
-    default void pushNext(char ch) {
-        pushSpace();
-        push(ch);
+    default IAsmWriter pushNext(char ch) {
+        return pushSpace().push(ch);
     }
 
-    default void pushNext(String str) {
-        pushSpace();
-        push(str);
+    default IAsmWriter pushNext(String str) {
+        return pushSpace().push(str);
     }
 
-    default void pushSpace() {
-        push(' ');
+    default IAsmWriter pushSpace() {
+        return push(' ');
     }
 
-    default void pushSpaces(int count) {
+    default IAsmWriter pushSpaces(int count) {
         for (int i = 0; i < count; i++) {
             pushSpace();
         }
+        return this;
     }
 
-    default void pushNewLine() {
-        push('\n');
+    default IAsmWriter pushNewLine() {
+        return push('\n');
     }
 
-    default void pushNewLines(int count) {
+    default IAsmWriter pushNewLines(int count) {
         for (int i = 0; i < count; i++) {
             pushNewLine();
         }
+        return this;
     }
 
-    void pushComment(String comment);
+    IAsmWriter pushComment(String comment);
 
-    void commentBegin();
+    IAsmWriter commentBegin();
 
-    void commentEnd();
+    IAsmWriter commentEnd();
 }

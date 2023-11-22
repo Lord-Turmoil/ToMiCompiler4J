@@ -37,11 +37,8 @@ public class ArrayType extends Type {
     }
 
     @Override
-    public void printAsm(IAsmWriter out) {
-        out.push('[');
-        out.push(String.valueOf(elementCount));
-        out.pushNext(" x ");
-        elementType.printAsm(out);
-        out.push(']');
+    public IAsmWriter printAsm(IAsmWriter out) {
+        out.push('[').push(String.valueOf(elementCount)).pushNext(" x ");
+        return elementType.printAsm(out).push(']');
     }
 }

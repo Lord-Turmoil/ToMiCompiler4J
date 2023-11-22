@@ -34,8 +34,7 @@ public class IntegerType extends Type {
     }
 
     @Override
-    public void printAsm(IAsmWriter out) {
-        out.push('i');
-        out.push(String.valueOf(bitWidth));
+    public IAsmWriter printAsm(IAsmWriter out) {
+        return out.push('i').push(String.valueOf(bitWidth));
     }
 }

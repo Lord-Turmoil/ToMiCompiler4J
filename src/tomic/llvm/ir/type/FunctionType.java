@@ -52,9 +52,8 @@ public class FunctionType extends Type {
     }
 
     @Override
-    public void printAsm(IAsmWriter out) {
-        getReturnType().printAsm(out);
-        out.pushNext('(');
+    public IAsmWriter printAsm(IAsmWriter out) {
+        getReturnType().printAsm(out).pushNext('(');
         boolean first = true;
         for (var arg : getParamTypes()) {
             if (!first) {
@@ -62,6 +61,6 @@ public class FunctionType extends Type {
             }
             arg.printAsm(out);
         }
-        out.push(')');
+        return out.push(')');
     }
 }

@@ -11,29 +11,29 @@ public class VerboseAsmWriter implements IAsmWriter {
     }
 
     @Override
-    public void push(char ch) {
+    public IAsmWriter push(char ch) {
         impl.write(ch);
+        return this;
     }
 
     @Override
-    public void push(String str) {
+    public IAsmWriter push(String str) {
         impl.write(str);
+        return this;
     }
 
     @Override
-    public void pushComment(String comment) {
-        push("; ");
-        push(comment);
-        pushNewLine();
+    public IAsmWriter pushComment(String comment) {
+        return push("; ").push(comment).pushNewLine();
     }
 
     @Override
-    public void commentBegin() {
-        push("; ");
+    public IAsmWriter commentBegin() {
+        return push("; ");
     }
 
     @Override
-    public void commentEnd() {
-        pushNewLine();
+    public IAsmWriter commentEnd() {
+        return pushNewLine();
     }
 }

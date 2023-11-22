@@ -31,8 +31,7 @@ public class PointerType extends Type {
     }
 
     @Override
-    public void printAsm(IAsmWriter out) {
-        elementType.printAsm(out);
-        out.push('*');
+    public IAsmWriter printAsm(IAsmWriter out) {
+        return elementType.printAsm(out).push('*');
     }
 }

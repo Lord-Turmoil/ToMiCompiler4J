@@ -69,11 +69,12 @@ public class Type {
         return false;
     }
 
-    public void printAsm(IAsmWriter out) {
+    public IAsmWriter printAsm(IAsmWriter out) {
         switch (typeId) {
             case VoidTyID -> out.push("void");
             case LabelTyID -> out.push("label");
             default -> throw new IllegalStateException("Should not reach here");
         }
+        return out;
     }
 }
