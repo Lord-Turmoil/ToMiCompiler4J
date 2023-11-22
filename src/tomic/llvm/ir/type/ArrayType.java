@@ -1,5 +1,7 @@
 package tomic.llvm.ir.type;
 
+import tomic.llvm.asm.IAsmWriter;
+
 public class ArrayType extends Type {
     private final Type elementType;
     private final int elementCount;
@@ -32,5 +34,14 @@ public class ArrayType extends Type {
 
     public boolean match(Type elementType, int elementCount) {
         return this.elementType.equals(elementType) && this.elementCount == elementCount;
+    }
+
+    @Override
+    public void printAsm(IAsmWriter out) {
+        out.push('[');
+        out.push(String.valueOf(elementCount));
+        out.pushNext(" x ");
+        elementType.printAsm(out);
+        out.push(']');
     }
 }

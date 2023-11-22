@@ -1,5 +1,7 @@
 package tomic.llvm.ir.type;
 
+import tomic.llvm.asm.IAsmWriter;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,5 +49,19 @@ public class FunctionType extends Type {
 
     public boolean match(Type returnType, List<Type> paramTypes) {
         return this.returnType.equals(returnType) && this.paramTypes.equals(paramTypes);
+    }
+
+    @Override
+    public void printAsm(IAsmWriter out) {
+        getReturnType().printAsm(out);
+        out.pushNext('(');
+        boolean first = true;
+        for (var arg : getParamTypes()) {
+            if (!first) {
+                out.push(", ");
+            }
+            arg.printAsm(out);
+        }
+        out.push(')');
     }
 }

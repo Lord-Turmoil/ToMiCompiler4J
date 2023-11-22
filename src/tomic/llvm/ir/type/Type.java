@@ -1,5 +1,6 @@
 package tomic.llvm.ir.type;
 
+import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.LlvmContext;
 
 public class Type {
@@ -68,4 +69,11 @@ public class Type {
         return false;
     }
 
+    public void printAsm(IAsmWriter out) {
+        switch (typeId) {
+            case VoidTyID -> out.push("void");
+            case LabelTyID -> out.push("label");
+            default -> throw new IllegalStateException("Should not reach here");
+        }
+    }
 }

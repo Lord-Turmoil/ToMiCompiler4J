@@ -1,5 +1,7 @@
 package tomic.llvm.ir.type;
 
+import tomic.llvm.asm.IAsmWriter;
+
 public class PointerType extends Type {
     private final Type elementType;
 
@@ -26,5 +28,11 @@ public class PointerType extends Type {
 
     public boolean match(Type elementType) {
         return this.elementType.equals(elementType);
+    }
+
+    @Override
+    public void printAsm(IAsmWriter out) {
+        elementType.printAsm(out);
+        out.push('*');
     }
 }

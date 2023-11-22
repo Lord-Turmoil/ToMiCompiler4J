@@ -1,5 +1,6 @@
 package tomic.llvm.ir.type;
 
+import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.LlvmContext;
 
 public class IntegerType extends Type {
@@ -30,5 +31,11 @@ public class IntegerType extends Type {
             return bitWidth == other.bitWidth;
         }
         return false;
+    }
+
+    @Override
+    public void printAsm(IAsmWriter out) {
+        out.push('i');
+        out.push(String.valueOf(bitWidth));
     }
 }
