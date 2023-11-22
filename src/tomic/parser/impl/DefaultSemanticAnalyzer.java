@@ -55,7 +55,6 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
 
     @Override
     public boolean visitExit(SyntaxNode node) {
-
         boolean ret = switch (node.getType()) {
             case COMP_UNIT -> exitCompUnit(node);
             case BTYPE -> exitBType(node);
@@ -702,9 +701,11 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
         } else {
             type = SymbolValueTypes.VOID;
         }
+
+        // Get
+        var funcType = SymbolValueTypes.values()[AstExt.getInheritedIntAttribute(node, "type")];
         node.setIntAttribute("type", type.ordinal());
 
-        var funcType = SymbolValueTypes.values()[AstExt.getInheritedIntAttribute(node, "type")];
         if (funcType == SymbolValueTypes.VOID && type != SymbolValueTypes.VOID) {
             log(LogLevel.ERROR, "Invalid return type");
             logError(ErrorTypes.RETURN_TYPE_MISMATCH, "Invalid return type");
