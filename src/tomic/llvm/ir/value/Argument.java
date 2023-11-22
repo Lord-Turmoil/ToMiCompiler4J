@@ -1,5 +1,6 @@
 package tomic.llvm.ir.value;
 
+import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.type.Type;
 
 public class Argument extends Value {
@@ -23,5 +24,16 @@ public class Argument extends Value {
 
     public int getArgNo() {
         return argNo;
+    }
+
+    @Override
+    public IAsmWriter printAsm(IAsmWriter out) {
+        getType().printAsm(out).pushNext('%');
+        return out.push(String.valueOf(getParent().slot(this)));
+    }
+
+    @Override
+    public IAsmWriter printUse(IAsmWriter out) {
+        return printAsm(out);
     }
 }

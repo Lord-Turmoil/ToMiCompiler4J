@@ -1,5 +1,7 @@
 package tomic.llvm.ir.value;
 
+import tomic.llvm.asm.IAsmWriter;
+import tomic.llvm.ir.type.PointerType;
 import tomic.llvm.ir.type.Type;
 
 public class GlobalVariable extends GlobalValue {
@@ -14,5 +16,26 @@ public class GlobalVariable extends GlobalValue {
         super(ValueTypes.GlobalVariableTy, type, name);
         this.isConstant = isConstant;
         this.initializer = initializer;
+    }
+
+    @Override
+    public IAsmWriter printAsm(IAsmWriter out) {
+        printName(out).pushNext('=').pushNext("dso_local");
+
+        out.pushNext(isConstant ? "constant" : "global").pushSpace();
+
+        if (initializer != null) {
+            initializer.printAsm(out);
+        } else {
+            var type = ((PointerType) getType()).getElementType();
+            type.printAsm(out);
+            if (type.isArrayTy()) {
+                out.pushNext("zeroinitializer");
+            } else {
+                out.pushNext("0");
+            }
+        }
+
+        return out.pushNewLine();
     }
 }

@@ -1,8 +1,10 @@
 package tomic.llvm.ir.value;
 
+import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.SlotTracker;
 import tomic.llvm.ir.type.FunctionType;
 import tomic.llvm.ir.type.Type;
+import tomic.llvm.ir.value.inst.ReturnInst;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -69,5 +71,42 @@ public class Function extends GlobalValue {
     // A utility method to get the slot of a value in this function.
     public int slot(Value value) {
         return slotTracker.slot(value);
+    }
+
+    @Override
+    public IAsmWriter printAsm(IAsmWriter out) {
+        var type = (FunctionType) getType();
+        getSlotTracker().trace(this);
+
+        if (type.getReturnType().isVoidTy()) {
+            var block = getBasicBlocks().getLast();
+            if (block.getInstructions().isEmpty()) {
+                block.insertInstruction(new ReturnInst(getContext()));
+            } else {
+                if (!(block.getInstructions().getLast() instanceof ReturnInst)) {
+                    block.insertInstruction(new ReturnInst(getContext()));
+                }
+            }
+        }
+
+        out.pushNewLine();
+
+        out.push("define").pushNext("dso_local");
+        type.getReturnType().printAsm(out).pushSpace();
+
+        printName(out).push('(');
+        for (var arg : getArguments()) {
+            if (arg != getArguments().get(0)) {
+                out.push(", ");
+            }
+            arg.printAsm(out);
+        }
+        out.push(')');
+
+        out.pushNext('{').pushNewLine();
+
+        getBasicBlocks().forEach(block -> block.printAsm(out));
+
+        return out.push('}').pushNewLine();
     }
 }

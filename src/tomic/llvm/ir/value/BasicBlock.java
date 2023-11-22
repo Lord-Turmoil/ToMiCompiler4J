@@ -1,5 +1,6 @@
 package tomic.llvm.ir.value;
 
+import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.value.inst.Instruction;
 
 import java.util.LinkedList;
@@ -33,5 +34,29 @@ public class BasicBlock extends Value {
 
     public LinkedList<Instruction> getInstructions() {
         return instructions;
+    }
+
+    @Override
+    public IAsmWriter printAsm(IAsmWriter out) {
+        var func = getParent();
+
+        if (this != func.getBasicBlocks().getFirst()) {
+            printName(out).pushNewLine();
+        }
+
+        getInstructions().forEach(inst -> inst.printAsm(out.pushSpaces(4)));
+
+        return out;
+    }
+
+    @Override
+    public IAsmWriter printName(IAsmWriter out) {
+        return out.push(String.valueOf(getParent().slot(this)));
+    }
+
+    @Override
+    public IAsmWriter printUse(IAsmWriter out) {
+        getType().printAsm(out).pushSpace();
+        return printName(out);
     }
 }
