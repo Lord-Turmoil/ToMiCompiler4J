@@ -1,5 +1,6 @@
 package tomic.llvm.ir.value;
 
+import tomic.llvm.ir.SlotTracker;
 import tomic.llvm.ir.type.FunctionType;
 import tomic.llvm.ir.type.Type;
 
@@ -10,6 +11,7 @@ import java.util.List;
 public class Function extends GlobalValue {
     private final ArrayList<Argument> arguments;
     private final LinkedList<BasicBlock> basicBlocks;
+    private final SlotTracker slotTracker = new SlotTracker();
 
     public Function(Type type, String name, List<Argument> arguments) {
         super(ValueTypes.FunctionTy, type, name);
@@ -58,5 +60,14 @@ public class Function extends GlobalValue {
 
     public Type getReturnType() {
         return ((FunctionType) getType()).getReturnType();
+    }
+
+    public SlotTracker getSlotTracker() {
+        return slotTracker;
+    }
+
+    // A utility method to get the slot of a value in this function.
+    public int slot(Value value) {
+        return slotTracker.slot(value);
     }
 }
