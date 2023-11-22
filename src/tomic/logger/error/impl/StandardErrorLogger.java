@@ -32,7 +32,9 @@ public class StandardErrorLogger implements IErrorLogger {
         });
 
         for (Entry entry : entries.stream().distinct().toList()) {
-            writer.writeLine(entry.line + " " + mapper.description(entry.type));
+            if (entry.type != ErrorTypes.UNKNOWN) {
+                writer.writeLine(entry.line + " " + mapper.description(entry.type));
+            }
         }
     }
 

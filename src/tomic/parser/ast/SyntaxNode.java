@@ -217,7 +217,11 @@ public abstract class SyntaxNode {
     }
 
     public int getIntAttribute(String name, int defaultValue) {
-        return Integer.getInteger(getAttribute(name, String.valueOf(defaultValue)));
+        String attr = getAttribute(name, null);
+        if (attr == null) {
+            return defaultValue;
+        }
+        return Integer.parseInt(attr);
     }
 
     public boolean getBoolAttribute(String name) {
@@ -225,7 +229,11 @@ public abstract class SyntaxNode {
     }
 
     public boolean getBoolAttribute(String name, boolean defaultValue) {
-        return Boolean.getBoolean(getAttribute(name, String.valueOf(defaultValue)));
+        String attr = getAttribute(name, null);
+        if (attr == null) {
+            return defaultValue;
+        }
+        return Boolean.parseBoolean(attr);
     }
 
     public Map<String, String> getAttributes() {

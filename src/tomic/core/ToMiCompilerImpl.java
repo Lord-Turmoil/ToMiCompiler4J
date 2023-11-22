@@ -7,9 +7,11 @@ import tomic.lexer.IPreprocessor;
 import tomic.logger.debug.IDebugLogger;
 import tomic.logger.debug.LogLevel;
 import tomic.logger.error.IErrorLogger;
+import tomic.parser.ISemanticParser;
 import tomic.parser.ISyntacticParser;
 import tomic.parser.ast.SyntaxTree;
 import tomic.parser.ast.printer.IAstPrinter;
+import tomic.parser.table.SymbolTable;
 
 import java.util.function.Consumer;
 
@@ -38,23 +40,34 @@ class ToMiCompilerImpl {
 
     void compile() {
         // Preprocess
-        if (config.target.ordinal() < Config.TargetTypes.Preprocess.ordinal()) {
-            return;
-        }
-        ITwioWriter writer = preprocess();
-
-        // Syntactic
-        if (config.target.ordinal() < Config.TargetTypes.Syntactic.ordinal()) {
-            return;
-        }
-        var ast = syntacticParse(new TwioReader(writer.yield()));
-        if (ast == null) {
+        ITwioWriter[] writer = { null };
+        if (!preprocess(writer)) {
             logErrors();
             return;
         }
+
+        // Syntactic
+        SyntaxTree[] ast = { null };
+        if (!syntacticParse(new TwioReader(writer[0].yield()), ast)) {
+            logErrors();
+            return;
+        }
+
+        // Semantic
+        SymbolTable[] table = { null };
+        if (!semanticParse(ast[0], table)) {
+            logErrors();
+            return;
+        }
+
+        logErrors();
     }
 
-    private ITwioWriter preprocess() {
+    private boolean preprocess(ITwioWriter[] outWriter) {
+        if (config.target.ordinal() < Config.TargetTypes.Preprocess.ordinal()) {
+            return false;
+        }
+
         var logger = container.resolveRequired(IDebugLogger.class);
 
         ITwioReader reader = buildReader(config.input);
@@ -72,17 +85,23 @@ class ToMiCompilerImpl {
                 .process();
         logger.debug("Preprocess done");
 
-        return writer;
+        outWriter[0] = writer;
+
+        return true;
     }
 
-    private SyntaxTree syntacticParse(ITwioReader reader) {
+    private boolean syntacticParse(ITwioReader reader, SyntaxTree[] outAst) {
+        if (config.target.ordinal() < Config.TargetTypes.Syntactic.ordinal()) {
+            return false;
+        }
+
         var logger = container.resolveRequired(IDebugLogger.class);
 
         logger.debug("Parsing " + config.input + "...");
         var ast = container.resolveRequired(ISyntacticParser.class).setReader(reader).parse();
         if (ast == null) {
             logger.fatal("Syntactic parse failed, compilation aborted");
-            return null;
+            return false;
         }
 
         if (logger.count(LogLevel.ERROR) > 0) {
@@ -95,9 +114,35 @@ class ToMiCompilerImpl {
             }
         }
 
-        return ast;
+        outAst[0] = ast;
+
+        return true;
     }
 
+    private boolean semanticParse(SyntaxTree ast, SymbolTable[] outTable) {
+        if (config.target.ordinal() < Config.TargetTypes.Semantic.ordinal()) {
+            return false;
+        }
+
+        var logger = container.resolveRequired(IDebugLogger.class);
+        logger.debug("Performing semantic analyzing on " + config.input + "...");
+
+        var table = container.resolveRequired(ISemanticParser.class).parse(ast);
+
+        if (config.emitAst) {
+            outputSyntaxTree(config.astOutput, container.resolveRequired(IAstPrinter.class), ast);
+        }
+
+        outTable[0] = table;
+
+        var errorLogger = container.resolveRequired(IErrorLogger.class);
+        if (table == null || errorLogger.count() > 0) {
+            logger.fatal("Semantic analyzing failed, compilation aborted");
+            return false;
+        }
+
+        return true;
+    }
     private void outputSyntaxTree(String filename, IAstPrinter printer, SyntaxTree tree) {
         var writer = TwioExt.buildWriter(filename);
         printer.print(tree, writer);

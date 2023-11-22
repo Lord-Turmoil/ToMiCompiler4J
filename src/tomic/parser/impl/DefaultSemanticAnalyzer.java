@@ -31,12 +31,16 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
     @Override
     public SymbolTable analyze(SyntaxTree tree) {
         table = new SymbolTable();
+        nodeStack.clear();
+        nodeStack.push(tree.getRoot());
         tree.accept(this);
         return table;
     }
 
     @Override
     public boolean visitEnter(SyntaxNode node) {
+        nodeStack.push(node);
+
         return switch (node.getType()) {
             case COMP_UNIT -> enterCompUnit(node);
             case DECL -> enterDecl(node);
@@ -51,7 +55,8 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
 
     @Override
     public boolean visitExit(SyntaxNode node) {
-        return switch (node.getType()) {
+
+        boolean ret = switch (node.getType()) {
             case COMP_UNIT -> exitCompUnit(node);
             case BTYPE -> exitBType(node);
             case CONST_DEF -> exitConstDef(node);
@@ -86,6 +91,9 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
             case NUMBER -> exitNumber(node);
             default -> true;
         };
+        nodeStack.pop();
+
+        return ret;
     }
 
     @Override
@@ -161,7 +169,12 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
      * ===================== Logging =============================
      */
     private void log(LogLevel level, String message) {
-        debugLogger.log(level, message);
+        SyntaxNode node = errorCandidate != null ? errorCandidate : nodeStack.peek();
+        var terminator = AstExt.getChildNode(node, SyntaxTypes.TERMINATOR);
+        int line = terminator.getToken().lineNo;
+        int column = terminator.getToken().charNo;
+
+        debugLogger.log(LogLevel.ERROR, String.format("(%d:%d) %s", line, column, message));
     }
 
     private void logError(ErrorTypes type, String message) {
@@ -413,7 +426,7 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
 
         var ident = AstExt.getDirectChildNode(node, SyntaxTypes.TERMINATOR);
         var builder = FunctionEntry.builder(ident.getToken().lexeme).setType(type);
-        var params = AstExt.getDirectChildNode(node, SyntaxTypes.FUNC_FPARAM);
+        var params = AstExt.getDirectChildNode(node, SyntaxTypes.FUNC_FPARAMS);
         if (params != null) {
             var paramList = AstExt.getDirectChildNodes(params, SyntaxTypes.FUNC_FPARAM);
             for (var param : paramList) {
@@ -733,8 +746,8 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
         int argc = args.size();
 
         if (argc != formatArgc) {
-            log(LogLevel.ERROR, "Argument count mismatch");
-            logError(ErrorTypes.PRINTF_EXTRA_ARGUMENTS, "Argument count mismatch");
+            log(LogLevel.ERROR, "Argument count mismatch for printf");
+            logError(ErrorTypes.PRINTF_EXTRA_ARGUMENTS, "Argument count mismatch for printf");
         }
         for (var arg : args) {
             var argType = SymbolValueTypes.values()[arg.getIntAttribute("type")];
@@ -928,8 +941,8 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
 
         int argc = AstExt.getSynthesizedIntAttribute(node, "argc");
         if (argc != entry.getParamCount()) {
-            log(LogLevel.ERROR, "Argument count mismatch");
-            logError(ErrorTypes.ARGUMENT_COUNT_MISMATCH, "Argument count mismatch");
+            log(LogLevel.ERROR, String.format("Argument count mismatch, expect %d, got %d", entry.getParamCount(), argc));
+            logError(ErrorTypes.ARGUMENT_COUNT_MISMATCH, "Argument count mismatch, expect " + entry.getParamCount() + ", got " + argc);
         }
 
         int upper = Math.min(argc, entry.getParamCount());
@@ -974,7 +987,7 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
         node.setIntAttribute("type", SymbolValueTypes.INT.ordinal());
         node.setBoolAttribute("det", true);
 
-        node.setIntAttribute("value", Integer.parseInt(node.getToken().lexeme));
+        node.setIntAttribute("value", Integer.parseInt(node.getFirstChild().getToken().lexeme));
 
         return true;
     }

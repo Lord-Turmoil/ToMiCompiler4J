@@ -16,6 +16,9 @@ import tomic.logger.debug.impl.DumbLogger;
 import tomic.logger.error.IErrorLogger;
 import tomic.logger.error.IErrorMapper;
 import tomic.logger.error.impl.*;
+import tomic.parser.impl.DefaultSemanticParser;
+import tomic.parser.ISemanticAnalyzer;
+import tomic.parser.ISemanticParser;
 import tomic.parser.ISyntacticParser;
 import tomic.parser.ast.mapper.CompleteSyntaxMapper;
 import tomic.parser.ast.mapper.ISyntaxMapper;
@@ -23,6 +26,7 @@ import tomic.parser.ast.mapper.ReducedSyntaxMapper;
 import tomic.parser.ast.printer.IAstPrinter;
 import tomic.parser.ast.printer.StandardAstPrinter;
 import tomic.parser.ast.printer.XmlAstPrinter;
+import tomic.parser.impl.DefaultSemanticAnalyzer;
 import tomic.parser.impl.ResilientSyntacticParser;
 import tomic.utils.StringExt;
 
@@ -97,6 +101,11 @@ public class ToMiCompiler {
             }
             service.addTransient(ISyntacticParser.class, ResilientSyntacticParser.class,
                     ILexicalParser.class, ITokenMapper.class, ISyntaxMapper.class, IErrorLogger.class, IDebugLogger.class);
+        });
+        //////////////////// Semantic
+        impl.configure(service -> {
+            service.addTransient(ISemanticAnalyzer.class, DefaultSemanticAnalyzer.class, IErrorLogger.class, IDebugLogger.class);
+            service.addTransient(ISemanticParser.class, DefaultSemanticParser.class, ISemanticAnalyzer.class);
         });
 
         return this;

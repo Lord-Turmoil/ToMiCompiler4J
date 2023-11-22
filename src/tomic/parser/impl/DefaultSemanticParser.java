@@ -1,5 +1,7 @@
-package tomic.parser;
+package tomic.parser.impl;
 
+import tomic.parser.ISemanticAnalyzer;
+import tomic.parser.ISemanticParser;
 import tomic.parser.ast.SyntaxTree;
 import tomic.parser.table.SymbolTable;
 

@@ -36,7 +36,7 @@ public class Container implements IContainer {
 
     @Override
     public IContainer addSingleton(Class<?> cls, Class<?> impl, Class<?>... dependencies) {
-        pool.put(cls, new Entry(impl, dependencies));
+        pool.put(cls, new Entry(impl, true, dependencies));
         return this;
     }
 
