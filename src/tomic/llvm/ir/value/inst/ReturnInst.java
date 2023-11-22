@@ -27,7 +27,7 @@ public class ReturnInst extends Instruction {
         out.push("ret");
         if (value != null && !value.getType().isVoidTy()) {
             out.pushSpace();
-            value.printAsm(out);
+            value.printUse(out);
         } else {
             out.pushNext("void");
         }

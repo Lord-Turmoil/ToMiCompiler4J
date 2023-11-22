@@ -52,7 +52,7 @@ public class CallInst extends Instruction {
             if (param != parameters.get(0)) {
                 out.pushNext(", ");
             }
-            param.printAsm(out);
+            param.printUse(out);
         }
         return out.push(')').pushNewLine();
     }

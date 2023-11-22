@@ -16,7 +16,7 @@ public class StoreInst extends BinaryInstruction{
     public IAsmWriter printAsm(IAsmWriter out) {
         out.push("store").pushSpace();
         getLeftOperand().printUse(out);
-        out.pushNext(',').pushSpace();
+        out.push(',').pushSpace();
         getRightOperand().printUse(out);
         return out.pushNewLine();
     }

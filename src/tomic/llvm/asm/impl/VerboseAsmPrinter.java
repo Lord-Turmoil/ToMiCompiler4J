@@ -34,7 +34,7 @@ public class VerboseAsmPrinter implements IAsmPrinter {
         printDeclaration(out);
 
         module.getGlobalVariables().forEach(it -> it.printAsm(out));
-        if (!module.getGlobalVariables().isEmpty()) {
+        if (!module.getGlobalStrings().isEmpty()) {
             out.pushNewLine();
             module.getGlobalStrings().forEach(it -> it.printAsm(out));
         }

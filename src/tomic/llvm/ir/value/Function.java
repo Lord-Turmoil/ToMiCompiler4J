@@ -106,7 +106,7 @@ public class Function extends GlobalValue {
 
         out.pushNewLine();
 
-        out.push("define").pushNext("dso_local");
+        out.push("define").pushNext("dso_local").pushSpace();
         type.getReturnType().printAsm(out).pushSpace();
 
         printName(out).push('(');

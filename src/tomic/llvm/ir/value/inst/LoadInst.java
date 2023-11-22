@@ -23,7 +23,7 @@ public class LoadInst extends UnaryInstruction{
     @Override
     public IAsmWriter printAsm(IAsmWriter out) {
         printName(out).pushNext('=').pushNext("load").pushSpace();
-        getType().printAsm(out).pushNext(',').pushSpace();
-        return getAddress().printUse(out);
+        getType().printAsm(out).push(',').pushSpace();
+        return getAddress().printUse(out).pushNewLine();
     }
 }

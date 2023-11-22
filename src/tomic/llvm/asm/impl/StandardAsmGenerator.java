@@ -544,6 +544,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         var format = node.childAt(2).getToken().lexeme;
         int paramNo = 0;
 
+        format = format.substring(1, format.length() - 1);
         for (var str : format.split("(?<=%d)|(?=%d)")) {
             if (str.equals("%d")) {
                 var exp = AstExt.getDirectChildNode(node, SyntaxTypes.EXP, ++paramNo);

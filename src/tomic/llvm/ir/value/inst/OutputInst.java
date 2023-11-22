@@ -8,6 +8,11 @@ import tomic.llvm.ir.value.ValueTypes;
 public class OutputInst extends UnaryInstruction {
     public OutputInst(Value operand) {
         super(ValueTypes.OutputInstTy, operand.getContext().getVoidTy(), operand);
+        if (isInteger()) {
+            setName("putint");
+        } else {
+            setName("putstr");
+        }
     }
 
     public boolean isInteger() {
@@ -19,7 +24,7 @@ public class OutputInst extends UnaryInstruction {
         out.push("call").pushSpace();
         getType().printAsm(out).pushSpace();
 
-        out.push('(');
+        out.push("@").push(getName()).push('(');
         if (isInteger()) {
             getOperand().printUse(out);
         } else {
