@@ -1,5 +1,6 @@
 package tomic.llvm.ir.value;
 
+import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.LlvmContext;
 import tomic.llvm.ir.type.Type;
 
@@ -44,5 +45,17 @@ public class Value {
 
     public LlvmContext getContext() {
         return type.getContext();
+    }
+
+    public IAsmWriter printAsm(IAsmWriter out) {
+        throw new UnsupportedOperationException();
+    }
+
+    public IAsmWriter printName(IAsmWriter out) {
+        throw new UnsupportedOperationException();
+    }
+
+    public IAsmWriter printUse(IAsmWriter out) {
+        throw new UnsupportedOperationException();
     }
 }

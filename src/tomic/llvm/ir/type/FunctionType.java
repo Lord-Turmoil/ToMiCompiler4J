@@ -60,6 +60,7 @@ public class FunctionType extends Type {
                 out.push(", ");
             }
             arg.printAsm(out);
+            first = false;
         }
         return out.push(')');
     }

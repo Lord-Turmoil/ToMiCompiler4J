@@ -1,5 +1,6 @@
 package tomic.llvm.ir.value;
 
+import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.type.ArrayType;
 import tomic.llvm.ir.type.Type;
 
@@ -9,12 +10,13 @@ import java.util.List;
 public class ConstantData extends Constant {
     private boolean isAllZero;
     private int value;
-    private ArrayList<ConstantData> values;
+    private final ArrayList<ConstantData> values;
 
     public ConstantData(Type type, int value) {
         super(ValueTypes.ConstantDataTy, type);
         this.value = value;
         this.isAllZero = value == 0;
+        values = null;
     }
 
     public ConstantData(List<ConstantData> values) {
@@ -28,4 +30,57 @@ public class ConstantData extends Constant {
             }
         }
     }
+
+    private boolean isArray() {
+        return values != null;
+    }
+
+    @Override
+    public IAsmWriter printAsm(IAsmWriter out) {
+        getType().printAsm(out);
+        if (isArray()) {
+            if (isAllZero) {
+                out.pushNext("zeroinitializer");
+            } else {
+                out.pushNext('[');
+                boolean first = true;
+                for (var value : values) {
+                    if (!first) {
+                        out.push(", ");
+                    }
+                    value.printAsm(out);
+                    first = false;
+                }
+            }
+        } else {
+            out.pushNext(String.valueOf(value));
+        }
+        return out;
+    }
+
+    @Override
+    public IAsmWriter printName(IAsmWriter out) {
+        if (isArray()) {
+            out.push('[');
+            boolean first = true;
+            for (var value : values) {
+                if (!first) {
+                    out.push(", ");
+                }
+                value.printAsm(out);
+                first = false;
+            }
+            out.push(']');
+        } else {
+            out.push(String.valueOf(value));
+        }
+        return out;
+    }
+
+    @Override
+    public IAsmWriter printUse(IAsmWriter out) {
+        getType().printAsm(out).pushSpace();
+        return printName(out);
+    }
+
 }
