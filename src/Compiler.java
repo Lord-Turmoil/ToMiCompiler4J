@@ -8,6 +8,10 @@ public class Compiler {
         Config config = new Config();
 
         // Override default config
+        config.target = Config.TargetTypes.Semantic;
+        config.input = "testfile.txt";
+        config.enableError = true;
+        config.errorOutput = "error.txt";
 
         new ToMiCompiler().configure(config).compile();
     }
