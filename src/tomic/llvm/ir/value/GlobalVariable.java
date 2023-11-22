@@ -13,7 +13,7 @@ public class GlobalVariable extends GlobalValue {
     }
 
     public GlobalVariable(Type type, boolean isConstant, String name, ConstantData initializer) {
-        super(ValueTypes.GlobalVariableTy, type, name);
+        super(ValueTypes.GlobalVariableTy, PointerType.get(type), name);
         this.isConstant = isConstant;
         this.initializer = initializer;
     }
