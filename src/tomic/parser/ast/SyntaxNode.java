@@ -200,31 +200,31 @@ public abstract class SyntaxNode {
     /*
      * ==================== AST Attributes ====================
      */
-    boolean hasAttribute(String name) {
+    public boolean hasAttribute(String name) {
         return attributes.containsKey(name);
     }
 
-    String getAttribute(String name) {
+    public String getAttribute(String name) {
         return getAttribute(name, null);
     }
 
-    String getAttribute(String name, String defaultValue) {
+    public String getAttribute(String name, String defaultValue) {
         return attributes.getOrDefault(name, defaultValue);
     }
 
-    int getIntAttribute(String name) {
+    public int getIntAttribute(String name) {
         return getIntAttribute(name, 0);
     }
 
-    int getIntAttribute(String name, int defaultValue) {
+    public int getIntAttribute(String name, int defaultValue) {
         return Integer.getInteger(getAttribute(name, String.valueOf(defaultValue)));
     }
 
-    boolean getBoolAttribute(String name) {
+    public boolean getBoolAttribute(String name) {
         return getBoolAttribute(name, false);
     }
 
-    boolean getBoolAttribute(String name, boolean defaultValue) {
+    public boolean getBoolAttribute(String name, boolean defaultValue) {
         return Boolean.getBoolean(getAttribute(name, String.valueOf(defaultValue)));
     }
 
@@ -232,25 +232,25 @@ public abstract class SyntaxNode {
         return attributes;
     }
 
-    SyntaxNode setAttribute(String name, String value) {
+    public SyntaxNode setAttribute(String name, String value) {
         attributes.put(name, value);
         return this;
     }
 
-    SyntaxNode setIntAttribute(String name, int value) {
+    public SyntaxNode setIntAttribute(String name, int value) {
         return setAttribute(name, String.valueOf(value));
     }
 
-    SyntaxNode setBoolAttribute(String name, boolean value) {
+    public SyntaxNode setBoolAttribute(String name, boolean value) {
         return setAttribute(name, String.valueOf(value));
     }
 
-    SyntaxNode removeAttribute(String name) {
+    public SyntaxNode removeAttribute(String name) {
         attributes.remove(name);
         return this;
     }
 
-    enum SyntaxNodeTypes {
+    public enum SyntaxNodeTypes {
         NON_TERMINAL,
         TERMINAL,
         EPSILON

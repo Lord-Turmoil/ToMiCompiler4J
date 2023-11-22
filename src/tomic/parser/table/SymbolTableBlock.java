@@ -44,4 +44,8 @@ public class SymbolTableBlock {
     public SymbolTableEntry findLocalEntry(String name) {
         return entries.getOrDefault(name, null);
     }
+
+    public SymbolTableBlock newChild() {
+        return table.newBlock(this);
+    }
 }

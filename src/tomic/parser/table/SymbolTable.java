@@ -23,7 +23,7 @@ public class SymbolTable {
         return block;
     }
 
-    public SymbolTableBlock get(int id) {
+    public SymbolTableBlock getBlock(int id) {
         return blocks.getOrDefault(id, null);
     }
 }

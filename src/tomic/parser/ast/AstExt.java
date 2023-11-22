@@ -30,6 +30,10 @@ public class AstExt {
         return count;
     }
 
+    public static SyntaxNode getDirectChildNode(SyntaxNode node, SyntaxTypes type) {
+        return getDirectChildNode(node, type, 1);
+    }
+
     public static SyntaxNode getDirectChildNode(SyntaxNode node, SyntaxTypes type, int index) {
         assert index != 0;
         if (node == null) {
@@ -80,6 +84,10 @@ public class AstExt {
     }
 
     private static int currentCount;
+
+    public static SyntaxNode getChildNode(SyntaxNode node, SyntaxTypes type) {
+        return getChildNode(node, type, 1);
+    }
 
     public static SyntaxNode getChildNode(SyntaxNode node, SyntaxTypes type, int index) {
         assert index != 0;
@@ -243,6 +251,73 @@ public class AstExt {
         return false;
     }
 
+    public static int getSynthesizedIntAttribute(SyntaxNode node, String name) {
+        return getSynthesizedIntAttribute(node, name, 0);
+    }
+
+    public static int getSynthesizedIntAttribute(SyntaxNode node, String name, int defaultValue) {
+        int[] value = { defaultValue };
+
+        if (querySynthesizedIntAttribute(node, name, value, defaultValue)) {
+            return value[0];
+        }
+
+        return defaultValue;
+    }
+
+    public static boolean getSynthesizedBoolAttribute(SyntaxNode node, String name) {
+        return getSynthesizedBoolAttribute(node, name, false);
+    }
+
+    public static boolean getSynthesizedBoolAttribute(SyntaxNode node, String name, boolean defaultValue) {
+        boolean[] value = { defaultValue };
+
+        if (querySynthesizedBoolAttribute(node, name, value, defaultValue)) {
+            return value[0];
+        }
+
+        return defaultValue;
+    }
+
+    private static boolean querySynthesizedAttribute(SyntaxNode node, String name, String[] value, String defaultValue) {
+        if (node.hasAttribute(name)) {
+            value[0] = node.getAttribute(name, defaultValue);
+            return true;
+        }
+
+        for (var child = node.getFirstChild(); child != null; child = child.getNextSibling()) {
+            if (querySynthesizedAttribute(child, name, value, defaultValue)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean querySynthesizedIntAttribute(SyntaxNode node, String name, int[] value, int defaultValue) {
+        String[] attr = { null };
+        if (querySynthesizedAttribute(node, name, attr, null)) {
+            value[0] = Integer.parseInt(attr[0]);
+            return true;
+        }
+
+        value[0] = defaultValue;
+
+        return false;
+    }
+
+    private static boolean querySynthesizedBoolAttribute(SyntaxNode node, String name, boolean[] value, boolean defaultValue) {
+        String[] attr = { null };
+        if (querySynthesizedAttribute(node, name, attr, null)) {
+            value[0] = Boolean.parseBoolean(attr[0]);
+            return true;
+        }
+
+        value[0] = defaultValue;
+
+        return false;
+    }
+
     /******************************************************************/
     // Array serialization
     // The format is like this:
@@ -330,36 +405,39 @@ public class AstExt {
     }
 
     // I hate Java. So clumsy.
-    public static int evaluateLVal(SyntaxNode node, SymbolTableBlock block) throws Exception {
+    public static boolean tryEvaluate(SyntaxNode node, SymbolTableBlock block, int[] value) {
         if (node.getIntAttribute("dim", -1) != 0) {
-            throw new Exception("Cannot evaluate array lval");
+            return false;
         }
 
         String name = node.getFirstChild().getToken().lexeme;
         var rawEntry = block.findEntry(name);
         if ((rawEntry == null) || !rawEntry.isConstant()) {
-            throw new Exception("Cannot evaluate non-constant lval");
+            return false;
         }
         ConstantEntry entry = (ConstantEntry) rawEntry;
         int dim = entry.getDimension();
         if (dim == 0) {
-            return entry.getValue();
+            value[0] = entry.getValue();
+            return true;
         } else if (dim == 1) {
             var index = getDirectChildNode(node, SyntaxTypes.EXP, 1);
             if (index == null || !index.getBoolAttribute("det")) {
-                throw new Exception("Cannot evaluate non-deterministic array lval");
+                return false;
             }
-            return entry.getValue(index.getIntAttribute("value"));
+            value[0] = entry.getValue(index.getIntAttribute("value"));
+            return true;
         } else {
             var index1 = getDirectChildNode(node, SyntaxTypes.EXP, 1);
             var index2 = getDirectChildNode(node, SyntaxTypes.EXP, 2);
             if (index1 == null || index2 == null) {
-                throw new Exception("Cannot evaluate non-deterministic array lval");
+                return false;
             }
             if (!index1.getBoolAttribute("det") || !index2.getBoolAttribute("det")) {
-                throw new Exception("Cannot evaluate non-deterministic array lval");
+                return false;
             }
-            return entry.getValue(index1.getIntAttribute("value"), index2.getIntAttribute("value"));
+            value[0] = entry.getValue(index1.getIntAttribute("value"), index2.getIntAttribute("value"));
+            return true;
         }
     }
 }

@@ -6,6 +6,7 @@ public class ConstantEntry extends SymbolTableEntry {
     private final SymbolValueTypes type;
     private final int dimension;
     private final int value;
+    private final int[] sizes = { 0, 0 };
     ArrayList<ArrayList<Integer>> values;
 
     private ConstantEntry(String name, SymbolValueTypes type, int value) {
@@ -45,15 +46,7 @@ public class ConstantEntry extends SymbolTableEntry {
     }
 
     public int getSize(int dim) {
-        if (dim == 0) {
-            if (dimension == 1) {
-                return values.get(0).size();
-            } else {
-                return values.size();
-            }
-        } else {
-            return values.size();
-        }
+        return sizes[dim];
     }
 
     public static Builder builder(String name) {
@@ -65,6 +58,7 @@ public class ConstantEntry extends SymbolTableEntry {
         private SymbolValueTypes type;
         private int dimension;
         private int value;
+        private final int[] sizes = { 0, 0 };
         ArrayList<ArrayList<Integer>> values;
 
         public Builder(String name) {
@@ -78,6 +72,19 @@ public class ConstantEntry extends SymbolTableEntry {
 
         public Builder setDimension(int dimension) {
             this.dimension = dimension;
+            return this;
+        }
+
+        public Builder setSize(int d1) {
+            this.dimension = 1;
+            this.sizes[0] = d1;
+            return this;
+        }
+
+        public Builder setSize(int d1, int d2) {
+            this.dimension = 2;
+            this.sizes[0] = d1;
+            this.sizes[1] = d2;
             return this;
         }
 
