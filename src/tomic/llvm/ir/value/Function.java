@@ -15,13 +15,28 @@ public class Function extends GlobalValue {
     private final LinkedList<BasicBlock> basicBlocks;
     private final SlotTracker slotTracker = new SlotTracker();
 
-    public Function(Type type, String name, List<Argument> arguments) {
+    public static Function newInstance(Type returnType, String name, List<Argument> arguments) {
+        ArrayList<Type> argTypes = new ArrayList<>();
+        for (var arg : arguments) {
+            argTypes.add(arg.getType());
+        }
+
+        return new Function(FunctionType.get(returnType, argTypes), name, arguments);
+    }
+
+    public static Function newInstance(Type returnType, String name) {
+        return new Function(FunctionType.get(returnType), name);
+    }
+
+    private Function(Type type, String name, List<Argument> arguments) {
         super(ValueTypes.FunctionTy, type, name);
         this.arguments = new ArrayList<>(arguments);
         this.basicBlocks = new LinkedList<>();
+
+        this.arguments.forEach(arg -> arg.setParent(this));
     }
 
-    public Function(Type type, String name) {
+    private Function(Type type, String name) {
         this(type, name, new ArrayList<>());
     }
 

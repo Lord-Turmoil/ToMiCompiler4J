@@ -11,7 +11,7 @@ public class PointerType extends Type {
     }
 
     public static PointerType get(Type elementType) {
-        return null;
+        return elementType.getContext().getPointerType(elementType);
     }
 
     public Type getElementType() {

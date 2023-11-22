@@ -7,6 +7,7 @@ public class VariableEntry extends SymbolTableEntry {
 
     private VariableEntry(String name, SymbolValueTypes type, int dimension, int[] sizes) {
         super(name);
+        this.type = type;
         this.dimension = dimension;
         this.sizes = sizes;
     }

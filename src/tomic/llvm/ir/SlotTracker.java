@@ -3,10 +3,11 @@ package tomic.llvm.ir;
 import tomic.llvm.ir.value.Function;
 import tomic.llvm.ir.value.Value;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class SlotTracker {
-    private Map<Value, Integer> valueSlot;
+    private final Map<Value, Integer> valueSlot = new HashMap<>();
 
     public void trace(Function function) {
         valueSlot.clear();

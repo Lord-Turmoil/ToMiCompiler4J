@@ -82,7 +82,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
     private Function parseMainFunction(SyntaxNode node) {
         var context = module.getContext();
 
-        Function function = new Function(IntegerType.get(context, 32), "main");
+        Function function = Function.newInstance(IntegerType.get(context, 32), "main");
         setCurrentFunction(function);
         setCurrentBasicBlock(function.newBasicBlock());
 
@@ -111,12 +111,13 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
 
         String name = decl.childAt(1).getToken().lexeme;
         var entry = getSymbolTableBlock(node).findEntry(name);
-        Function function = new Function(returnType, name, args);
+        Function function = Function.newInstance(returnType, name, args);
         var body = initFunctionParams(function, block);
 
         setCurrentFunction(function);
         setCurrentBasicBlock(body);
 
+        addValue(entry, function);
         node.accept(this);
 
         module.addFunction(function);
@@ -206,7 +207,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         if (value == null) {
             throw new IllegalStateException("Value not found for entry: " + entry);
         }
-        return null;
+        return value;
     }
 
     // node is a LVal
