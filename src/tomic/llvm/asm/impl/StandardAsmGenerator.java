@@ -538,6 +538,20 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
     }
 
     private void parseOutputStmt(SyntaxNode node) {
+        var context = module.getContext();
+        var format = node.childAt(2).getToken().lexeme;
+        int paramNo = 0;
+
+        for (var str : format.split("(?<=%d)|(?=%d)")) {
+            if (str.equals("%d")) {
+                var exp = AstExt.getDirectChildNode(node, SyntaxTypes.EXP, ++paramNo);
+                var value = parseExpression(exp);
+                insertInstruction(new OutputInst(value));
+            } else {
+                var value = GlobalString.getInstance(context, str);
+                module.addGlobalString(value);
+                insertInstruction(new OutputInst(value));
+            }
+        }
     }
 }
-
