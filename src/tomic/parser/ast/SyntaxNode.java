@@ -78,11 +78,11 @@ public abstract class SyntaxNode {
         return lastChild;
     }
 
-    public SyntaxNode prevSibling() {
+    public SyntaxNode getPrevSibling() {
         return prev;
     }
 
-    public SyntaxNode nextSibling() {
+    public SyntaxNode getNextSibling() {
         return next;
     }
 
@@ -204,28 +204,28 @@ public abstract class SyntaxNode {
         return attributes.containsKey(name);
     }
 
-    String attribute(String name) {
-        return attribute(name, null);
+    String getAttribute(String name) {
+        return getAttribute(name, null);
     }
 
-    String attribute(String name, String defaultValue) {
+    String getAttribute(String name, String defaultValue) {
         return attributes.getOrDefault(name, defaultValue);
     }
 
-    int intAttribute(String name) {
-        return intAttribute(name, 0);
+    int getIntAttribute(String name) {
+        return getIntAttribute(name, 0);
     }
 
-    int intAttribute(String name, int defaultValue) {
-        return Integer.getInteger(attribute(name, String.valueOf(defaultValue)));
+    int getIntAttribute(String name, int defaultValue) {
+        return Integer.getInteger(getAttribute(name, String.valueOf(defaultValue)));
     }
 
-    boolean boolAttribute(String name) {
-        return boolAttribute(name, false);
+    boolean getBoolAttribute(String name) {
+        return getBoolAttribute(name, false);
     }
 
-    boolean boolAttribute(String name, boolean defaultValue) {
-        return Boolean.getBoolean(attribute(name, String.valueOf(defaultValue)));
+    boolean getBoolAttribute(String name, boolean defaultValue) {
+        return Boolean.getBoolean(getAttribute(name, String.valueOf(defaultValue)));
     }
 
     public Map<String, String> getAttributes() {

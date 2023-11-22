@@ -8,7 +8,7 @@ public class NonTerminalSyntaxNode extends SyntaxNode {
     @Override
     public boolean accept(IAstVisitor visitor) {
         if (visitor.visitEnter(this)) {
-            for (var node = getFirstChild(); node != null; node = node.nextSibling()) {
+            for (var node = getFirstChild(); node != null; node = node.getNextSibling()) {
                 if (!node.accept(visitor)) {
                     break;
                 }

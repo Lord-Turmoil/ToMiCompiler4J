@@ -34,7 +34,7 @@ public class RightRecursiveTransformer implements IAstTransformer, IAstVisitor {
     @Override
     public boolean visitExit(SyntaxNode node) {
         ArrayList<SyntaxNode> children = new ArrayList<>();
-        for (var child = node.getFirstChild(); child != null; child = child.nextSibling()) {
+        for (var child = node.getFirstChild(); child != null; child = child.getNextSibling()) {
             children.add(child);
         }
 

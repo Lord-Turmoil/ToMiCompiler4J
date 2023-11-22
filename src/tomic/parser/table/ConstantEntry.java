@@ -28,6 +28,10 @@ public class ConstantEntry extends SymbolTableEntry {
         return type;
     }
 
+    public int getDimension() {
+        return dimension;
+    }
+
     public int getValue() {
         return value;
     }
