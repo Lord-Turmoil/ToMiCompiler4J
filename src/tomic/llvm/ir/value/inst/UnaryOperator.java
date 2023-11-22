@@ -13,8 +13,8 @@ public class UnaryOperator extends UnaryInstruction {
 
     private final UnaryOpTypes opType;
 
-    public UnaryOperator(Type type, Value operand, UnaryOpTypes opType) {
-        super(ValueTypes.UnaryOperatorTy, type, operand);
+    public UnaryOperator(Value operand, UnaryOpTypes opType) {
+        super(ValueTypes.UnaryOperatorTy, operand.getType(), operand);
         this.opType = opType;
     }
 

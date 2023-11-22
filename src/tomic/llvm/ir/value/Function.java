@@ -28,6 +28,7 @@ public class Function extends GlobalValue {
     }
 
     public void insertBasicBlock(BasicBlock basicBlock) {
+        basicBlock.setParent(this);
         basicBlocks.add(basicBlock);
     }
 

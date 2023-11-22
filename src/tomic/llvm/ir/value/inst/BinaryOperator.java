@@ -15,8 +15,8 @@ public class BinaryOperator extends BinaryInstruction {
 
     private final BinaryOpTypes opType;
 
-    public BinaryOperator(Type type, Value lhs, Value rhs, BinaryOpTypes opType) {
-        super(ValueTypes.BinaryOperatorTy, type, lhs, rhs);
+    public BinaryOperator(Value lhs, Value rhs, BinaryOpTypes opType) {
+        super(ValueTypes.BinaryOperatorTy, lhs.getType(), lhs, rhs);
         this.opType = opType;
     }
 

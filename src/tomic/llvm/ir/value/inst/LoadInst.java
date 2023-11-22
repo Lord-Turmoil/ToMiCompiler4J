@@ -1,14 +1,14 @@
 package tomic.llvm.ir.value.inst;
 
-import tomic.llvm.ir.type.Type;
+import tomic.llvm.ir.type.PointerType;
 import tomic.llvm.ir.value.Value;
 import tomic.llvm.ir.value.ValueTypes;
 
 public class LoadInst extends UnaryInstruction{
     private final Value address;
 
-    public LoadInst(Type type, Value address) {
-        super(ValueTypes.LoadInstTy, type, address);
+    public LoadInst(Value address) {
+        super(ValueTypes.LoadInstTy, ((PointerType) address.getType()).getElementType(), address);
         this.address = address;
     }
 

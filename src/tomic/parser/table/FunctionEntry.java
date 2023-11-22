@@ -24,6 +24,10 @@ public class FunctionEntry extends SymbolTableEntry {
         return params.get(index);
     }
 
+    public ArrayList<ParamEntry> getParams() {
+        return params;
+    }
+
     public static Builder builder(String name) {
         return new Builder(name);
     }

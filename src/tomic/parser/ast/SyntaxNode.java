@@ -58,6 +58,15 @@ public abstract class SyntaxNode {
         return this.type == type;
     }
 
+    public boolean is(SyntaxTypes... types) {
+        for (SyntaxTypes type : types) {
+            if (this.is(type)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public SyntaxNode getRoot() {
         SyntaxNode node = this;
         while (node.parent != null) {
