@@ -42,11 +42,19 @@ public class Module {
         return functions;
     }
 
+    public Function getMainFunction() {
+        return mainFunction;
+    }
+
     public void addFunction(Function function) {
         if (function.getName().equals("main")) {
             mainFunction = function;
         } else {
             functions.add(function);
         }
+    }
+
+    public String getName() {
+        return name;
     }
 }

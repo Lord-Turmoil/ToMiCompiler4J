@@ -9,6 +9,10 @@ import tomic.lexer.impl.DefaultLexicalParser;
 import tomic.lexer.impl.DefaultPreprocessor;
 import tomic.lexer.token.ITokenMapper;
 import tomic.lexer.token.impl.DefaultTokenMapper;
+import tomic.llvm.asm.IAsmGenerator;
+import tomic.llvm.asm.IAsmPrinter;
+import tomic.llvm.asm.impl.StandardAsmGenerator;
+import tomic.llvm.asm.impl.VerboseAsmPrinter;
 import tomic.logger.debug.IDebugLogger;
 import tomic.logger.debug.LogLevel;
 import tomic.logger.debug.impl.DefaultLogger;
@@ -16,7 +20,6 @@ import tomic.logger.debug.impl.DumbLogger;
 import tomic.logger.error.IErrorLogger;
 import tomic.logger.error.IErrorMapper;
 import tomic.logger.error.impl.*;
-import tomic.parser.impl.DefaultSemanticParser;
 import tomic.parser.ISemanticAnalyzer;
 import tomic.parser.ISemanticParser;
 import tomic.parser.ISyntacticParser;
@@ -27,6 +30,7 @@ import tomic.parser.ast.printer.IAstPrinter;
 import tomic.parser.ast.printer.StandardAstPrinter;
 import tomic.parser.ast.printer.XmlAstPrinter;
 import tomic.parser.impl.DefaultSemanticAnalyzer;
+import tomic.parser.impl.DefaultSemanticParser;
 import tomic.parser.impl.ResilientSyntacticParser;
 import tomic.utils.StringExt;
 
@@ -92,6 +96,7 @@ public class ToMiCompiler {
                 }
             }
         });
+
         //////////////////// Syntactic
         impl.configure(service -> {
             if (config.enableCompleteAst) {
@@ -102,10 +107,17 @@ public class ToMiCompiler {
             service.addTransient(ISyntacticParser.class, ResilientSyntacticParser.class,
                     ILexicalParser.class, ITokenMapper.class, ISyntaxMapper.class, IErrorLogger.class, IDebugLogger.class);
         });
+
         //////////////////// Semantic
         impl.configure(service -> {
             service.addTransient(ISemanticAnalyzer.class, DefaultSemanticAnalyzer.class, IErrorLogger.class, IDebugLogger.class);
             service.addTransient(ISemanticParser.class, DefaultSemanticParser.class, ISemanticAnalyzer.class);
+        });
+
+        //////////////////// Semantic
+        impl.configure(service -> {
+            service.addTransient(IAsmGenerator.class, StandardAsmGenerator.class);
+            service.addTransient(IAsmPrinter.class, VerboseAsmPrinter.class);
         });
 
         return this;

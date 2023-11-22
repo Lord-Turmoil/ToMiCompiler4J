@@ -4,6 +4,9 @@ import lib.ioc.Container;
 import lib.ioc.IContainer;
 import lib.twio.*;
 import tomic.lexer.IPreprocessor;
+import tomic.llvm.asm.IAsmGenerator;
+import tomic.llvm.asm.IAsmPrinter;
+import tomic.llvm.ir.Module;
 import tomic.logger.debug.IDebugLogger;
 import tomic.logger.debug.LogLevel;
 import tomic.logger.error.IErrorLogger;
@@ -60,6 +63,13 @@ class ToMiCompilerImpl {
             return;
         }
 
+        // LLVM IR
+        Module[] module = { null };
+        if (!generateLlvmAsm(ast[0], table[0], module)) {
+            logErrors();
+            return;
+        }
+
         logErrors();
     }
 
@@ -110,7 +120,7 @@ class ToMiCompilerImpl {
 
         if (config.target == Config.TargetTypes.Syntactic) {
             if (config.emitAst) {
-                outputSyntaxTree(config.astOutput, container.resolveRequired(IAstPrinter.class), ast);
+                outputSyntaxTree(config.astOutput, ast);
             }
         }
 
@@ -130,7 +140,7 @@ class ToMiCompilerImpl {
         var table = container.resolveRequired(ISemanticParser.class).parse(ast);
 
         if (config.emitAst) {
-            outputSyntaxTree(config.astOutput, container.resolveRequired(IAstPrinter.class), ast);
+            outputSyntaxTree(config.astOutput, ast);
         }
 
         outTable[0] = table;
@@ -143,9 +153,38 @@ class ToMiCompilerImpl {
 
         return true;
     }
-    private void outputSyntaxTree(String filename, IAstPrinter printer, SyntaxTree tree) {
-        var writer = TwioExt.buildWriter(filename);
-        printer.print(tree, writer);
+
+    private void outputSyntaxTree(String filename, SyntaxTree tree) {
+        var printer = container.resolveRequired(IAstPrinter.class);
+        printer.print(tree, TwioExt.buildWriter(filename));
+    }
+
+    private void outputLlvmAsm(String filename, Module module) {
+        var printer = container.resolveRequired(IAsmPrinter.class);
+        printer.print(module, TwioExt.buildWriter(filename));
+    }
+
+    private boolean generateLlvmAsm(SyntaxTree ast, SymbolTable table, Module[] outModule) {
+        if (config.target.ordinal() < Config.TargetTypes.IR.ordinal()) {
+            return false;
+        }
+
+        var logger = container.resolveRequired(IDebugLogger.class);
+        logger.log(LogLevel.DEBUG, "Generating LLVM IR...");
+
+        var module = container.resolveRequired(IAsmGenerator.class).generate(ast, table, config.input);
+        if (module == null) {
+            logger.fatal("Generating LLVM IR failed, compilation aborted");
+            return false;
+        }
+
+        if (config.emitLlvm) {
+            outputLlvmAsm(config.llvmOutput, module);
+        }
+
+        outModule[0] = module;
+
+        return true;
     }
 
     private void logErrors() {

@@ -13,6 +13,7 @@ import tomic.parser.ast.*;
 import tomic.parser.table.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
@@ -23,7 +24,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
     private Function currentFunction;
     private BasicBlock currentBlock;
 
-    private Map<SymbolTableEntry, Value> valueMap;
+    private final Map<SymbolTableEntry, Value> valueMap = new HashMap<>();
 
     @Override
     public Module generate(SyntaxTree syntaxTree, SymbolTable symbolTable, String name) {
