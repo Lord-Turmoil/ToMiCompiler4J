@@ -1,5 +1,6 @@
 package tomic.llvm.ir.value.inst;
 
+import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.Module;
 import tomic.llvm.ir.type.Type;
 import tomic.llvm.ir.value.BasicBlock;
@@ -28,5 +29,16 @@ public class Instruction extends User {
 
     public Module getParentModule() {
         return getParentFunction().getParent();
+    }
+
+    @Override
+    public IAsmWriter printName(IAsmWriter out) {
+        return out.push('%').push(String.valueOf(getParentFunction().slot(this)));
+    }
+
+    @Override
+    public IAsmWriter printUse(IAsmWriter out) {
+        getType().printAsm(out).pushSpace();
+        return printName(out);
     }
 }

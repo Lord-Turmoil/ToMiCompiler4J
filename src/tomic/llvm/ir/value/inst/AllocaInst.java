@@ -1,5 +1,6 @@
 package tomic.llvm.ir.value.inst;
 
+import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.type.PointerType;
 import tomic.llvm.ir.type.Type;
 import tomic.llvm.ir.value.ValueTypes;
@@ -20,5 +21,14 @@ public class AllocaInst extends Instruction {
 
     public Type getAllocatedType() {
         return allocatedType;
+    }
+
+    /**
+     * %1 = alloca i32[, align 4]
+     */
+    @Override
+    public IAsmWriter printAsm(IAsmWriter out) {
+        printName(out).pushNext('=').pushNext("alloca").pushSpace();
+        return getAllocatedType().printAsm(out).pushNewLine();
     }
 }

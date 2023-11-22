@@ -1,5 +1,6 @@
 package tomic.llvm.ir.value.inst;
 
+import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.value.Function;
 import tomic.llvm.ir.value.Value;
 import tomic.llvm.ir.value.ValueTypes;
@@ -31,5 +32,28 @@ public class CallInst extends Instruction {
 
     public Value getParam(int index) {
         return parameters.get(index);
+    }
+
+    public Function getFunction() {
+        return function;
+    }
+
+    @Override
+    public IAsmWriter printAsm(IAsmWriter out) {
+        if (!getType().isVoidTy()) {
+            printName(out).pushNext('=').pushSpace();
+        }
+
+        out.push("call").pushSpace();
+        getFunction().getReturnType().printAsm(out).pushSpace();
+
+        getFunction().printName(out).push('(');
+        for (var param : parameters) {
+            if (param != parameters.get(0)) {
+                out.pushNext(", ");
+            }
+            param.printAsm(out);
+        }
+        return out.push(')').pushNewLine();
     }
 }
