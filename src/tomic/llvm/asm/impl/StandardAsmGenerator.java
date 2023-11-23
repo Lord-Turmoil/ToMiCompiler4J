@@ -581,9 +581,59 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         }
     }
 
+    private Value parseEqExp(SyntaxNode node) {
+        if (node.getBoolAttribute("det")) {
+            int value = node.getIntAttribute("value");
+            var type = IntegerType.get(module.getContext(), 1);
+            return new ConstantData(type, value != 0 ? 1 : 0);
+        }
+
+        var lhs = parseEqExp(node.getFirstChild());
+        var op = node.childAt(1).getToken().lexeme;
+        var rhs = parseRelExp(node.getLastChild());
+        lhs = ensureBitWidth(lhs, lhs, rhs);
+        rhs = ensureBitWidth(rhs, lhs, rhs);
+        return switch (op) {
+            case "==" -> insertInstruction(new CompInst(lhs, rhs, CompInst.CompOpTypes.Eq));
+            case "!=" -> insertInstruction(new CompInst(lhs, rhs, CompInst.CompOpTypes.Ne));
+            default -> throw new IllegalStateException("Unexpected operator: " + op);
+        };
+    }
+
+    private Value parseRelExp(SyntaxNode node) {
+        if (node.getBoolAttribute("det")) {
+            int value = node.getIntAttribute("value");
+            return new ConstantData(module.getContext(), value != 0);
+        }
+
+        var lhs = parseRelExp(node.getFirstChild());
+        var op = node.childAt(1).getToken().lexeme;
+        var rhs = parseAddExp(node.getLastChild());
+        lhs = ensureBitWidth(lhs, lhs, rhs);
+        rhs = ensureBitWidth(rhs, lhs, rhs);
+        return switch (op) {
+            case "<" -> insertInstruction(new CompInst(lhs, rhs, CompInst.CompOpTypes.Slt));
+            case "<=" -> insertInstruction(new CompInst(lhs, rhs, CompInst.CompOpTypes.Sle));
+            case ">" -> insertInstruction(new CompInst(lhs, rhs, CompInst.CompOpTypes.Sgt));
+            case ">=" -> insertInstruction(new CompInst(lhs, rhs, CompInst.CompOpTypes.Sge));
+            default -> throw new IllegalStateException("Unexpected operator: " + op);
+        };
+    }
+
     private Value ensureInt32(Value value) {
         if (!value.getIntegerType().isInteger()) {
             var extInst = ZExtInst.toInt32(value);
+            insertInstruction(extInst);
+            return extInst;
+        } else {
+            return value;
+        }
+    }
+
+    private Value ensureBitWidth(Value value, Value lhs, Value rhs) {
+        int maxBitWidth = Math.max(lhs.getIntegerType().getBitWidth(), rhs.getIntegerType().getBitWidth());
+        if (value.getIntegerType().getBitWidth() != maxBitWidth) {
+            var extInst = ZExtInst.newInstance(value, maxBitWidth);
             insertInstruction(extInst);
             return extInst;
         } else {

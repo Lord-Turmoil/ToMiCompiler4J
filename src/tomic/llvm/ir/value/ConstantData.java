@@ -1,6 +1,7 @@
 package tomic.llvm.ir.value;
 
 import tomic.llvm.asm.IAsmWriter;
+import tomic.llvm.ir.LlvmContext;
 import tomic.llvm.ir.type.ArrayType;
 import tomic.llvm.ir.type.Type;
 
@@ -17,6 +18,10 @@ public class ConstantData extends Constant {
         this.value = value;
         this.isAllZero = value == 0;
         values = null;
+    }
+
+    public ConstantData(LlvmContext context, boolean value) {
+        this(context.getInt1Ty(), value ? 1 : 0);
     }
 
     public ConstantData(List<ConstantData> values) {
