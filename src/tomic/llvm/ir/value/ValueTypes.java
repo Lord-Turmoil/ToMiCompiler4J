@@ -6,8 +6,6 @@ public enum ValueTypes {
     BasicBlockTy,
 
     // === Value.User.Instruction ===
-    BinaryOperatorTy,
-    CompareInstTy,
     BranchInstTy,
     IndirectBrInstTy,
     GetElementPtrInstTy,
@@ -17,10 +15,15 @@ public enum ValueTypes {
     InputInstTy,
     OutputInstTy,
 
+    // === Value.User.Instruction.BinaryInstruction ===
+    BinaryOperatorTy,
+    CompareInstTy,
+
     // === Value.User.Instruction.UnaryInstruction ===
     AllocaInstTy,
     LoadInstTy,
     UnaryOperatorTy,
+    ZExtInstTy,
 
     // === Value.User.Constant ===
     ConstantTy,

@@ -8,6 +8,7 @@ import java.util.List;
 public class LlvmContext {
     private final Type voidTy = new Type(this, Type.TypeID.VoidTyID);
     private final Type labelTy = new Type(this, Type.TypeID.LabelTyID);
+    private final IntegerType int1Ty = new IntegerType(this, 1);
     private final IntegerType int8Ty = new IntegerType(this, 8);
     private final IntegerType int16Ty = new IntegerType(this, 16);
     private final IntegerType int32Ty = new IntegerType(this, 32);
@@ -23,6 +24,10 @@ public class LlvmContext {
 
     public Type getLabelTy() {
         return labelTy;
+    }
+
+    public IntegerType getInt1Ty() {
+        return int1Ty;
     }
 
     public IntegerType getInt8Ty() {

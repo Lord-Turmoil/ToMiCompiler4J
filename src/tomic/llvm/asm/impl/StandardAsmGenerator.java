@@ -395,7 +395,12 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
             inst = new ReturnInst(context);
         } else {
             var value = parseExpression(exp);
-            inst = new ReturnInst(value);
+            if (!value.getIntegerType().isInteger()) {
+                var extInst = ZExtInst.toInt32(value);
+                inst = new ReturnInst(insertInstruction(extInst));
+            } else {
+                inst = new ReturnInst(value);
+            }
         }
         insertInstruction(inst);
         return inst;
@@ -430,9 +435,9 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         }
 
         if (node.hasManyChildren()) {
-            var lhs = parseAddExp(node.getFirstChild());
+            var lhs = ensureInt32(parseAddExp(node.getFirstChild()));
             var op = node.childAt(1).getToken().lexeme;
-            var rhs = parseMulExp(node.getLastChild());
+            var rhs = ensureInt32(parseMulExp(node.getLastChild()));
             return switch (op) {
                 case "+" -> insertInstruction(new BinaryOperator(lhs, rhs, BinaryOperator.BinaryOpTypes.Add));
                 case "-" -> insertInstruction(new BinaryOperator(lhs, rhs, BinaryOperator.BinaryOpTypes.Sub));
@@ -453,9 +458,9 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         }
 
         if (node.hasManyChildren()) {
-            var lhs = parseMulExp(node.getFirstChild());
+            var lhs = ensureInt32(parseMulExp(node.getFirstChild()));
             var op = node.childAt(1).getToken().lexeme;
-            var rhs = parseUnaryExp(node.getLastChild());
+            var rhs = ensureInt32(parseUnaryExp(node.getLastChild()));
             return switch (op) {
                 case "*" -> insertInstruction(new BinaryOperator(lhs, rhs, BinaryOperator.BinaryOpTypes.Mul));
                 case "/" -> insertInstruction(new BinaryOperator(lhs, rhs, BinaryOperator.BinaryOpTypes.Div));
@@ -474,14 +479,32 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
             return parseFunctionCall(node.getFirstChild());
         }
 
-        return switch (node.getFirstChild().getAttribute("op")) {
-            case "+" -> parseUnaryExp(node.getLastChild());
-            case "-" ->
-                    insertInstruction(new UnaryOperator(parseUnaryExp(node.getLastChild()), UnaryOperator.UnaryOpTypes.Neg));
-            case "!" -> throw new IllegalStateException("Not implemented");
-            default ->
-                    throw new IllegalStateException("Unexpected operator: " + node.getFirstChild().getAttribute("op"));
-        };
+        String op = node.getFirstChild().getAttribute("op");
+        switch (op) {
+            case "+" -> {
+                return parseUnaryExp(node.getLastChild());
+            }
+            case "-" -> {
+                var operand = parseUnaryExp(node.getLastChild());
+                if (operand.getIntegerType().isBoolean()) {
+                    var extInst = ZExtInst.toInt32(operand);
+                    insertInstruction(extInst);
+                    return insertInstruction(new UnaryOperator(extInst, UnaryOperator.UnaryOpTypes.Neg));
+                } else {
+                    return insertInstruction(new UnaryOperator(operand, UnaryOperator.UnaryOpTypes.Neg));
+                }
+            }
+            case "!" -> {
+                var operand = parseUnaryExp(node.getLastChild());
+                if (operand.getIntegerType().isBoolean()) {
+                    return insertInstruction(new UnaryOperator(operand, UnaryOperator.UnaryOpTypes.Not));
+                } else {
+                    // This will generate one xor less than standard LLVM.
+                    return insertInstruction(new CompInst(operand, CompInst.CompOpTypes.Eq));
+                }
+            }
+            default -> throw new IllegalStateException("Unexpected operator: " + op);
+        }
     }
 
     private Value parsePrimaryExp(SyntaxNode node) {
@@ -555,6 +578,16 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
                 module.addGlobalString(value);
                 insertInstruction(new OutputInst(value));
             }
+        }
+    }
+
+    private Value ensureInt32(Value value) {
+        if (!value.getIntegerType().isInteger()) {
+            var extInst = ZExtInst.toInt32(value);
+            insertInstruction(extInst);
+            return extInst;
+        } else {
+            return value;
         }
     }
 }

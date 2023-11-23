@@ -2,6 +2,9 @@ package tomic.llvm.ir.value;
 
 import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.LlvmContext;
+import tomic.llvm.ir.type.ArrayType;
+import tomic.llvm.ir.type.IntegerType;
+import tomic.llvm.ir.type.PointerType;
 import tomic.llvm.ir.type.Type;
 
 import java.util.LinkedList;
@@ -41,6 +44,18 @@ public class Value {
 
     public Type getType() {
         return type;
+    }
+
+    public IntegerType getIntegerType() {
+        return (IntegerType) type;
+    }
+
+    public ArrayType getArrayType() {
+        return (ArrayType) type;
+    }
+
+    public PointerType getPointerType() {
+        return (PointerType) type;
     }
 
     public LlvmContext getContext() {

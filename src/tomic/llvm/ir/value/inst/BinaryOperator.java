@@ -38,7 +38,7 @@ public class BinaryOperator extends BinaryInstruction {
 
         getType().printAsm(out).pushSpace();
 
-        getLeftOperand().printName(out).pushNext(", ");
+        getLeftOperand().printName(out).push(", ");
         getRightOperand().printName(out);
 
         return out.pushNewLine();

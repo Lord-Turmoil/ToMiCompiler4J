@@ -13,6 +13,7 @@ public class IntegerType extends Type {
 
     public static IntegerType get(LlvmContext context, int bitWidth) {
         return switch (bitWidth) {
+            case 1 -> context.getInt1Ty();
             case 8 -> context.getInt8Ty();
             case 16 -> context.getInt16Ty();
             case 32 -> context.getInt32Ty();
@@ -23,6 +24,14 @@ public class IntegerType extends Type {
 
     public int getBitWidth() {
         return bitWidth;
+    }
+
+    public boolean isBoolean() {
+        return bitWidth == 1;
+    }
+
+    public boolean isInteger() {
+        return bitWidth > 1;
     }
 
     @Override
