@@ -22,6 +22,17 @@ public class User extends Value {
         operand.removeUser(this);
     }
 
+    public void removeOperands() {
+        operands.forEach(operand -> operand.removeUser(this));
+        operands.clear();
+    }
+
+    @Override
+    public void invalidate() {
+        super.invalidate();
+        removeOperands();
+    }
+
     public Value getOperand(int index) {
         return operands.get(index);
     }

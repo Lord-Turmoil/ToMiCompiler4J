@@ -4,7 +4,7 @@ import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.SlotTracker;
 import tomic.llvm.ir.type.FunctionType;
 import tomic.llvm.ir.type.Type;
-import tomic.llvm.ir.value.inst.ReturnInst;
+import tomic.llvm.ir.value.inst.*;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -13,7 +13,9 @@ import java.util.List;
 public class Function extends GlobalValue {
     private final ArrayList<Argument> arguments;
     private final LinkedList<BasicBlock> basicBlocks;
+    private BasicBlock returnBlock;
     private final SlotTracker slotTracker = new SlotTracker();
+    private AllocaInst returnValue;
 
     public static Function newInstance(Type returnType, String name, List<Argument> arguments) {
         ArrayList<Type> argTypes = new ArrayList<>();
@@ -32,8 +34,18 @@ public class Function extends GlobalValue {
         super(ValueTypes.FunctionTy, type, name);
         this.arguments = new ArrayList<>(arguments);
         this.basicBlocks = new LinkedList<>();
-
         this.arguments.forEach(arg -> arg.setParent(this));
+        returnBlock = new BasicBlock(this);
+
+        if (getReturnType().isVoidTy()) {
+            returnValue = null;
+            returnBlock.insertInstruction(new ReturnInst(getContext()));
+        } else {
+            returnValue = new AllocaInst(getReturnType());
+            var value = new LoadInst(returnValue);
+            returnBlock.insertInstruction(value);
+            returnBlock.insertInstruction(new ReturnInst(value));
+        }
     }
 
     private Function(Type type, String name) {
@@ -47,6 +59,9 @@ public class Function extends GlobalValue {
     }
 
     public void insertBasicBlock(BasicBlock basicBlock) {
+        if (basicBlock.getParent() != null) {
+            basicBlock.getParent().removeBasicBlock(basicBlock);
+        }
         basicBlock.setParent(this);
         basicBlocks.add(basicBlock);
     }
@@ -88,6 +103,14 @@ public class Function extends GlobalValue {
         return slotTracker.slot(value);
     }
 
+    public BasicBlock getReturnBlock() {
+        return returnBlock;
+    }
+
+    public AllocaInst getReturnValue() {
+        return returnValue;
+    }
+
     @Override
     public IAsmWriter printAsm(IAsmWriter out) {
         var type = (FunctionType) getType();
@@ -123,5 +146,48 @@ public class Function extends GlobalValue {
         getBasicBlocks().forEach(block -> block.printAsm(out));
 
         return out.push('}').pushNewLine();
+    }
+
+    @Override
+    public void refactor() {
+        basicBlocks.forEach(BasicBlock::refactor);
+
+        /**
+         * There is only one return instruction in a basic block.
+         */
+        if (returnBlock != null) {
+            var preds = returnBlock.getPredecessors();
+            if (preds.size() == 1) {
+                var pred = preds.get(0);
+                var instructions = pred.getInstructions();
+                if (instructions.getLast() instanceof JumpInst jmp && jmp.isReturn()) {
+                    if (returnValue.getType().isVoidTy()) {
+                        pred.removeInstruction(jmp);
+                        returnBlock.getInstructions().forEach(pred::insertInstruction);
+                        returnBlock = null;
+                    }
+                    // get the corresponding store.
+                    if (instructions.get(instructions.size() - 2) instanceof StoreInst store) {
+                        pred.removeInstruction(store);
+                        pred.removeInstruction(jmp);
+
+                        var value = store.getLeftOperand();
+                        pred.insertInstruction(new ReturnInst(value));
+
+                        returnValue = null;
+
+                        returnBlock = null;
+                    }
+                }
+            }
+        }
+
+        if (returnBlock != null) {
+            insertBasicBlock(returnBlock);
+        }
+
+        if (returnValue != null) {
+            basicBlocks.get(0).insertInstructionFirst(returnValue);
+        }
     }
 }

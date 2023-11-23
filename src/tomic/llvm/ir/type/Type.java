@@ -14,11 +14,11 @@ public class Type {
 
 
     public static Type getVoidTy(LlvmContext context) {
-        return null;
+        return context.getVoidTy();
     }
 
     public static Type getLabelTy(LlvmContext context) {
-        return null;
+        return context.getLabelTy();
     }
 
     public boolean isVoidTy() {

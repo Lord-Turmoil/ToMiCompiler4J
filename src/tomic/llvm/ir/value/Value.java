@@ -2,10 +2,7 @@ package tomic.llvm.ir.value;
 
 import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.LlvmContext;
-import tomic.llvm.ir.type.ArrayType;
-import tomic.llvm.ir.type.IntegerType;
-import tomic.llvm.ir.type.PointerType;
-import tomic.llvm.ir.type.Type;
+import tomic.llvm.ir.type.*;
 
 import java.util.LinkedList;
 
@@ -30,6 +27,15 @@ public class Value {
         users.remove(user);
     }
 
+    public void removeUsers() {
+        users.forEach(user -> user.removeOperand(this));
+        users.clear();
+    }
+
+    public void invalidate() {
+        removeUsers();
+    }
+
     public LinkedList<User> getUsers() {
         return users;
     }
@@ -48,6 +54,10 @@ public class Value {
 
     public IntegerType getIntegerType() {
         return (IntegerType) type;
+    }
+
+    public FunctionType getFunctionType() {
+        return (FunctionType) type;
     }
 
     public ArrayType getArrayType() {
@@ -72,5 +82,13 @@ public class Value {
 
     public IAsmWriter printUse(IAsmWriter out) {
         throw new UnsupportedOperationException();
+    }
+
+    /**
+     * I cannot come up with a better name for this method.
+     * After refactor, some getters may become invalid!
+     */
+    public void refactor() {
+        // default behavior is doing nothing
     }
 }

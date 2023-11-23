@@ -38,6 +38,8 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
             return null;
         }
 
+        module.refactor();
+
         return module;
     }
 
@@ -395,24 +397,18 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         throw new IllegalStateException("Not implemented");
     }
 
-    private ReturnInst parseReturnStmt(SyntaxNode node) {
-        var context = module.getContext();
-        ReturnInst inst;
-
+    private void parseReturnStmt(SyntaxNode node) {
         var exp = AstExt.getChildNode(node, SyntaxTypes.EXP);
         if (exp == null) {
-            inst = new ReturnInst(context);
+            insertInstruction(new JumpInst(currentFunction.getReturnBlock()));
         } else {
             var value = parseExpression(exp);
             if (!value.getIntegerType().isInteger()) {
-                var extInst = ZExtInst.toInt32(value);
-                inst = new ReturnInst(insertInstruction(extInst));
-            } else {
-                inst = new ReturnInst(value);
+                value = insertInstruction(ZExtInst.toInt32(value));
             }
+            insertInstruction(new StoreInst(value, currentFunction.getReturnValue()));
+            insertInstruction(new JumpInst(currentFunction.getReturnBlock(), true));
         }
-        insertInstruction(inst);
-        return inst;
     }
 
     private void parseAssignStmt(SyntaxNode node) {

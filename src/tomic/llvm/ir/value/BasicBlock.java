@@ -3,10 +3,12 @@ package tomic.llvm.ir.value;
 import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.LlvmContext;
 import tomic.llvm.ir.value.inst.Instruction;
+import tomic.llvm.ir.value.inst.JumpInst;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 
 public class BasicBlock extends Value {
     private Function parent;
@@ -37,12 +39,38 @@ public class BasicBlock extends Value {
         instructions.add(instruction);
     }
 
+    public void insertInstructionFirst(Instruction instruction) {
+        instruction.setParent(this);
+        instructions.addFirst(instruction);
+    }
+
+    public void insertInstructionBefore(Instruction instruction, Instruction before) {
+        instruction.setParent(this);
+        instructions.add(instructions.indexOf(before), instruction);
+    }
+
+    public void insertInstructionAfter(Instruction instruction, Instruction after) {
+        instruction.setParent(this);
+        instructions.add(instructions.indexOf(after) + 1, instruction);
+    }
+
     public void removeInstruction(Instruction instruction) {
+        instruction.invalidate();
         instructions.remove(instruction);
     }
 
     public LinkedList<Instruction> getInstructions() {
         return instructions;
+    }
+
+    public List<BasicBlock> getPredecessors() {
+        ArrayList<BasicBlock> preds = new ArrayList<>();
+        for (var inst : getUsers()) {
+            if (inst instanceof Instruction user && user.getParent() != this) {
+                preds.add(user.getParent());
+            }
+        }
+        return preds;
     }
 
     @Override
@@ -87,5 +115,22 @@ public class BasicBlock extends Value {
     public IAsmWriter printUse(IAsmWriter out) {
         getType().printAsm(out).pushSpace();
         return printName(out);
+    }
+
+    @Override
+    public void refactor() {
+        JumpInst inst = null;
+        for (var i : getInstructions()) {
+            if (i instanceof JumpInst jumpInst && jumpInst.isReturn()) {
+                inst = jumpInst;
+                break;
+            }
+        }
+
+        if (inst != null) {
+            var unreachable = instructions.subList(instructions.indexOf(inst) + 1, instructions.size());
+            unreachable.forEach(User::invalidate);
+            instructions.removeAll(unreachable);
+        }
     }
 }

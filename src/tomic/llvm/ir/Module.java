@@ -3,6 +3,7 @@ package tomic.llvm.ir;
 import tomic.llvm.ir.value.Function;
 import tomic.llvm.ir.value.GlobalString;
 import tomic.llvm.ir.value.GlobalVariable;
+import tomic.llvm.ir.value.Value;
 
 import java.util.ArrayList;
 
@@ -56,5 +57,12 @@ public class Module {
 
     public String getName() {
         return name;
+    }
+
+    public void refactor() {
+        globalVariables.forEach(Value::refactor);
+        globalStrings.forEach(Value::refactor);
+        functions.forEach(Value::refactor);
+        mainFunction.refactor();
     }
 }
