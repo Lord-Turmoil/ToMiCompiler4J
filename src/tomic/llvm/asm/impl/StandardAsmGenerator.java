@@ -1,5 +1,6 @@
 package tomic.llvm.asm.impl;
 
+import tomic.lexer.token.TokenTypes;
 import tomic.llvm.asm.IAsmGenerator;
 import tomic.llvm.ir.LlvmExt;
 import tomic.llvm.ir.Module;
@@ -182,6 +183,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
             case EXP_STMT -> parseExpression(node.getFirstChild());
             case IN_STMT -> parseInputStmt(node);
             case OUT_STMT -> parseOutputStmt(node);
+            case IF_STMT -> parseIfStmt(node);
             default -> throw new IllegalStateException("Unexpected node type: " + node.getType());
         }
     }
@@ -256,6 +258,9 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         currentBlock = block;
 
         if (block.getParent() != currentFunction) {
+            if (currentBlock.getParent() != null) {
+                currentBlock.getParent().removeBasicBlock(currentBlock);
+            }
             currentFunction.insertBasicBlock(block);
         }
 
@@ -265,6 +270,10 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
     private Instruction insertInstruction(Instruction instruction) {
         currentBlock.insertInstruction(instruction);
         return instruction;
+    }
+
+    private BasicBlock newBasicBlock() {
+        return new BasicBlock(module.getContext());
     }
 
     /*
@@ -588,6 +597,10 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
             return new ConstantData(type, value != 0 ? 1 : 0);
         }
 
+        if (node.hasOnlyOneChild()) {
+            return parseRelExp(node.getFirstChild());
+        }
+
         var lhs = parseEqExp(node.getFirstChild());
         var op = node.childAt(1).getToken().lexeme;
         var rhs = parseRelExp(node.getLastChild());
@@ -606,6 +619,10 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
             return new ConstantData(module.getContext(), value != 0);
         }
 
+        if (node.hasOnlyOneChild()) {
+            return parseAddExp(node.getFirstChild());
+        }
+
         var lhs = parseRelExp(node.getFirstChild());
         var op = node.childAt(1).getToken().lexeme;
         var rhs = parseAddExp(node.getLastChild());
@@ -620,6 +637,109 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         };
     }
 
+    private void parseIfStmt(SyntaxNode node) {
+        // Prepare blocks
+        BasicBlock thenBlock = newBasicBlock();
+        BasicBlock finalBlock = newBasicBlock();
+        BasicBlock elseBlock;
+        if (AstExt.countDirectTerminalNode(node, TokenTypes.ELSE) == 0) {
+            elseBlock = finalBlock;
+        } else {
+            elseBlock = newBasicBlock();
+        }
+
+        // Parse condition
+        parseCond(AstExt.getChildNode(node, SyntaxTypes.COND), thenBlock, elseBlock);
+
+        // Parse true block
+        setCurrentBasicBlock(thenBlock);
+        AstExt.getDirectChildNode(node, SyntaxTypes.STMT).accept(this);
+        if (elseBlock != finalBlock) {
+            setCurrentBasicBlock(elseBlock);
+            AstExt.getDirectChildNode(node, SyntaxTypes.STMT, 2).accept(this);
+            elseBlock.insertInstruction(new JumpInst(finalBlock));
+        }
+
+        // Jump to final block
+        // DO NOT use currentBlock since it might be changed by nested if
+        thenBlock.insertInstruction(new JumpInst(finalBlock));
+
+        // Set final block
+        setCurrentBasicBlock(finalBlock);
+    }
+
+    private void parseCond(SyntaxNode node, BasicBlock trueBlock, BasicBlock falseBlock) {
+        parseOrExp(node.getFirstChild(), trueBlock, falseBlock, currentBlock);
+    }
+
+    private void parseOrExp(SyntaxNode node, BasicBlock trueBlock, BasicBlock falseBlock, BasicBlock nextBlock) {
+        if (node.getBoolAttribute("det")) {
+            if (nextBlock == null) {
+                nextBlock = newBasicBlock();
+            }
+            setCurrentBasicBlock(nextBlock);
+            int value = node.getIntAttribute("value");
+            if (value != 0) {
+                insertInstruction(new JumpInst(trueBlock));
+            } else {
+                insertInstruction(new JumpInst(falseBlock));
+            }
+            return;
+        }
+
+        if (node.hasOnlyOneChild()) {
+            parseAndExp(node.getFirstChild(), trueBlock, falseBlock, nextBlock);
+            return;
+        }
+
+        BasicBlock rightBranch = newBasicBlock();
+        parseOrExp(node.getFirstChild(), trueBlock, rightBranch, nextBlock);
+        parseAndExp(node.getLastChild(), trueBlock, falseBlock, rightBranch);
+    }
+
+    private void parseAndExp(SyntaxNode node, BasicBlock trueBlock, BasicBlock falseBlock, BasicBlock nextBlock) {
+        if (node.getBoolAttribute("det")) {
+            if (nextBlock == null) {
+                nextBlock = currentFunction.newBasicBlock();
+            }
+            setCurrentBasicBlock(nextBlock);
+            int value = node.getIntAttribute("value");
+            if (value != 0) {
+                insertInstruction(new JumpInst(trueBlock));
+            } else {
+                insertInstruction(new JumpInst(falseBlock));
+            }
+            return;
+        }
+
+        if (node.hasOnlyOneChild()) {
+            if (nextBlock == null) {
+                nextBlock = newBasicBlock();
+            }
+
+            setCurrentBasicBlock(nextBlock);
+            var value = parseEqExp(node.getFirstChild());
+            if (!value.getIntegerType().isBoolean()) {
+                value = insertInstruction(new CompInst(value, CompInst.CompOpTypes.Ne));
+            }
+            insertInstruction(new BranchInst(value, trueBlock, falseBlock));
+            return;
+        }
+
+        BasicBlock rightBranch = newBasicBlock();
+        parseAndExp(node.getFirstChild(), rightBranch, falseBlock, nextBlock);
+
+        setCurrentBasicBlock(rightBranch);
+        var value = parseEqExp(node.getLastChild());
+        if (!value.getIntegerType().isBoolean()) {
+            value = insertInstruction(new CompInst(value, CompInst.CompOpTypes.Ne));
+        }
+        insertInstruction(new BranchInst(value, trueBlock, falseBlock));
+    }
+
+    /*
+     * ==================== Utility functions ====================
+     */
     private Value ensureInt32(Value value) {
         if (!value.getIntegerType().isInteger()) {
             var extInst = ZExtInst.toInt32(value);

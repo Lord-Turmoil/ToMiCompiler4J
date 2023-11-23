@@ -173,6 +173,10 @@ public abstract class SyntaxNode {
         return firstChild != null && (firstChild != lastChild);
     }
 
+    public boolean hasOnlyOneChild() {
+        return firstChild != null && (firstChild == lastChild);
+    }
+
     private void insertChildPreamble(SyntaxNode child) {
         assert child != null;
         assert tree == child.tree;

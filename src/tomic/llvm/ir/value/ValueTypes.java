@@ -7,7 +7,7 @@ public enum ValueTypes {
 
     // === Value.User.Instruction ===
     BranchInstTy,
-    IndirectBrInstTy,
+    JumpInstTy,
     GetElementPtrInstTy,
     ReturnInstTy,
     StoreInstTy,
