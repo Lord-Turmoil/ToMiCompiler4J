@@ -154,34 +154,88 @@ public class Function extends GlobalValue {
         return out.push('}').pushNewLine();
     }
 
+    private boolean refactored = false;
+
+    @Override
+    public void refactor() {
+        // Prevent from refactoring twice.
+        if (refactored) {
+            return;
+        }
+        refactored = true;
+
+        // Refactor basic blocks
+        basicBlocks.forEach(BasicBlock::refactor);
+
+        // Add return block
+        insertBasicBlock(returnBlock);
+
+        // Connect neighboring basic blocks
+        for (int i = 0; i < basicBlocks.size() - 1; i++) {
+            var block = basicBlocks.get(i);
+            var next = basicBlocks.get(i + 1);
+            if (block.isEmpty() || !(block.getInstructions().getLast() instanceof JumpInst)) {
+                block.insertInstruction(new JumpInst(next, next == returnBlock));
+            }
+        }
+
+        boolean merged = false;
+        var preds = returnBlock.getPredecessors();
+        if (preds.size() == 1) {
+            var pred = preds.get(0);
+            var prevBlock = basicBlocks.get(basicBlocks.size() - 2);
+            if (pred == prevBlock) {
+                if (pred.getInstructions().getLast() instanceof JumpInst jmp && jmp.isReturn()) {
+                    if (returnValue == null) {
+                        pred.removeInstruction(jmp);
+                        returnBlock.getInstructions().forEach(pred::insertInstruction);
+                        merged = true;
+                    } else {
+                        var instructions = pred.getInstructions();
+                        if (instructions.get(instructions.size() - 2) instanceof StoreInst store) {
+                            pred.removeInstruction(store);
+                            pred.removeInstruction(jmp);
+                            var value = store.getLeftOperand();
+                            pred.insertInstruction(new ReturnInst(value));
+                            merged = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (merged) {
+            removeBasicBlock(returnBlock);
+        }
+
+        // Add return value alloca
+        if (!merged && returnValue != null) {
+            basicBlocks.get(0).insertInstructionFirst(returnValue);
+        }
+    }
+    /*
     @Override
     public void refactor() {
         basicBlocks.forEach(BasicBlock::refactor);
 
-        /**
-         * There is only one return instruction in a basic block.
-         */
+        // There is only one return instruction in a basic block.
         if (returnBlock != null) {
             var preds = returnBlock.getPredecessors();
             if (preds.size() == 1) {
                 var pred = preds.get(0);
                 var instructions = pred.getInstructions();
                 if (instructions.getLast() instanceof JumpInst jmp && jmp.isReturn()) {
-                    if (returnValue.getType().isVoidTy()) {
+                    if (returnValue == null || returnValue.getType().isVoidTy()) {
                         pred.removeInstruction(jmp);
                         returnBlock.getInstructions().forEach(pred::insertInstruction);
+                        returnValue = null;
                         returnBlock = null;
-                    }
-                    // get the corresponding store.
-                    if (instructions.get(instructions.size() - 2) instanceof StoreInst store) {
+                    } else if (instructions.get(instructions.size() - 2) instanceof StoreInst store) {
                         pred.removeInstruction(store);
                         pred.removeInstruction(jmp);
-
                         var value = store.getLeftOperand();
                         pred.insertInstruction(new ReturnInst(value));
-
                         returnValue = null;
-
                         returnBlock = null;
                     }
                 }
@@ -208,4 +262,6 @@ public class Function extends GlobalValue {
             }
         }
     }
+
+     */
 }

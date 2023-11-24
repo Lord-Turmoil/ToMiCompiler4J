@@ -466,7 +466,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
     private void parseReturnStmt(SyntaxNode node) {
         var exp = AstExt.getChildNode(node, SyntaxTypes.EXP);
         if (exp == null) {
-            insertInstruction(new JumpInst(currentFunction.getReturnBlock()));
+            insertInstruction(new JumpInst(currentFunction.getReturnBlock(), true));
         } else {
             var value = parseExpression(exp);
             if (!value.getIntegerType().isInteger()) {
