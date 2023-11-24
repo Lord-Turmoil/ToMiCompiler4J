@@ -29,6 +29,10 @@ public class Value {
         users.add(user);
     }
 
+    public void addUsers(Iterable<User> users) {
+        users.forEach(this::addUser);
+    }
+
     public void removeUser(User user) {
         users.remove(user);
     }

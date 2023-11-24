@@ -23,6 +23,10 @@ public class User extends Value {
         operand.addUser(this);
     }
 
+    public void addOperands(Iterable<Value> operands) {
+        operands.forEach(this::addOperand);
+    }
+
     public void removeOperand(Value operand) {
         operands.remove(operand);
         operand.removeUser(this);
