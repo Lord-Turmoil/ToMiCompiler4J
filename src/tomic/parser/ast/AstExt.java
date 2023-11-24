@@ -144,6 +144,40 @@ public class AstExt {
         return null;
     }
 
+    public static List<SyntaxNode> getChildNodes(SyntaxNode node, SyntaxTypes type) {
+        List<SyntaxNode> nodes = new ArrayList<>();
+        getChildNodes(node, type, nodes);
+        return nodes;
+    }
+
+    public static List<SyntaxNode> getChildNodes(SyntaxNode node, SyntaxTypes... types) {
+        List<SyntaxNode> nodes = new ArrayList<>();
+        getChildNodes(node, nodes, types);
+        return nodes;
+    }
+
+    private static void getChildNodes(SyntaxNode node, SyntaxTypes type, List<SyntaxNode> nodes) {
+        if (node.is(type)) {
+            nodes.add(node);
+            return;
+        }
+
+        for (var child = node.getFirstChild(); child != null; child = child.getNextSibling()) {
+            getChildNodes(child, type, nodes);
+        }
+    }
+
+    private static void getChildNodes(SyntaxNode node, List<SyntaxNode> nodes, SyntaxTypes... types) {
+        if (node.is(types)) {
+            nodes.add(node);
+            return;
+        }
+
+        for (var child = node.getFirstChild(); child != null; child = child.getNextSibling()) {
+            getChildNodes(child, nodes, types);
+        }
+    }
+
     public static boolean hasParent(SyntaxNode node, SyntaxTypes type) {
         var parent = node.getParent();
         while (parent != null) {

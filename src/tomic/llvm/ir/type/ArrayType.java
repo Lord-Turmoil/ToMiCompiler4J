@@ -30,6 +30,14 @@ public class ArrayType extends Type {
         return elementCount;
     }
 
+    public int getSize() {
+        if (elementType instanceof ArrayType array) {
+            return array.getSize() * elementCount;
+        } else {
+            return elementCount;
+        }
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof ArrayType other) {
@@ -44,7 +52,7 @@ public class ArrayType extends Type {
 
     @Override
     public IAsmWriter printAsm(IAsmWriter out) {
-        out.push('[').push(String.valueOf(elementCount)).pushNext(" x ");
+        out.push('[').push(String.valueOf(elementCount)).push(" x ");
         return elementType.printAsm(out).push(']');
     }
 }

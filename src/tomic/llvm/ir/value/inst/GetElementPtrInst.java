@@ -6,6 +6,7 @@
 
 package tomic.llvm.ir.value.inst;
 
+import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.type.ArrayType;
 import tomic.llvm.ir.type.PointerType;
 import tomic.llvm.ir.type.Type;
@@ -48,5 +49,20 @@ public class GetElementPtrInst extends Instruction {
 
     public ArrayList<Value> getSubscripts() {
         return subscripts;
+    }
+
+    /**
+     * %3 = getelementptr [5 x [7 x i32]], [5 x [7 x i32]]* @a, i32 0, i32 3, i32 4
+     */
+    @Override
+    public IAsmWriter printAsm(IAsmWriter out) {
+        printName(out).pushNext('=').pushNext("getelementptr inbounds").pushSpace();
+        address.getPointerType().getElementType().printAsm(out).push(',').pushSpace();
+        address.printUse(out);
+        for (Value subscript : subscripts) {
+            out.push(',').pushSpace();
+            subscript.printUse(out);
+        }
+        return out.pushNewLine();
     }
 }

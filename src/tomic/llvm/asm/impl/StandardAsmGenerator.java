@@ -19,10 +19,7 @@ import tomic.llvm.ir.value.inst.*;
 import tomic.parser.ast.*;
 import tomic.parser.table.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 
 public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
     private SyntaxTree syntaxTree;
@@ -395,18 +392,75 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         AllocaInst address = new AllocaInst(type);
         insertInstruction(address);
 
+        addValue(entry, address);
+
         if (node.getLastChild().is(SyntaxTypes.INIT_VAL, SyntaxTypes.CONST_INIT_VAL)) {
             var value = parseExpression(node.getLastChild().getFirstChild());
             insertInstruction(new StoreInst(value, address));
         }
 
-        addValue(entry, address);
-
         return address;
     }
 
     private AllocaInst parseArrayDef(SyntaxNode node) {
-        throw new IllegalStateException("Not implemented");
+        String name = node.getFirstChild().getToken().lexeme;
+        var entry = getSymbolTableBlock(node).findEntry(name);
+        var type = getEntryType(entry);
+
+        AllocaInst array = new AllocaInst(type);
+        insertInstruction(array);
+
+        addValue(entry, array);
+
+        if (!node.getLastChild().is(SyntaxTypes.INIT_VAL, SyntaxTypes.CONST_INIT_VAL)) {
+            return array;
+        }
+
+        var expNodes = AstExt.getChildNodes(node.getLastChild(), SyntaxTypes.EXP, SyntaxTypes.CONST_EXP);
+        initArray(array, expNodes, 0);
+
+        return array;
+    }
+
+    private void initArray(Value base, List<SyntaxNode> initValues, int offset) {
+        Type arrayType = base.getPointerType().getElementType();
+        if (!arrayType.isArrayTy()) {
+            throw new IllegalStateException("Base is not array pointer");
+        }
+        ArrayType type = ((ArrayType) arrayType);
+
+        if (type.getElementType().isIntegerTy()) {
+            int size = type.getElementCount();
+            var inst = GetElementPtrInst.create(base, List.of(
+                    new ConstantData(IntegerType.get(module.getContext(), 64), 0),
+                    new ConstantData(IntegerType.get(module.getContext(), 64), 0)));
+            insertInstruction(inst);
+            storeArrayInit(inst, size, initValues, offset);
+        } else {
+            var inst = GetElementPtrInst.create(base, List.of(
+                    new ConstantData(IntegerType.get(module.getContext(), 64), 0),
+                    new ConstantData(IntegerType.get(module.getContext(), 64), 0)));
+            insertInstruction(inst);
+            initArray(inst, initValues, offset);
+            int size = ((ArrayType) type.getElementType()).getSize();
+            for (int i = 1; i < type.getElementCount(); i++) {
+                inst = GetElementPtrInst.create(inst, List.of(new ConstantData(IntegerType.get(module.getContext(), 64), 1)));
+                insertInstruction(inst);
+                initArray(inst, initValues, offset + i * size);
+            }
+        }
+    }
+
+    private void storeArrayInit(Value base, int size, List<SyntaxNode> initValues, int offset) {
+        var value = ensureInt32(parseExpression(initValues.get(offset)));
+        insertInstruction(new StoreInst(value, base));
+        Instruction inst = (Instruction) base;
+        for (int i = 1; i < size; i++) {
+            inst = GetElementPtrInst.create(inst, List.of(new ConstantData(IntegerType.get(module.getContext(), 64), 1)));
+            insertInstruction(inst);
+            value = ensureInt32(parseExpression(initValues.get(offset + i)));
+            insertInstruction(new StoreInst(value, inst));
+        }
     }
 
     private void parseReturnStmt(SyntaxNode node) {
