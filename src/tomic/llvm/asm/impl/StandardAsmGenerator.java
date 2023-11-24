@@ -22,6 +22,7 @@ import tomic.parser.table.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 
 public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
     private SyntaxTree syntaxTree;
@@ -30,6 +31,8 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
 
     private Function currentFunction;
     private BasicBlock currentBlock;
+
+    private final Stack<ForContext> forCtxStack = new Stack<>();
 
     private final Map<SymbolTableEntry, Value> valueMap = new HashMap<>();
 
@@ -193,6 +196,8 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
             case OUT_STMT -> parseOutputStmt(node);
             case IF_STMT -> parseIfStmt(node);
             case FOR_STMT -> parseForStmt(node);
+            case BREAK_STMT -> parseBreakStmt(node);
+            case CONTINUE_STMT -> parseContinueStmt(node);
             default -> throw new IllegalStateException("Unexpected node type: " + node.getType());
         }
     }
@@ -760,10 +765,16 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         var condNode = AstExt.getDirectChildNode(node, SyntaxTypes.COND);
         parseCond(condNode, bodyBlock, elseBlock, entryBlock);
 
+        // Set current context for body.
+        forCtxStack.push(new ForContext(entryBlock, stepBlock, elseBlock));
+
         // Body
         setCurrentBasicBlock(bodyBlock);
         AstExt.getDirectChildNode(node, SyntaxTypes.STMT).accept(this);
         bodyBlock.insertInstruction(new JumpInst(stepBlock));
+
+        // Pop context
+        forCtxStack.pop();
 
         // Step
         setCurrentBasicBlock(stepBlock);
@@ -775,6 +786,16 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
 
         // Else
         setCurrentBasicBlock(elseBlock);
+    }
+
+    private void parseBreakStmt(SyntaxNode node) {
+        var context = forCtxStack.peek();
+        insertInstruction(new JumpInst(context.elseBlock()));
+    }
+
+    private void parseContinueStmt(SyntaxNode node) {
+        var context = forCtxStack.peek();
+        insertInstruction(new JumpInst(context.stepBlock()));
     }
 
     /*
@@ -800,4 +821,13 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
             return value;
         }
     }
+
+    /**
+     * Record for context for break and continue.
+     *
+     * @param entryBlock The entry block of the loop.
+     * @param stepBlock  The step block of the loop.
+     * @param elseBlock  The else block of the loop.
+     */
+    private record ForContext(BasicBlock entryBlock, BasicBlock stepBlock, BasicBlock elseBlock) {}
 }
