@@ -8,6 +8,7 @@ package tomic.llvm.ir.value;
 
 import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.LlvmContext;
+import tomic.llvm.ir.value.inst.BranchInst;
 import tomic.llvm.ir.value.inst.Instruction;
 import tomic.llvm.ir.value.inst.JumpInst;
 
@@ -125,10 +126,13 @@ public class BasicBlock extends Value {
 
     @Override
     public void refactor() {
-        JumpInst inst = null;
+        Instruction inst = null;
         for (var i : getInstructions()) {
-            if (i instanceof JumpInst jumpInst && jumpInst.isReturn()) {
+            if (i instanceof JumpInst jumpInst) {
                 inst = jumpInst;
+                break;
+            } else if (i instanceof BranchInst branchInst) {
+                inst = branchInst;
                 break;
             }
         }
