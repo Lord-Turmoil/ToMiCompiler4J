@@ -1,5 +1,7 @@
-/*******************************************************************************
- * Copyright (C) 2023 Tony Skywalker. All Rights Reserved
+/*
+ * Copyright (C) Tony's Studio 2018 - 2023. All rights reserved.
+ *
+ *   For BUAA 2023 Compiler Technology
  */
 
 package lib.ioc;
