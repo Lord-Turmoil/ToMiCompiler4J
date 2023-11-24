@@ -430,6 +430,10 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         var exp = AstExt.getDirectChildNode(node, SyntaxTypes.EXP);
         var value = parseExpression(exp);
 
+        if (value.getIntegerType().isBoolean()) {
+            value = insertInstruction(ZExtInst.toInt32(value));
+        }
+
         insertInstruction(new StoreInst(value, address));
     }
 
