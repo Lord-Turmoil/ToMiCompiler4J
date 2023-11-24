@@ -367,6 +367,11 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
 
     private boolean exitInitVal(SyntaxNode node) {
         if (node.getFirstChild().is(SyntaxTypes.EXP)) {
+            var exp = node.getFirstChild();
+            if (exp.getIntAttribute("dim") != 0) {
+                log(LogLevel.ERROR, "Dimension mismatch");
+                logError(ErrorTypes.UNKNOWN, "Dimension mismatch");
+            }
             node.setAttribute("dim", "0");
             if (node.getFirstChild().getBoolAttribute("det")) {
                 node.setBoolAttribute("det", true);
