@@ -195,5 +195,17 @@ public class Function extends GlobalValue {
         if (returnValue != null) {
             basicBlocks.get(0).insertInstructionFirst(returnValue);
         }
+
+        // add jump for empty basic blocks.
+        for (int i = 0; i < basicBlocks.size(); i++) {
+            var block = basicBlocks.get(i);
+            if (block.isEmpty()) {
+                if (i == basicBlocks.size() - 1) {
+                    throw new RuntimeException("The last basic block cannot be empty.");
+                }
+                var target = basicBlocks.get(i + 1);
+                block.insertInstruction(new JumpInst(target));
+            }
+        }
     }
 }

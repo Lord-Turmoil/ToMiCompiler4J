@@ -192,6 +192,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
             case IN_STMT -> parseInputStmt(node);
             case OUT_STMT -> parseOutputStmt(node);
             case IF_STMT -> parseIfStmt(node);
+            case FOR_STMT -> parseForStmt(node);
             default -> throw new IllegalStateException("Unexpected node type: " + node.getType());
         }
     }
@@ -418,8 +419,11 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
     }
 
     private void parseAssignStmt(SyntaxNode node) {
-        var address = getLValValue(node.getFirstChild());
-        var value = parseExpression(node.getLastChild().getPrevSibling());
+        var lVal = AstExt.getDirectChildNode(node, SyntaxTypes.LVAL);
+        var address = getLValValue(lVal);
+
+        var exp = AstExt.getDirectChildNode(node, SyntaxTypes.EXP);
+        var value = parseExpression(exp);
 
         insertInstruction(new StoreInst(value, address));
     }
@@ -651,7 +655,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         }
 
         // Parse condition
-        parseCond(AstExt.getChildNode(node, SyntaxTypes.COND), thenBlock, elseBlock);
+        parseCond(AstExt.getChildNode(node, SyntaxTypes.COND), thenBlock, elseBlock, currentBlock);
 
         // Parse true block
         setCurrentBasicBlock(thenBlock);
@@ -670,8 +674,8 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         setCurrentBasicBlock(finalBlock);
     }
 
-    private void parseCond(SyntaxNode node, BasicBlock trueBlock, BasicBlock falseBlock) {
-        parseOrExp(node.getFirstChild(), trueBlock, falseBlock, currentBlock);
+    private void parseCond(SyntaxNode node, BasicBlock trueBlock, BasicBlock falseBlock, BasicBlock nextBlock) {
+        parseOrExp(node.getFirstChild(), trueBlock, falseBlock, nextBlock);
     }
 
     private void parseOrExp(SyntaxNode node, BasicBlock trueBlock, BasicBlock falseBlock, BasicBlock nextBlock) {
@@ -737,6 +741,40 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
             value = insertInstruction(new CompInst(value, CompInst.CompOpTypes.Ne));
         }
         insertInstruction(new BranchInst(value, trueBlock, falseBlock));
+    }
+
+    private void parseForStmt(SyntaxNode node) {
+        BasicBlock entryBlock = newBasicBlock();
+        BasicBlock bodyBlock = newBasicBlock();
+        BasicBlock stepBlock = newBasicBlock();
+        BasicBlock elseBlock = newBasicBlock();
+
+        // ForInit
+        var initNode = AstExt.getDirectChildNode(node, SyntaxTypes.FOR_INIT_STMT);
+        if (initNode != null) {
+            parseAssignStmt(initNode);
+        }
+        currentBlock.insertInstruction(new JumpInst(entryBlock));
+
+        // Condition
+        var condNode = AstExt.getDirectChildNode(node, SyntaxTypes.COND);
+        parseCond(condNode, bodyBlock, elseBlock, entryBlock);
+
+        // Body
+        setCurrentBasicBlock(bodyBlock);
+        AstExt.getDirectChildNode(node, SyntaxTypes.STMT).accept(this);
+        bodyBlock.insertInstruction(new JumpInst(stepBlock));
+
+        // Step
+        setCurrentBasicBlock(stepBlock);
+        var stepNode = AstExt.getDirectChildNode(node, SyntaxTypes.FOR_STEP_STMT);
+        if (stepNode != null) {
+            parseAssignStmt(stepNode);
+        }
+        stepBlock.insertInstruction(new JumpInst(entryBlock));
+
+        // Else
+        setCurrentBasicBlock(elseBlock);
     }
 
     /*

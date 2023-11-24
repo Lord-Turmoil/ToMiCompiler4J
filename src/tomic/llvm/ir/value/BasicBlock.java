@@ -80,6 +80,10 @@ public class BasicBlock extends Value {
         return preds;
     }
 
+    public boolean isEmpty() {
+        return instructions.isEmpty();
+    }
+
     @Override
     public IAsmWriter printAsm(IAsmWriter out) {
         var func = getParent();
