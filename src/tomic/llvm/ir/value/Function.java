@@ -174,7 +174,7 @@ public class Function extends GlobalValue {
         for (int i = 0; i < basicBlocks.size() - 1; i++) {
             var block = basicBlocks.get(i);
             var next = basicBlocks.get(i + 1);
-            if (block.isEmpty() || !(block.getInstructions().getLast() instanceof JumpInst)) {
+            if (needConnect(block)) {
                 block.insertInstruction(new JumpInst(next, next == returnBlock));
             }
         }
@@ -213,55 +213,13 @@ public class Function extends GlobalValue {
             basicBlocks.get(0).insertInstructionFirst(returnValue);
         }
     }
-    /*
-    @Override
-    public void refactor() {
-        basicBlocks.forEach(BasicBlock::refactor);
 
-        // There is only one return instruction in a basic block.
-        if (returnBlock != null) {
-            var preds = returnBlock.getPredecessors();
-            if (preds.size() == 1) {
-                var pred = preds.get(0);
-                var instructions = pred.getInstructions();
-                if (instructions.getLast() instanceof JumpInst jmp && jmp.isReturn()) {
-                    if (returnValue == null || returnValue.getType().isVoidTy()) {
-                        pred.removeInstruction(jmp);
-                        returnBlock.getInstructions().forEach(pred::insertInstruction);
-                        returnValue = null;
-                        returnBlock = null;
-                    } else if (instructions.get(instructions.size() - 2) instanceof StoreInst store) {
-                        pred.removeInstruction(store);
-                        pred.removeInstruction(jmp);
-                        var value = store.getLeftOperand();
-                        pred.insertInstruction(new ReturnInst(value));
-                        returnValue = null;
-                        returnBlock = null;
-                    }
-                }
-            }
+    private boolean needConnect(BasicBlock block) {
+        if (block.isEmpty()) {
+            return true;
         }
 
-        if (returnBlock != null) {
-            insertBasicBlock(returnBlock);
-        }
-
-        if (returnValue != null) {
-            basicBlocks.get(0).insertInstructionFirst(returnValue);
-        }
-
-        // add jump for empty basic blocks.
-        for (int i = 0; i < basicBlocks.size(); i++) {
-            var block = basicBlocks.get(i);
-            if (block.isEmpty()) {
-                if (i == basicBlocks.size() - 1) {
-                    throw new RuntimeException("The last basic block cannot be empty.");
-                }
-                var target = basicBlocks.get(i + 1);
-                block.insertInstruction(new JumpInst(target));
-            }
-        }
+        var inst = block.getInstructions().getLast();
+        return !(inst instanceof JumpInst || inst instanceof BranchInst);
     }
-
-     */
 }

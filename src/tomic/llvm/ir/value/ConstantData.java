@@ -62,6 +62,7 @@ public class ConstantData extends Constant {
                     value.printAsm(out);
                     first = false;
                 }
+                out.push(']');
             }
         } else {
             out.pushNext(String.valueOf(value));

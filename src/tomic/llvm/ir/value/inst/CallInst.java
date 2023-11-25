@@ -56,7 +56,7 @@ public class CallInst extends Instruction {
         getFunction().printName(out).push('(');
         for (var param : parameters) {
             if (param != parameters.get(0)) {
-                out.pushNext(", ");
+                out.push(", ");
             }
             param.printUse(out);
         }
