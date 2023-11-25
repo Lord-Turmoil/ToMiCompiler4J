@@ -497,6 +497,10 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
     }
 
     private Value parseExpression(SyntaxNode node) {
+        if (node.is(SyntaxTypes.TERMINATOR)) {
+            return null;
+        }
+
         var context = module.getContext();
 
         if (node.getBoolAttribute("det")) {
