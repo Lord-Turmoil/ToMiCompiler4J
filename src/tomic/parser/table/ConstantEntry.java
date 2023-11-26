@@ -12,7 +12,7 @@ public class ConstantEntry extends SymbolTableEntry {
     private final SymbolValueTypes type;
     private final int dimension;
     private final int value;
-    private final int[] sizes = { 0, 0 };
+    private final int[] sizes;
     ArrayList<ArrayList<Integer>> values;
 
     private ConstantEntry(String name, SymbolValueTypes type, int value) {
@@ -21,14 +21,16 @@ public class ConstantEntry extends SymbolTableEntry {
         this.dimension = 0;
         this.value = value;
         this.values = null;
+        this.sizes = new int[]{ 0, 0 };
     }
 
-    private ConstantEntry(String name, SymbolValueTypes type, int dimension, ArrayList<ArrayList<Integer>> values) {
+    private ConstantEntry(String name, SymbolValueTypes type, int dimension, int[] sizes, ArrayList<ArrayList<Integer>> values) {
         super(name);
         this.type = type;
         this.dimension = dimension;
         this.value = 0;
         this.values = values;
+        this.sizes = sizes;
     }
 
     public SymbolValueTypes getType() {
@@ -109,7 +111,7 @@ public class ConstantEntry extends SymbolTableEntry {
             if (dimension == 0) {
                 return new ConstantEntry(name, type, value);
             } else {
-                return new ConstantEntry(name, type, dimension, values);
+                return new ConstantEntry(name, type, dimension, sizes, values);
             }
         }
     }

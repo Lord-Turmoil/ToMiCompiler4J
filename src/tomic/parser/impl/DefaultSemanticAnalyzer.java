@@ -260,6 +260,7 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
             return true;
         }
 
+        node.setIntAttribute("dim", dim);
         addToSymbolTable(builder.build());
 
         return true;

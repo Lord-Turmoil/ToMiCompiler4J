@@ -789,8 +789,8 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
     private Value parseEqExp(SyntaxNode node) {
         if (node.getBoolAttribute("det")) {
             int value = node.getIntAttribute("value");
-            var type = IntegerType.get(module.getContext(), 1);
-            return new ConstantData(type, value != 0 ? 1 : 0);
+            var type = IntegerType.get(module.getContext(), 32);
+            return new ConstantData(type, value);
         }
 
         if (node.hasOnlyOneChild()) {
@@ -812,7 +812,8 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
     private Value parseRelExp(SyntaxNode node) {
         if (node.getBoolAttribute("det")) {
             int value = node.getIntAttribute("value");
-            return new ConstantData(module.getContext(), value != 0);
+            var type = IntegerType.get(module.getContext(), 32);
+            return new ConstantData(type, value);
         }
 
         if (node.hasOnlyOneChild()) {
