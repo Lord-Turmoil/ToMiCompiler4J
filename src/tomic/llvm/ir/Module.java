@@ -42,6 +42,9 @@ public class Module {
     }
 
     public void addGlobalString(GlobalString globalString) {
+        if (globalStrings.contains(globalString)) {
+            return;
+        }
         globalStrings.add(globalString);
     }
 

@@ -7,9 +7,12 @@
 package tomic.llvm.ir;
 
 import tomic.llvm.ir.type.*;
+import tomic.llvm.ir.value.GlobalString;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class LlvmContext {
     private final Type voidTy = new Type(this, Type.TypeID.VoidTyID);
@@ -23,6 +26,7 @@ public class LlvmContext {
     private final ArrayList<ArrayType> arrayTypes = new ArrayList<>();
     private final ArrayList<FunctionType> functionTypes = new ArrayList<>();
     private final ArrayList<PointerType> pointerTypes = new ArrayList<>();
+    private final Map<String, GlobalString> globalStrings = new HashMap<>();
 
     public Type getVoidTy() {
         return voidTy;
@@ -88,5 +92,27 @@ public class LlvmContext {
 
     public FunctionType getFunctionType(Type returnType) {
         return getFunctionType(returnType, new ArrayList<>());
+    }
+
+    private static int idx = -1;
+    public GlobalString getGlobalString(String value) {
+        if (globalStrings.containsKey(value)) {
+            return globalStrings.get(value);
+        }
+
+        String name;
+        if (++idx > 0) {
+            name = ".str." + idx;
+        } else {
+            name = ".str";
+        }
+
+        int size = value.length() + 1;
+        var type = PointerType.get(ArrayType.get(IntegerType.get(this, 8), size));
+
+        var globalString = new GlobalString(type, value, name);
+        globalStrings.put(value, globalString);
+
+        return globalString;
     }
 }
