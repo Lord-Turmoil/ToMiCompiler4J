@@ -769,7 +769,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         var value = new InputInst(module.getContext());
         insertInstruction(value);
 
-        var address = getLValValue(node.getFirstChild());
+        var address = parseLVal(node.getFirstChild());
         insertInstruction(new StoreInst(value, address));
     }
 
