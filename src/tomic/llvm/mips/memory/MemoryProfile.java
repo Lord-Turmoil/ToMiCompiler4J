@@ -6,18 +6,16 @@
 
 package tomic.llvm.mips.memory;
 
-import lib.twio.ITwioWriter;
-import tomic.llvm.asm.impl.VerboseAsmWriter;
-import tomic.llvm.mips.memory.impl.DefaultRegisterProfile;
-import tomic.llvm.mips.memory.impl.DefaultStackProfile;
+import tomic.llvm.mips.memory.IRegisterProfile;
+import tomic.llvm.mips.memory.IStackProfile;
 
 public class MemoryProfile {
     private final IRegisterProfile registerProfile;
     private final IStackProfile stackProfile;
 
-    public MemoryProfile(ITwioWriter out) {
-        this.stackProfile = new DefaultStackProfile();
-        this.registerProfile = new DefaultRegisterProfile(stackProfile, new VerboseAsmWriter(out));
+    public MemoryProfile(IRegisterProfile registerProfile, IStackProfile stackProfile) {
+        this.registerProfile = registerProfile;
+        this.stackProfile = stackProfile;
     }
 
     public IRegisterProfile getRegisterProfile() {

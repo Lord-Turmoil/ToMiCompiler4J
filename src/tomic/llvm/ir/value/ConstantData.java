@@ -15,14 +15,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConstantData extends Constant {
-    private boolean isAllZero;
+    private boolean allZero;
     private int value;
     private final ArrayList<ConstantData> values;
 
     public ConstantData(Type type, int value) {
         super(ValueTypes.ConstantDataTy, type);
         this.value = value;
-        this.isAllZero = value == 0;
+        this.allZero = value == 0;
         values = null;
     }
 
@@ -33,24 +33,36 @@ public class ConstantData extends Constant {
     public ConstantData(List<ConstantData> values) {
         super(ValueTypes.ConstantDataTy, ArrayType.get(values.get(0).getType(), values.size()));
         this.values = new ArrayList<>(values);
-        this.isAllZero = true;
+        this.allZero = true;
         for (var value : values) {
-            if (!value.isAllZero) {
-                isAllZero = false;
+            if (!value.allZero) {
+                allZero = false;
                 break;
             }
         }
     }
 
-    private boolean isArray() {
+    public boolean isArray() {
         return values != null;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public boolean isAllZero() {
+        return allZero;
+    }
+
+    public List<ConstantData> getValues() {
+        return values;
     }
 
     @Override
     public IAsmWriter printAsm(IAsmWriter out) {
         getType().printAsm(out);
         if (isArray()) {
-            if (isAllZero) {
+            if (allZero) {
                 out.pushNext("zeroinitializer");
             } else {
                 out.pushNext('[');

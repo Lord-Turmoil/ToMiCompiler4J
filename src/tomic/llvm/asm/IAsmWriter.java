@@ -41,7 +41,12 @@ public interface IAsmWriter {
         return this;
     }
 
-    IAsmWriter pushComment(String comment);
+    default IAsmWriter pushComment(String comment) {
+        commentBegin();
+        push(comment);
+        commentEnd();
+        return this;
+    }
 
     IAsmWriter commentBegin();
 

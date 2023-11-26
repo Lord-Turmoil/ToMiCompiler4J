@@ -6,6 +6,8 @@
 
 package tomic.llvm.mips.memory;
 
+import lib.twio.ITwioWriter;
+import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.value.Value;
 
 /**

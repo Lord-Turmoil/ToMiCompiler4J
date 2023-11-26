@@ -13,6 +13,7 @@ import tomic.lexer.IPreprocessor;
 import tomic.llvm.asm.IAsmGenerator;
 import tomic.llvm.asm.IAsmPrinter;
 import tomic.llvm.ir.Module;
+import tomic.llvm.mips.IMipsGenerator;
 import tomic.logger.debug.IDebugLogger;
 import tomic.logger.debug.LogLevel;
 import tomic.logger.error.IErrorLogger;
@@ -76,7 +77,16 @@ class ToMiCompilerImpl {
             return;
         }
 
-        logErrors();
+        // MIPS
+        if (!generateMips(module[0])) {
+            logErrors();
+            return;
+        }
+
+        if (logErrors()) {
+            var logger = container.resolveRequired(IDebugLogger.class);
+            logger.info("Compilation completed!");
+        }
     }
 
     private boolean preprocess(ITwioWriter[] outWriter) {
@@ -193,9 +203,23 @@ class ToMiCompilerImpl {
         return true;
     }
 
-    private void logErrors() {
+    private boolean generateMips(Module module) {
+        if (config.target.ordinal() < Config.TargetTypes.ASM.ordinal()) {
+            return false;
+        }
+
+        var logger = container.resolveRequired(IDebugLogger.class);
+        logger.log(LogLevel.DEBUG, "Generating MIPS...");
+
+        var out = TwioExt.buildWriter(config.output);
+        container.resolveRequired(IMipsGenerator.class).generate(module, out);
+
+        return true;
+    }
+
+    private boolean logErrors() {
         if (!config.enableError) {
-            return;
+            return false;
         }
 
         var logger = container.resolveRequired(IDebugLogger.class);
@@ -203,10 +227,10 @@ class ToMiCompilerImpl {
         var errorWriter = TwioExt.buildWriter(config.errorOutput);
         if (errorLogger.count() > 0) {
             errorLogger.dumps(errorWriter);
+            logger.fatal("Compilation completed with " + errorLogger.count() + " errors");
+            return false;
         }
 
-        if (errorLogger.count() > 0) {
-            logger.fatal("Compilation completed with " + errorLogger.count() + " errors");
-        }
+        return true;
     }
 }

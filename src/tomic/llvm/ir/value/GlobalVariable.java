@@ -24,6 +24,10 @@ public class GlobalVariable extends GlobalValue {
         this.initializer = initializer;
     }
 
+    public ConstantData getInitializer() {
+        return initializer;
+    }
+
     @Override
     public IAsmWriter printAsm(IAsmWriter out) {
         printName(out).pushNext('=').pushNext("dso_local");

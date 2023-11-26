@@ -19,6 +19,8 @@ import tomic.llvm.asm.IAsmGenerator;
 import tomic.llvm.asm.IAsmPrinter;
 import tomic.llvm.asm.impl.StandardAsmGenerator;
 import tomic.llvm.asm.impl.VerboseAsmPrinter;
+import tomic.llvm.mips.IMipsGenerator;
+import tomic.llvm.mips.impl.StandardMipsGenerator;
 import tomic.logger.debug.IDebugLogger;
 import tomic.logger.debug.LogLevel;
 import tomic.logger.debug.impl.DefaultLogger;
@@ -120,10 +122,15 @@ public class ToMiCompiler {
             service.addTransient(ISemanticParser.class, DefaultSemanticParser.class, ISemanticAnalyzer.class);
         });
 
-        //////////////////// Semantic
+        //////////////////// LLVM IR
         impl.configure(service -> {
             service.addTransient(IAsmGenerator.class, StandardAsmGenerator.class);
             service.addTransient(IAsmPrinter.class, VerboseAsmPrinter.class);
+        });
+
+        //////////////////// MIPS
+        impl.configure(service -> {
+            service.addTransient(IMipsGenerator.class, StandardMipsGenerator.class);
         });
 
         return this;

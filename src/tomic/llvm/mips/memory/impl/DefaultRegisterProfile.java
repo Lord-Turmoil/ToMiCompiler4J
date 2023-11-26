@@ -8,6 +8,7 @@ package tomic.llvm.mips.memory.impl;
 
 import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.value.Value;
+import tomic.llvm.mips.IMipsGenerator;
 import tomic.llvm.mips.memory.IRegisterProfile;
 import tomic.llvm.mips.memory.IStackProfile;
 import tomic.llvm.mips.memory.Register;
