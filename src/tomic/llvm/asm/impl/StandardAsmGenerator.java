@@ -858,15 +858,18 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         // Parse true block
         setCurrentBasicBlock(thenBlock);
         AstExt.getDirectChildNode(node, SyntaxTypes.STMT).accept(this);
+        // Jump to final block
+        // Use currentBlock since it might be changed by nested if!
+        insertInstruction(new JumpInst(finalBlock));
+
+
+        // Parse else block
         if (elseBlock != finalBlock) {
             setCurrentBasicBlock(elseBlock);
             AstExt.getDirectChildNode(node, SyntaxTypes.STMT, 2).accept(this);
-            elseBlock.insertInstruction(new JumpInst(finalBlock));
+            insertInstruction(new JumpInst(finalBlock));
         }
 
-        // Jump to final block
-        // DO NOT use currentBlock since it might be changed by nested if
-        thenBlock.insertInstruction(new JumpInst(finalBlock));
 
         // Set final block
         setCurrentBasicBlock(finalBlock);
@@ -970,7 +973,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         // Body
         setCurrentBasicBlock(bodyBlock);
         AstExt.getDirectChildNode(node, SyntaxTypes.STMT).accept(this);
-        bodyBlock.insertInstruction(new JumpInst(stepBlock));
+        insertInstruction(new JumpInst(stepBlock));
 
         // Pop context
         forCtxStack.pop();
