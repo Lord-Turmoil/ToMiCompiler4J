@@ -83,4 +83,12 @@ public class Type {
         }
         return out;
     }
+
+    public int getBytes() {
+        switch (typeId) {
+            case VoidTyID -> throw new UnsupportedOperationException("Void type has no size");
+            case LabelTyID -> throw new UnsupportedOperationException("Label type has no size");
+            default -> throw new IllegalStateException("Should not reach here");
+        }
+    }
 }

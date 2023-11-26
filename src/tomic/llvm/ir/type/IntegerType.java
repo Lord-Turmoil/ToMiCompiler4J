@@ -52,4 +52,9 @@ public class IntegerType extends Type {
     public IAsmWriter printAsm(IAsmWriter out) {
         return out.push('i').push(String.valueOf(bitWidth));
     }
+
+    @Override
+    public int getBytes() {
+        return bitWidth / 8;
+    }
 }

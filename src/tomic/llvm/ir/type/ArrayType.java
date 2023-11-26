@@ -55,4 +55,9 @@ public class ArrayType extends Type {
         out.push('[').push(String.valueOf(elementCount)).push(" x ");
         return elementType.printAsm(out).push(']');
     }
+
+    @Override
+    public int getBytes() {
+        return elementType.getBytes() * elementCount;
+    }
 }

@@ -70,4 +70,9 @@ public class FunctionType extends Type {
         }
         return out.push(')');
     }
+
+    @Override
+    public int getBytes() {
+        throw new UnsupportedOperationException("Function type does not have size");
+    }
 }

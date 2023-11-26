@@ -97,4 +97,8 @@ public class Value {
     public void refactor() {
         // default behavior is doing nothing
     }
+
+    public int getBytes() {
+        return type.getBytes();
+    }
 }

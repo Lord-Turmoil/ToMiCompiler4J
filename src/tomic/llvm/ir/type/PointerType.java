@@ -40,4 +40,9 @@ public class PointerType extends Type {
     public IAsmWriter printAsm(IAsmWriter out) {
         return elementType.printAsm(out).push('*');
     }
+
+    @Override
+    public int getBytes() {
+        return 4;
+    }
 }
