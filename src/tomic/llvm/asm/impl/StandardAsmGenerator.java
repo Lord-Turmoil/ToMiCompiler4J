@@ -484,7 +484,8 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
 
     private void parseAssignStmt(SyntaxNode node) {
         var lVal = AstExt.getDirectChildNode(node, SyntaxTypes.LVAL);
-        var address = getLValValue(lVal);
+//        var address = getLValValue(lVal);
+        var address = parseLVal(lVal);
 
         var exp = AstExt.getDirectChildNode(node, SyntaxTypes.EXP);
         var value = parseExpression(exp);
@@ -599,7 +600,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
             return parseExpression(node.childAt(1));
         }
         if (node.getFirstChild().is(SyntaxTypes.LVAL)) {
-            return parseLVal(node.getFirstChild());
+            return parseRVal(node.getFirstChild());
         }
         if (node.getFirstChild().is(SyntaxTypes.NUMBER)) {
             return parseNumber(node.getFirstChild());
@@ -625,7 +626,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         return insertInstruction(new CallInst(function));
     }
 
-    private Value parseLVal(SyntaxNode node) {
+    private Value parseRVal(SyntaxNode node) {
         var rawEntry = getLValEntry(node);
         int dim;
         if (rawEntry instanceof VariableEntry entry) {
@@ -685,6 +686,69 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         } else {
             return inst;
         }
+    }
+
+    private Value parseLVal(SyntaxNode node) {
+        var rawEntry = getLValEntry(node);
+        int dim;
+        if (rawEntry instanceof VariableEntry entry) {
+            dim = entry.getDimension();
+        } else if (rawEntry instanceof ConstantEntry entry) {
+            dim = entry.getDimension();
+        } else {
+            throw new IllegalStateException("Unexpected entry type: " + rawEntry.getClass());
+        }
+
+        if (dim == 0) {
+            return getLValValue(node);
+        }
+
+        var lVal = getLValValue(node);
+        var indexNodes = AstExt.getChildNodes(node, SyntaxTypes.EXP, SyntaxTypes.CONST_EXP);
+        if (indexNodes.isEmpty()) {
+            return insertInstruction(GetElementPtrInst.create(lVal,
+                    List.of(
+                            new ConstantData(IntegerType.get(module.getContext(), 32), 0),
+                            new ConstantData(IntegerType.get(module.getContext(), 32), 0)
+                    )));
+        }
+
+        var indices = new ArrayList<Value>();
+        Value inst = lVal;
+        boolean isDoublePointer = false;
+
+        if (inst.getType().isPointerTy() && ((PointerType) inst.getType()).getElementType().isPointerTy()) {
+            isDoublePointer = true;
+            inst = insertInstruction(new LoadInst(inst));
+            indices.add(ensureInt32(parseExpression(indexNodes.get(0))));
+            inst = insertInstruction(GetElementPtrInst.create(inst, indices));
+        }
+
+        for (int i = isDoublePointer ? 1 : 0; i < indexNodes.size(); i++) {
+            indices.clear();
+            indices.add(new ConstantData(IntegerType.get(module.getContext(), 32), 0));
+            indices.add(ensureInt32(parseExpression(indexNodes.get(i))));
+            inst = insertInstruction(GetElementPtrInst.create(inst, indices));
+        }
+
+        int i = indexNodes.size();
+        while (i < dim) {
+            indices.clear();
+            indices.add(new ConstantData(IntegerType.get(module.getContext(), 32), 0));
+            indices.add(new ConstantData(IntegerType.get(module.getContext(), 32), 0));
+            inst = insertInstruction(GetElementPtrInst.create(inst, indices));
+            i++;
+        }
+
+        /*
+         * It is not wise to rely on AST attribute... but leave it here.
+         */
+//        if (node.getIntAttribute("dim") == 0) {
+//            return insertInstruction(new LoadInst(inst));
+//        } else {
+//            return inst;
+//        }
+        return inst;
     }
 
     private Value parseNumber(SyntaxNode node) {
