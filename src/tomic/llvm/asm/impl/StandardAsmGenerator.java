@@ -52,7 +52,13 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
     @Override
     public boolean visitEnter(SyntaxNode node) {
         if (node.is(SyntaxTypes.BLOCK_ITEM)) {
-            return parseInstructions(node);
+            return parseBlockItem(node);
+        } else if (node.is(SyntaxTypes.STMT)) {
+            var statement = node.getFirstChild();
+            if (statement.is(SyntaxTypes.BLOCK)) {
+                return true;
+            }
+            parseStatement(statement);
         }
         return true;
     }
@@ -164,7 +170,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         return body;
     }
 
-    private boolean parseInstructions(SyntaxNode node) {
+    private boolean parseBlockItem(SyntaxNode node) {
         var child = node.getFirstChild();
 
         if (child.is(SyntaxTypes.VAR_DECL)) {
