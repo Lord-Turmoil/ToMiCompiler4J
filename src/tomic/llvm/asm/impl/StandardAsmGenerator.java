@@ -59,6 +59,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
                 return true;
             }
             parseStatement(statement);
+            return false;
         }
         return true;
     }
