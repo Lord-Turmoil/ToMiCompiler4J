@@ -956,7 +956,13 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
 
         // Condition
         var condNode = AstExt.getDirectChildNode(node, SyntaxTypes.COND);
-        parseCond(condNode, bodyBlock, elseBlock, entryBlock);
+        if (condNode != null) {
+            parseCond(condNode, bodyBlock, elseBlock, entryBlock);
+        } else {
+            // We still have to add entry block.
+            setCurrentBasicBlock(entryBlock);
+            currentBlock.insertInstruction(new JumpInst(bodyBlock));
+        }
 
         // Set current context for body.
         forCtxStack.push(new ForContext(entryBlock, stepBlock, elseBlock));

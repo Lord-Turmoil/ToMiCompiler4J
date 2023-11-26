@@ -9,6 +9,7 @@ package tomic.llvm.ir.value;
 import tomic.llvm.ir.type.Type;
 
 import java.util.LinkedList;
+import java.util.List;
 
 public class User extends Value {
     LinkedList<Value> operands;
@@ -37,13 +38,11 @@ public class User extends Value {
         operands.clear();
     }
 
-    @Override
-    public void invalidate() {
-        super.invalidate();
-        removeOperands();
-    }
-
     public Value getOperand(int index) {
         return operands.get(index);
+    }
+
+    public List<Value> getOperands() {
+        return operands;
     }
 }

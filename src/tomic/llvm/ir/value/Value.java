@@ -42,10 +42,6 @@ public class Value {
         users.clear();
     }
 
-    public void invalidate() {
-        removeUsers();
-    }
-
     public LinkedList<User> getUsers() {
         return users;
     }

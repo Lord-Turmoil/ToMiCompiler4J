@@ -62,7 +62,7 @@ public class BasicBlock extends Value {
     }
 
     public void removeInstruction(Instruction instruction) {
-        instruction.invalidate();
+        instruction.getOperands().forEach(operand -> operand.removeUser(instruction));
         instructions.remove(instruction);
     }
 
@@ -141,10 +141,12 @@ public class BasicBlock extends Value {
             }
         }
 
+        /*
+         * F**k you, IntelliJ IDEA.
+         */
         if (inst != null) {
-            var unreachable = instructions.subList(instructions.indexOf(inst) + 1, instructions.size());
-            unreachable.forEach(User::invalidate);
-            instructions.removeAll(unreachable);
+            var unreachable = new LinkedList<>(instructions.subList(instructions.indexOf(inst) + 1, instructions.size()));
+            unreachable.forEach(this::removeInstruction);
         }
     }
 }
