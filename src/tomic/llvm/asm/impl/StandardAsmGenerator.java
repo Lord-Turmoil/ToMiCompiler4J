@@ -651,25 +651,29 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         var lVal = getLValValue(node);
         var indexNodes = AstExt.getChildNodes(node, SyntaxTypes.EXP, SyntaxTypes.CONST_EXP);
         if (indexNodes.isEmpty()) {
-            return insertInstruction(GetElementPtrInst.create(lVal,
-                    List.of(
-                            new ConstantData(IntegerType.get(module.getContext(), 32), 0),
-                            new ConstantData(IntegerType.get(module.getContext(), 32), 0)
-                    )));
+            if (isDoublePointer(lVal)) {
+                return insertInstruction(new LoadInst(lVal));
+            } else {
+                return insertInstruction(GetElementPtrInst.create(lVal,
+                        List.of(
+                                new ConstantData(IntegerType.get(module.getContext(), 32), 0),
+                                new ConstantData(IntegerType.get(module.getContext(), 32), 0)
+                        )));
+            }
         }
 
         var indices = new ArrayList<Value>();
         Value inst = lVal;
-        boolean isDoublePointer = false;
+        boolean doublePointer = isDoublePointer(inst);
 
-        if (inst.getType().isPointerTy() && ((PointerType) inst.getType()).getElementType().isPointerTy()) {
-            isDoublePointer = true;
+        if (doublePointer) {
             inst = insertInstruction(new LoadInst(inst));
             indices.add(ensureInt32(parseExpression(indexNodes.get(0))));
             inst = insertInstruction(GetElementPtrInst.create(inst, indices));
         }
 
-        for (int i = isDoublePointer ? 1 : 0; i < indexNodes.size(); i++) {
+        for (
+                int i = doublePointer ? 1 : 0; i < indexNodes.size(); i++) {
             indices.clear();
             indices.add(new ConstantData(IntegerType.get(module.getContext(), 32), 0));
             indices.add(ensureInt32(parseExpression(indexNodes.get(i))));
@@ -722,16 +726,15 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
 
         var indices = new ArrayList<Value>();
         Value inst = lVal;
-        boolean isDoublePointer = false;
+        boolean doublePointer = isDoublePointer(inst);
 
-        if (inst.getType().isPointerTy() && ((PointerType) inst.getType()).getElementType().isPointerTy()) {
-            isDoublePointer = true;
+        if (doublePointer) {
             inst = insertInstruction(new LoadInst(inst));
             indices.add(ensureInt32(parseExpression(indexNodes.get(0))));
             inst = insertInstruction(GetElementPtrInst.create(inst, indices));
         }
 
-        for (int i = isDoublePointer ? 1 : 0; i < indexNodes.size(); i++) {
+        for (int i = doublePointer ? 1 : 0; i < indexNodes.size(); i++) {
             indices.clear();
             indices.add(new ConstantData(IntegerType.get(module.getContext(), 32), 0));
             indices.add(ensureInt32(parseExpression(indexNodes.get(i))));
@@ -747,15 +750,11 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
             i++;
         }
 
-        /*
-         * It is not wise to rely on AST attribute... but leave it here.
-         */
-//        if (node.getIntAttribute("dim") == 0) {
-//            return insertInstruction(new LoadInst(inst));
-//        } else {
-//            return inst;
-//        }
         return inst;
+    }
+
+    private boolean isDoublePointer(Value value) {
+        return value.getType().isPointerTy() && ((PointerType) value.getType()).getElementType().isPointerTy();
     }
 
     private Value parseNumber(SyntaxNode node) {
