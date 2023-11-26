@@ -33,6 +33,11 @@ public class ConstantEntry extends SymbolTableEntry {
         this.sizes = sizes;
     }
 
+    @Override
+    public boolean isConstant() {
+        return true;
+    }
+
     public SymbolValueTypes getType() {
         return type;
     }

@@ -18,6 +18,11 @@ public class VariableEntry extends SymbolTableEntry {
         this.sizes = sizes;
     }
 
+    @Override
+    public boolean isVariable() {
+        return true;
+    }
+
     public SymbolValueTypes getType() {
         return type;
     }
@@ -28,11 +33,6 @@ public class VariableEntry extends SymbolTableEntry {
 
     public int getSize(int dim) {
         return sizes[dim];
-    }
-
-    @Override
-    public boolean isVariable() {
-        return true;
     }
 
     public static Builder builder(String name) {

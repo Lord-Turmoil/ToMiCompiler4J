@@ -18,6 +18,11 @@ public class FunctionEntry extends SymbolTableEntry {
         this.params = params;
     }
 
+    @Override
+    public boolean isFunction() {
+        return true;
+    }
+
     public SymbolValueTypes getType() {
         return type;
     }
