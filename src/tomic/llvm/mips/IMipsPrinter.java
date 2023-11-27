@@ -18,4 +18,12 @@ public interface IMipsPrinter {
     void printBinaryOperator(IMipsWriter out, String op, int dst, int lhs, int rhs);
 
     void printReturn(IMipsWriter out);
+
+    void printStackGrow(IMipsWriter out, int size);
+
+    void printSaveStack(IMipsWriter out, int src, int offset);
+
+    void printLoadStack(IMipsWriter out, int dst, int offset);
+
+    void printCall(IMipsWriter out, String name);
 }

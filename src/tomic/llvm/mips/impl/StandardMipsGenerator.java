@@ -51,8 +51,9 @@ public class StandardMipsGenerator implements IMipsGenerator {
 
     private void generateText() {
         out.push(".text").pushNewLine();
-        module.getFunctions().forEach(this::generateFunction);
+        // Generate main function first.
         generateFunction(module.getMainFunction());
+        module.getFunctions().forEach(this::generateFunction);
     }
 
     private void generateGlobalVariable(GlobalVariable variable) {
@@ -115,8 +116,14 @@ public class StandardMipsGenerator implements IMipsGenerator {
 
     private void generateFunction(Function function) {
         generateFunctionPreamble();
+
         out.pushNewLine();
         out.push(function.getName()).push(":").pushNewLine();
+        // Store $ra register if not main.
+        if (!function.getName().equals("main")) {
+            out.pushIndent().pushIndent();
+            printer.printSaveStack(out, Registers.RA, 4);
+        }
         for (var basicBlock : function.getBasicBlocks()) {
             generateBasicBlock(basicBlock);
         }
@@ -146,7 +153,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
     }
 
     private String getLabelName(BasicBlock basicBlock) {
-        return ".L." + basicBlock.getIndex();
+        return ".L." + basicBlock.getParent().getName() + "." + basicBlock.getIndex();
     }
 
     private void generateInstruction(Instruction instruction) {
@@ -162,6 +169,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
             generateInputInst(inst);
         } else if (instruction instanceof OutputInst inst) {
             generateOutputInst(inst);
+        } else if (instruction instanceof CallInst inst) {
+            generateCall(inst);
         } else if (instruction instanceof ReturnInst inst) {
             generateReturnInst(inst);
         }
@@ -261,6 +270,14 @@ public class StandardMipsGenerator implements IMipsGenerator {
 
     private void generateStoreInst(StoreInst inst) {
         var lhs = inst.getLeftOperand();
+
+        if (lhs instanceof Argument argument) {
+            if (argument.getArgNo() < 4) {
+                generateStoreWord(Registers.A0 + argument.getArgNo(), inst.getRightOperand());
+            }
+            return;
+        }
+
         /*
          * Generate li for immediate value. We are sure here
          * we won't meet an array or pointer.
@@ -286,6 +303,13 @@ public class StandardMipsGenerator implements IMipsGenerator {
         out.push("sw").pushSpace();
         var op1 = registerProfile.acquire(value);
         out.pushRegister(op1.getId()).pushComma().pushSpace();
+        generateAddress(address);
+        out.pushNewLine();
+    }
+
+    private void generateStoreWord(int register, Value address) {
+        out.push("sw").pushSpace();
+        out.pushRegister(register).pushComma().pushSpace();
         generateAddress(address);
         out.pushNewLine();
     }
@@ -331,8 +355,69 @@ public class StandardMipsGenerator implements IMipsGenerator {
         if (inst.getParentFunction().getName().equals("main")) {
             generateSysCall(SYS_EXIT2);
         } else {
+            // Load $ra register if not main.
+            printer.printLoadStack(out, Registers.RA, 4);
             printer.printReturn(out);
         }
+    }
+
+    /*
+     * ==================== Function Call ====================
+     */
+
+    private void generateCall(CallInst inst) {
+        var profile = memoryProfile.getRegisterProfile();
+
+        // First, try yield all registers to ensure all values
+        // are allocated in memory.
+        profile.tryYieldAll();
+
+        /*
+         * We get the offset, but not yet grow the stack.
+         * Since we still need to calculate all parameters.
+         * Here -4 is to reserve $ra for callee.
+         */
+        int stackOffset = memoryProfile.getStackProfile().getTotalOffset() - 4;
+
+        // Push parameters in reverse order.
+        for (int i = inst.getParamCount() - 1; i >= 0; i--) {
+            var param = inst.getParam(i);
+            // The first four registers can be stored to $a0 ~ $a3
+            if (i < 4) {
+                if (param instanceof ConstantData constant) {
+                    generateLoadImmediate(Registers.A0 + i, constant.getValue());
+                } else {
+                    var reg = profile.acquire(param);
+                    printer.printMove(out, Registers.A0 + i, reg.getId());
+                }
+            } else {
+                var reg = profile.acquire(param);
+                printer.printSaveStack(out, reg.getId(), stackOffset - (i - 4) * 4);
+            }
+        }
+
+        // Then we really yield all registers.
+        profile.yieldAll();
+
+        // At last, expand the stack.
+        printer.printStackGrow(out, stackOffset);
+
+        // Call function
+        printer.printCall(out, inst.getFunction().getName());
+
+        // Restore stack
+        printer.printStackGrow(out, -stackOffset);
+
+        // Get return value.
+        if (!inst.getType().isVoidTy()) {
+            var reg = profile.acquire(inst);
+            printer.printMove(out, reg.getId(), Registers.V0);
+        }
+
+        /*
+         * No need to restore registers, as they will be
+         * restored when they are used again.
+         */
     }
 
     /*

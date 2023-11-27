@@ -113,7 +113,7 @@ public class Register {
         this.temporary = temporary;
     }
 
-    public void mark() {
-        this.dirty = true;
+    public void setDirty(boolean dirty) {
+        this.dirty = dirty;
     }
 }

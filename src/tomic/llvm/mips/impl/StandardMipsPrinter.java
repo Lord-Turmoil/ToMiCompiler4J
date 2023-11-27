@@ -52,4 +52,47 @@ public class StandardMipsPrinter implements IMipsPrinter {
         out.push("jr").pushSpace();
         out.pushRegister(Registers.RA).pushNewLine();
     }
+
+    /**
+     * subu $sp, $sp, size
+     *
+     * @param out  Output writer
+     * @param size Size of stack to grow.
+     */
+    @Override
+    public void printStackGrow(IMipsWriter out, int size) {
+        out.push("addi").pushSpace();
+        out.pushRegister(Registers.SP).pushComma().pushSpace();
+        out.pushRegister(Registers.SP).pushComma().pushSpace();
+        out.push(String.valueOf(size)).pushNewLine();
+    }
+
+    /**
+     * sw {src}, offset($sp)
+     *
+     * @param out    Output writer.
+     * @param src    Source register.
+     * @param offset Offset of stack.
+     */
+    @Override
+    public void printSaveStack(IMipsWriter out, int src, int offset) {
+        out.push("sw").pushSpace();
+        out.pushRegister(src).pushComma().pushSpace();
+        out.push(String.valueOf(offset)).push('(');
+        out.pushRegister(Registers.SP).push(')').pushNewLine();
+    }
+
+    @Override
+    public void printLoadStack(IMipsWriter out, int dst, int offset) {
+        out.push("lw").pushSpace();
+        out.pushRegister(dst).pushComma().pushSpace();
+        out.push(String.valueOf(offset)).push('(');
+        out.pushRegister(Registers.SP).push(')').pushNewLine();
+    }
+
+    @Override
+    public void printCall(IMipsWriter out, String name) {
+        out.push("jal").pushSpace();
+        out.push(name).pushNewLine();
+    }
 }

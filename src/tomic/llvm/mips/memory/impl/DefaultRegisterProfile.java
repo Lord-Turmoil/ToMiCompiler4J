@@ -91,9 +91,32 @@ public class DefaultRegisterProfile implements IRegisterProfile {
     }
 
     @Override
+    public void tryYield(Value value) {
+        var register = valueRegisterMap.getOrDefault(value, null);
+        if (register == null) {
+            throw new IllegalStateException("Value " + value + " is not allocated a register.");
+        }
+
+        if (register.isActive() && !register.isTemporary()) {
+            var address = stackProfile.getAddress(value);
+            if (address == null) {
+                stackProfile.allocate(value);
+                register.setDirty(true);
+            }
+        }
+    }
+
+    @Override
     public void yieldAll() {
         for (var value : valueRegisterMap.keySet()) {
             this.yield(value);
+        }
+    }
+
+    @Override
+    public void tryYieldAll() {
+        for (var value : valueRegisterMap.keySet()) {
+            this.tryYield(value);
         }
     }
 
@@ -158,6 +181,7 @@ public class DefaultRegisterProfile implements IRegisterProfile {
                 printer.printStoreWord(out, register.getId(), address.offset(), address.base());
             } else if (register.isDirty()) {
                 printer.printStoreWord(out, register.getId(), address.offset(), address.base());
+                register.setDirty(false);
             }
         } else {
             stackProfile.deallocate(register.getValue());

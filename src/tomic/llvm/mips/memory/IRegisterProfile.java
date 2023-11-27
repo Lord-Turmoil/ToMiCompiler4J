@@ -41,7 +41,16 @@ public interface IRegisterProfile {
      */
     void yield(Value value);
 
+    /**
+     * Try to yield register to memory. This will not really
+     * yield the register, but only allocate memory for it.
+     */
+    void tryYield(Value value);
+
     void yieldAll();
+
+
+    void tryYieldAll();
 
 
     /**
