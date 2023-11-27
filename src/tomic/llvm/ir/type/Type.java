@@ -67,6 +67,18 @@ public class Type {
         PointerTyID
     }
 
+    public IntegerType asInteger() {
+        return (IntegerType) this;
+    }
+
+    public PointerType asPointer() {
+        return (PointerType) this;
+    }
+
+    public ArrayType asArray() {
+        return (ArrayType) this;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof Type other) {
