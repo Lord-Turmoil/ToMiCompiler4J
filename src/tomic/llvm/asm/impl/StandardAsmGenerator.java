@@ -621,13 +621,13 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
 
         var params = AstExt.getChildNode(node, SyntaxTypes.FUNC_APARAMS);
         if (params != null && params.hasChildren()) {
-            ArrayList<Value> parameters = new ArrayList<>();
-            for (var it = params.getFirstChild(); it != null; it = it.getNextSibling()) {
-                if (it.is(SyntaxTypes.FUNC_APARAM)) {
-                    parameters.add(parseExpression(it.getFirstChild()));
-                }
+            var paramNodes = AstExt.getChildNodes(params, SyntaxTypes.FUNC_APARAM);
+            Collections.reverse(paramNodes);
+            ArrayList<Value> paramValues = new ArrayList<>();
+            for (var paramNode : paramNodes) {
+                paramValues.add(0, parseExpression(paramNode.getFirstChild()));
             }
-            return insertInstruction(new CallInst(function, parameters));
+            return insertInstruction(new CallInst(function, paramValues));
         }
 
         return insertInstruction(new CallInst(function));
@@ -778,12 +778,18 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         var format = node.childAt(2).getToken().lexeme;
         int paramNo = 0;
 
+        // First, parse all parameters.
+        var expNodes = AstExt.getDirectChildNodes(node, SyntaxTypes.EXP);
+        Collections.reverse(expNodes);
+        ArrayList<Value> expValues = new ArrayList<>();
+        for (var expNode : expNodes) {
+            expValues.add(0, ensureInt32(parseExpression(expNode)));
+        }
+
         format = format.substring(1, format.length() - 1);
         for (var str : format.split("(?<=%d)|(?=%d)")) {
             if (str.equals("%d")) {
-                var exp = AstExt.getDirectChildNode(node, SyntaxTypes.EXP, ++paramNo);
-                var value = parseExpression(exp);
-                insertInstruction(new OutputInst(value));
+                insertInstruction(new OutputInst(expValues.get(paramNo++)));
             } else {
                 var value = GlobalString.getInstance(context, str);
                 module.addGlobalString(value);

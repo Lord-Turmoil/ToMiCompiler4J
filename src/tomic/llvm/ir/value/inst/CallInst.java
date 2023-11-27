@@ -40,6 +40,10 @@ public class CallInst extends Instruction {
         return parameters.get(index);
     }
 
+    public List<Value> getParams() {
+        return parameters;
+    }
+
     public Function getFunction() {
         return function;
     }
