@@ -408,6 +408,9 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
 
         if (node.getLastChild().is(SyntaxTypes.INIT_VAL, SyntaxTypes.CONST_INIT_VAL)) {
             var value = parseExpression(node.getLastChild().getFirstChild());
+            if (value.getType().isIntegerTy()) {
+                value = ensureInt32(value);
+            }
             insertInstruction(new StoreInst(value, address));
         }
 
