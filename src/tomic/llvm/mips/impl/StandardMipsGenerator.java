@@ -159,6 +159,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
     private void generateInstruction(Instruction instruction) {
         if (instruction instanceof BinaryOperator inst) {
             generateBinaryOperator(inst);
+        } else if (instruction instanceof UnaryOperator inst) {
+            generateUnaryOperator(inst);
         } else if (instruction instanceof AllocaInst inst) {
             generateAllocaInst(inst);
         } else if (instruction instanceof LoadInst inst) {
@@ -454,6 +456,21 @@ public class StandardMipsGenerator implements IMipsGenerator {
         var lhsReg = memoryProfile.getRegisterProfile().acquire(lhs);
         var rhsReg = memoryProfile.getRegisterProfile().acquire(rhs);
         printer.printBinaryOperator(out, op, reg.getId(), lhsReg.getId(), rhsReg.getId());
+    }
+
+    private void generateUnaryOperator(UnaryOperator inst) {
+        var operand = inst.getOperand();
+        if (operand instanceof ConstantData constant) {
+            generateLoadImmediate(constant, constant.getValue());
+        }
+        var reg = memoryProfile.getRegisterProfile().acquire(inst);
+        String op = switch (inst.getOpType()) {
+            case Pos -> "add";
+            case Neg -> "sub";
+            case Not -> "not";
+        };
+        var operandReg = memoryProfile.getRegisterProfile().acquire(operand);
+        printer.printBinaryOperator(out, op, reg.getId(), Registers.ZERO, operandReg.getId());
     }
 
 
