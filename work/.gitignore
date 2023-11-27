@@ -1,0 +1,7 @@
+*
+!.gitignore
+!run.sh
+!build.sh
+!libsysy.c
+!libsysy.h
+!README.md
