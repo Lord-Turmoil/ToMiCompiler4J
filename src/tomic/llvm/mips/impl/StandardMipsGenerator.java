@@ -18,13 +18,15 @@ import tomic.llvm.mips.memory.impl.DefaultRegisterProfile;
 import tomic.llvm.mips.memory.impl.DefaultStackProfile;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class StandardMipsGenerator implements IMipsGenerator {
     private IMipsWriter out;
     private Module module;
     private MemoryProfile memoryProfile;
+    private final Map<GlobalString, String> globalStringNameMap = new HashMap<>();
 
     @Override
     public void generate(Module module, ITwioWriter output) {
@@ -36,20 +38,30 @@ public class StandardMipsGenerator implements IMipsGenerator {
         generateData();
         out.pushNewLine();
 
-        module.getFunctions().forEach(this::generateFunction);
-        generateFunction(module.getMainFunction());
+        generateText();
     }
 
     private void generateData() {
         out.push(".data").pushNewLine();
-        module.getGlobalVariables().forEach(this::generateGlobalVariable);
-        module.getGlobalStrings().forEach(this::generateGlobalString);
+        for (var variable : module.getGlobalVariables()) {
+            out.pushIndent();
+            generateGlobalVariable(variable);
+        }
+        for (var globalString : module.getGlobalStrings()) {
+            out.pushIndent();
+            generateGlobalString(globalString);
+        }
+    }
+
+    private void generateText() {
+        out.push(".text").pushNewLine();
+        module.getFunctions().forEach(this::generateFunction);
+        generateFunction(module.getMainFunction());
     }
 
     private void generateGlobalVariable(GlobalVariable variable) {
-        out.pushSpaces(4);
         out.push(variable.getName()).push(":").pushSpace();
-        out.push(".word");
+        out.push(".word").pushSpace();
         if (variable.getInitializer() != null) {
             generateInitializer(variable.getInitializer());
         } else {
@@ -63,9 +75,14 @@ public class StandardMipsGenerator implements IMipsGenerator {
             generateConsistentInitializer(data.getType(), 0);
         } else {
             List<Integer> values = getValues(data);
-            Collections.reverse(values);
+            boolean first = true;
             for (var value : values) {
-                out.pushSpace().push(String.valueOf(value));
+                if (first) {
+                    first = false;
+                } else {
+                    out.push(',').pushSpace();
+                }
+                out.push(String.valueOf(value));
             }
         }
     }
@@ -73,9 +90,9 @@ public class StandardMipsGenerator implements IMipsGenerator {
     private void generateConsistentInitializer(Type type, int value) {
         int n = type.getBytes() / 4;
         if (n == 1) {
-            out.pushNext(String.valueOf(value));
+            out.push(String.valueOf(value));
         } else {
-            out.pushNext(String.valueOf(value)).push(':').push(String.valueOf(n));
+            out.push(String.valueOf(value)).push(':').push(String.valueOf(n));
         }
     }
 
@@ -92,6 +109,36 @@ public class StandardMipsGenerator implements IMipsGenerator {
     }
 
     private void generateGlobalString(GlobalString globalString) {
+        out.push(getGlobalStringName(globalString)).push(":").pushSpace();
+        out.push(".asciiz").pushSpace();
+        out.push("\"").push(globalString.getValue().replace("\n", "\\n")).push("\"").pushNewLine();
+    }
+
+    private String getGlobalStringName(GlobalString globalString) {
+        if (globalStringNameMap.containsKey(globalString)) {
+            return globalStringNameMap.get(globalString);
+        }
+
+        String name = "__" + globalString.getName().replace('.', '_');
+        while (isGlobalStringNameUsed(name)) {
+            name += "_";
+        }
+        globalStringNameMap.put(globalString, name);
+        return name;
+    }
+
+    /**
+     * We only need to check if global variable or function takes the name.
+     * Since global string name itself won't clash with other global strings.
+     *
+     * @param name Name to check.
+     * @return True if the name is used.
+     */
+    private boolean isGlobalStringNameUsed(String name) {
+        if (module.getGlobalVariables().stream().anyMatch(variable -> variable.getName().equals(name))) {
+            return true;
+        }
+        return module.getFunctions().stream().anyMatch(function -> function.getName().equals(name));
     }
 
     private void generateFunction(Function function) {

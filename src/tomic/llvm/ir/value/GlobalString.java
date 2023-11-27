@@ -8,8 +8,6 @@ package tomic.llvm.ir.value;
 
 import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.LlvmContext;
-import tomic.llvm.ir.type.ArrayType;
-import tomic.llvm.ir.type.IntegerType;
 import tomic.llvm.ir.type.PointerType;
 import tomic.llvm.ir.type.Type;
 
@@ -46,5 +44,9 @@ public class GlobalString extends GlobalValue {
         out.push("\\00").push('"');
 
         return out.push(", align 1").pushNewLine();
+    }
+
+    public String getValue() {
+        return value;
     }
 }
