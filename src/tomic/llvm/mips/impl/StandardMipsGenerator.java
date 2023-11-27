@@ -437,11 +437,28 @@ public class StandardMipsGenerator implements IMipsGenerator {
         var rhs = inst.getRightOperand();
 
         // Ensure lhs is not a constant.
+        int lhsRegId = Registers.INVALID;
         if (lhs instanceof ConstantData constant) {
-            generateLoadImmediate(constant, constant.getValue());
+            if (constant.isAllZero()) {
+                lhsRegId = Registers.ZERO;
+            } else {
+                generateLoadImmediate(constant, constant.getValue());
+            }
         }
+        if (lhsRegId == Registers.INVALID) {
+            lhsRegId = memoryProfile.getRegisterProfile().acquire(lhs).getId();
+        }
+
+        int rhsRegId = Registers.INVALID;
         if (rhs instanceof ConstantData constant) {
-            generateLoadImmediate(constant, constant.getValue());
+            if (constant.isAllZero()) {
+                rhsRegId = Registers.ZERO;
+            } else {
+                generateLoadImmediate(constant, constant.getValue());
+            }
+        }
+        if (rhsRegId == Registers.INVALID) {
+            rhsRegId = memoryProfile.getRegisterProfile().acquire(rhs).getId();
         }
 
         var reg = memoryProfile.getRegisterProfile().acquire(inst);
@@ -453,24 +470,30 @@ public class StandardMipsGenerator implements IMipsGenerator {
             case Mod -> "rem";
         };
 
-        var lhsReg = memoryProfile.getRegisterProfile().acquire(lhs);
-        var rhsReg = memoryProfile.getRegisterProfile().acquire(rhs);
-        printer.printBinaryOperator(out, op, reg.getId(), lhsReg.getId(), rhsReg.getId());
+        printer.printBinaryOperator(out, op, reg.getId(), lhsRegId, rhsRegId);
     }
 
     private void generateUnaryOperator(UnaryOperator inst) {
         var operand = inst.getOperand();
+        int operandRegId = Registers.INVALID;
         if (operand instanceof ConstantData constant) {
-            generateLoadImmediate(constant, constant.getValue());
+            if (constant.isAllZero()) {
+                operandRegId = Registers.ZERO;
+            } else {
+                generateLoadImmediate(constant, constant.getValue());
+            }
         }
+        if (operandRegId == Registers.INVALID) {
+            operandRegId = memoryProfile.getRegisterProfile().acquire(operand).getId();
+        }
+
         var reg = memoryProfile.getRegisterProfile().acquire(inst);
         String op = switch (inst.getOpType()) {
             case Pos -> "add";
             case Neg -> "sub";
             case Not -> "not";
         };
-        var operandReg = memoryProfile.getRegisterProfile().acquire(operand);
-        printer.printBinaryOperator(out, op, reg.getId(), Registers.ZERO, operandReg.getId());
+        printer.printBinaryOperator(out, op, reg.getId(), Registers.ZERO, operandRegId);
     }
 
 
