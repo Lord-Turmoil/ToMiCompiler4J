@@ -9,6 +9,7 @@ package tomic.llvm.mips.memory.impl;
 import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.value.Value;
 import tomic.llvm.mips.IMipsGenerator;
+import tomic.llvm.mips.IMipsWriter;
 import tomic.llvm.mips.memory.IRegisterProfile;
 import tomic.llvm.mips.memory.IStackProfile;
 import tomic.llvm.mips.memory.Register;
@@ -32,9 +33,9 @@ public class DefaultRegisterProfile implements IRegisterProfile {
     private final Map<Integer, Register> registerMap;
 
     private final IStackProfile stackProfile;
-    private final IAsmWriter out;
+    private final IMipsWriter out;
 
-    public DefaultRegisterProfile(IStackProfile stackProfile, IAsmWriter out) {
+    public DefaultRegisterProfile(IStackProfile stackProfile, IMipsWriter out) {
         this.availableRegisters = new HashSet<>(ALL_REGISTERS);
         this.activeRegisters = new HashSet<>();
         this.valueRegisterMap = new HashMap<>();

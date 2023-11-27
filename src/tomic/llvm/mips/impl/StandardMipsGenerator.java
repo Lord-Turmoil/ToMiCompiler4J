@@ -7,12 +7,12 @@
 package tomic.llvm.mips.impl;
 
 import lib.twio.ITwioWriter;
-import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.Module;
 import tomic.llvm.ir.type.Type;
 import tomic.llvm.ir.value.*;
 import tomic.llvm.ir.value.inst.Instruction;
 import tomic.llvm.mips.IMipsGenerator;
+import tomic.llvm.mips.IMipsWriter;
 import tomic.llvm.mips.memory.MemoryProfile;
 import tomic.llvm.mips.memory.impl.DefaultRegisterProfile;
 import tomic.llvm.mips.memory.impl.DefaultStackProfile;
@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class StandardMipsGenerator implements IMipsGenerator {
-    private IAsmWriter out;
+    private IMipsWriter out;
     private Module module;
     private MemoryProfile memoryProfile;
 
