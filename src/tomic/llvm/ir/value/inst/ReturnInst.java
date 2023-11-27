@@ -28,6 +28,10 @@ public class ReturnInst extends Instruction {
         return value != null;
     }
 
+    public Value getValue() {
+        return value;
+    }
+
     @Override
     public IAsmWriter printAsm(IAsmWriter out) {
         out.push("ret");

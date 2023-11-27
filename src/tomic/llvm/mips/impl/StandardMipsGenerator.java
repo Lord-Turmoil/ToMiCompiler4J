@@ -155,6 +155,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
             generateStoreInst(inst);
         } else if (instruction instanceof OutputInst inst) {
             generateOutputInst(inst);
+        } else if (instruction instanceof ReturnInst inst) {
+            generateReturnInst(inst);
         }
         memoryProfile.tick();
     }
@@ -187,9 +189,13 @@ public class StandardMipsGenerator implements IMipsGenerator {
      */
     private void generateLoadWord(Value value, Value address) {
         var profile = memoryProfile.getRegisterProfile();
+        var reg = profile.acquire(value);
+        generateLoadWord(reg.getId(), address);
+    }
+
+    private void generateLoadWord(int register, Value address) {
         out.push("lw").pushSpace();
-        var op1 = profile.acquire(value);
-        out.pushRegister(op1.getId()).pushComma().pushSpace();
+        out.pushRegister(register).pushComma().pushSpace();
         generateAddress(address);
         out.pushNewLine();
     }
@@ -224,6 +230,33 @@ public class StandardMipsGenerator implements IMipsGenerator {
         var reg = profile.acquire(value, true);
         out.pushRegister(reg.getId()).pushComma();
         out.pushNext(String.valueOf(immediate)).pushNewLine();
+    }
+
+    private void generateLoadImmediate(int register, int immediate) {
+        out.push("li").pushSpace();
+        out.pushRegister(register).pushComma();
+        out.pushNext(String.valueOf(immediate)).pushNewLine();
+    }
+
+    /**
+     * Generate move instruction. <br />
+     * move $t0, $t1
+     *
+     * @param dst The destination.
+     * @param src The source.
+     */
+    private void generateMove(Value dst, Value src) {
+        var profile = memoryProfile.getRegisterProfile();
+        var dstReg = profile.acquire(dst);
+        generateMove(dstReg.getId(), src);
+    }
+
+    private void generateMove(int register, Value src) {
+        out.push("move").pushSpace();
+        out.pushRegister(register).pushComma().pushSpace();
+        var profile = memoryProfile.getRegisterProfile();
+        var srcReg = profile.acquire(src);
+        out.pushRegister(srcReg.getId()).pushNewLine();
     }
 
     private void generateStoreInst(StoreInst inst) {
@@ -264,8 +297,31 @@ public class StandardMipsGenerator implements IMipsGenerator {
             out.pushRegister(Registers.A0).pushComma();
             out.pushNext(string.getName()).pushNewLine();
             generateSysCall(SYS_PRINT_STRING);
+        } else if (value instanceof ConstantData constant) {
+            generateLoadImmediate(Registers.A0, constant.getValue());
+            generateSysCall(SYS_PRINT_INT);
         } else {
+            generateMove(Registers.A0, value);
+            generateSysCall(SYS_PRINT_INT);
         }
+    }
+
+    private void generateReturnInst(ReturnInst inst) {
+        if (inst.getParentFunction().getName().equals("main")) {
+            generateExitInst(inst);
+        }
+    }
+
+    private void generateExitInst(ReturnInst inst) {
+        var value = inst.getValue();
+        if (value instanceof ConstantData constant) {
+            generateLoadImmediate(Registers.A0, constant.getValue());
+        } else if (value.getType().isPointerTy()) {
+            generateLoadWord(Registers.A0, value);
+        } else {
+            generateMove(Registers.A0, value);
+        }
+        generateSysCall(SYS_EXIT2);
     }
 
     private void generateHeader() {
@@ -298,7 +354,9 @@ public class StandardMipsGenerator implements IMipsGenerator {
             out.pushRegister(add.base()).push(')');
         } else {
             var reg = memoryProfile.getRegisterProfile().acquire(address);
+            out.push('(');
             out.pushRegister(reg.getId());
+            out.push(')');
         }
     }
 
