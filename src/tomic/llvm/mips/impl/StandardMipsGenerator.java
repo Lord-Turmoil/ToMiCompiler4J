@@ -153,6 +153,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
             generateLoadInst(inst);
         } else if (instruction instanceof StoreInst inst) {
             generateStoreInst(inst);
+        } else if (instruction instanceof InputInst inst) {
+            generateInputInst(inst);
         } else if (instruction instanceof OutputInst inst) {
             generateOutputInst(inst);
         } else if (instruction instanceof ReturnInst inst) {
@@ -248,15 +250,14 @@ public class StandardMipsGenerator implements IMipsGenerator {
     private void generateMove(Value dst, Value src) {
         var profile = memoryProfile.getRegisterProfile();
         var dstReg = profile.acquire(dst);
-        generateMove(dstReg.getId(), src);
+        var srcReg = profile.acquire(src);
+        generateMove(dstReg.getId(), srcReg.getId());
     }
 
-    private void generateMove(int register, Value src) {
+    private void generateMove(int dst, int src) {
         out.push("move").pushSpace();
-        out.pushRegister(register).pushComma().pushSpace();
-        var profile = memoryProfile.getRegisterProfile();
-        var srcReg = profile.acquire(src);
-        out.pushRegister(srcReg.getId()).pushNewLine();
+        out.pushRegister(dst).pushComma().pushSpace();
+        out.pushRegister(src).pushNewLine();
     }
 
     private void generateStoreInst(StoreInst inst) {
@@ -290,6 +291,12 @@ public class StandardMipsGenerator implements IMipsGenerator {
         out.pushNewLine();
     }
 
+    private void generateInputInst(InputInst inst) {
+        var reg = memoryProfile.getRegisterProfile().acquire(inst);
+        generateSysCall(SYS_READ_INT);
+        generateMove(reg.getId(), Registers.V0);
+    }
+
     private void generateOutputInst(OutputInst inst) {
         var value = inst.getOperand();
         if (value instanceof GlobalString string) {
@@ -301,7 +308,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
             generateLoadImmediate(Registers.A0, constant.getValue());
             generateSysCall(SYS_PRINT_INT);
         } else {
-            generateMove(Registers.A0, value);
+            var reg = memoryProfile.getRegisterProfile().acquire(value);
+            generateMove(Registers.A0, reg.getId());
             generateSysCall(SYS_PRINT_INT);
         }
     }
@@ -319,7 +327,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
         } else if (value.getType().isPointerTy()) {
             generateLoadWord(Registers.A0, value);
         } else {
-            generateMove(Registers.A0, value);
+            var reg = memoryProfile.getRegisterProfile().acquire(value);
+            generateMove(Registers.A0, reg.getId());
         }
         generateSysCall(SYS_EXIT2);
     }
