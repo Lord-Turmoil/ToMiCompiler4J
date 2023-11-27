@@ -95,4 +95,17 @@ public class StandardMipsPrinter implements IMipsPrinter {
         out.push("jal").pushSpace();
         out.push(name).pushNewLine();
     }
+
+    @Override
+    public void printJump(IMipsWriter out, String label) {
+        out.push("j").pushNext(label).pushNewLine();
+    }
+
+    @Override
+    public void printBranch(IMipsWriter out, int flag, String trueLabel, String falseLabel) {
+        out.push("bnez").pushSpace();
+        out.pushRegister(flag).pushComma();
+        out.pushNext(trueLabel).pushNewLine();
+        printJump(out, falseLabel);
+    }
 }

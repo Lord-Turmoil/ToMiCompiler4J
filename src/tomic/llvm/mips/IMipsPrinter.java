@@ -26,4 +26,8 @@ public interface IMipsPrinter {
     void printLoadStack(IMipsWriter out, int dst, int offset);
 
     void printCall(IMipsWriter out, String name);
+
+    void printJump(IMipsWriter out, String label);
+
+    void printBranch(IMipsWriter out, int flag, String trueLabel, String falseLabel);
 }
