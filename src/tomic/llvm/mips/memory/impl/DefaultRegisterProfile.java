@@ -6,9 +6,7 @@
 
 package tomic.llvm.mips.memory.impl;
 
-import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.value.Value;
-import tomic.llvm.mips.IMipsGenerator;
 import tomic.llvm.mips.IMipsWriter;
 import tomic.llvm.mips.memory.IRegisterProfile;
 import tomic.llvm.mips.memory.IStackProfile;
@@ -47,15 +45,23 @@ public class DefaultRegisterProfile implements IRegisterProfile {
 
     @Override
     public Register acquire(Value value) {
+        return acquire(value, false);
+    }
+
+    @Override
+    public Register acquire(Value value, boolean temporary) {
         var register = valueRegisterMap.getOrDefault(value, null);
         if (register != null && register.isActive()) {
             register.setHot();
+            register.setTemporary(temporary);
             return register;
         }
 
         if (register == null) {
-            register = allocateRegister(value);
+            register = allocateRegister(value, temporary);
             valueRegisterMap.put(value, register);
+        } else {
+            register.setTemporary(temporary);
         }
 
         // swapIn ensures that the register is active.
@@ -90,8 +96,13 @@ public class DefaultRegisterProfile implements IRegisterProfile {
         }
     }
 
-    private Register allocateRegister(Value value) {
-        return new Register(value);
+    @Override
+    public void tick() {
+        registerMap.values().forEach(Register::tick);
+    }
+
+    private Register allocateRegister(Value value, boolean temporary) {
+        return new Register(value, temporary);
     }
 
     private void swapIn(Register register) {
@@ -103,8 +114,8 @@ public class DefaultRegisterProfile implements IRegisterProfile {
         int id;
         if (availableRegisters.isEmpty()) {
             var candidate = findSwapOutCandidate();
-            swapOut(candidate);
             id = candidate.getId();
+            swapOut(candidate);
         } else {
             id = availableRegisters.iterator().next();
         }
@@ -123,12 +134,12 @@ public class DefaultRegisterProfile implements IRegisterProfile {
             return;
         }
 
-        // TODO: write back value to memory, and allocate memory
-        //      in StackProfile if necessary
-        register.deactivate();
-
         availableRegisters.add(register.getId());
         registerMap.remove(register.getId());
+        register.deactivate();
+
+        // TODO: write back value to memory, and allocate memory
+        //      in StackProfile if necessary (not temporary)
     }
 
     private Register findSwapOutCandidate() {

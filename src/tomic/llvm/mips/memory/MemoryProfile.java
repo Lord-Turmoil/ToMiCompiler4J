@@ -25,4 +25,8 @@ public class MemoryProfile {
     public IStackProfile getStackProfile() {
         return stackProfile;
     }
+
+    public void tick() {
+        registerProfile.tick();
+    }
 }

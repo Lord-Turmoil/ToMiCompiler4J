@@ -40,12 +40,20 @@ public class Register {
      */
     private boolean dirty;
 
-    public Register(Value value) {
+    /**
+     * Indicate whether this register is a temporary register.
+     * If it is, then it will be swapped out more easily, which
+     * means it will not be saved when it is swapped out.
+     */
+    private boolean temporary;
+
+    public Register(Value value, boolean temporary) {
         this.value = value;
         this.priority = 0;
         this.active = false;
         this.id = Registers.INVALID;
         this.dirty = false;
+        this.temporary = temporary;
     }
 
     public Value getValue() {
@@ -95,6 +103,14 @@ public class Register {
 
     public boolean isDirty() {
         return dirty;
+    }
+
+    public boolean isTemporary() {
+        return temporary;
+    }
+
+    public void setTemporary(boolean temporary) {
+        this.temporary = temporary;
     }
 
     public void mark() {

@@ -6,6 +6,7 @@
 
 package tomic.llvm.mips.memory.impl;
 
+import tomic.llvm.ir.type.Type;
 import tomic.llvm.ir.value.Value;
 import tomic.llvm.mips.memory.IStackProfile;
 import tomic.llvm.mips.memory.Registers;
@@ -28,6 +29,15 @@ public class DefaultStackProfile implements IStackProfile {
     }
 
     @Override
+    public int allocateOnStack(Value value, Type type) {
+        var address = new StackAddress(value, Registers.SP, stackTopOffset);
+        addressMap.put(value, address);
+        stackTopOffset += type.getBytes();
+        return address.offset();
+    }
+
+
+    @Override
     public int getStackTopOffset() {
         return stackTopOffset;
     }
@@ -37,6 +47,14 @@ public class DefaultStackProfile implements IStackProfile {
         var address = new StackAddress(value, Registers.FP, transientTopOffset);
         addressMap.put(value, address);
         transientTopOffset += value.getBytes();
+        return address.offset();
+    }
+
+    @Override
+    public int allocateTransient(Value value, Type type) {
+        var address = new StackAddress(value, Registers.FP, transientTopOffset);
+        addressMap.put(value, address);
+        transientTopOffset += type.getBytes();
         return address.offset();
     }
 

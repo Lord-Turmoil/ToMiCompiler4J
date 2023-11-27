@@ -117,6 +117,10 @@ public class BasicBlock extends Value {
         return out;
     }
 
+    public int getIndex() {
+        return getParent().getBasicBlocks().indexOf(this);
+    }
+
     @Override
     public IAsmWriter printName(IAsmWriter out) {
         return out.push('%').push(String.valueOf(getParent().slot(this)));

@@ -6,8 +6,6 @@
 
 package tomic.llvm.mips.memory;
 
-import lib.twio.ITwioWriter;
-import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.value.Value;
 
 /**
@@ -23,6 +21,8 @@ public interface IRegisterProfile {
      * @return The register allocated for the value.
      */
     Register acquire(Value value);
+
+    Register acquire(Value value, boolean temporary);
 
     /**
      * Force retain a register so that it won't be swapped out
@@ -53,4 +53,10 @@ public interface IRegisterProfile {
      * @param value The value asking for releasing.
      */
     void release(Value value);
+
+    /**
+     * Tick the register profile. It will update the priority
+     * of all registers.
+     */
+    void tick();
 }

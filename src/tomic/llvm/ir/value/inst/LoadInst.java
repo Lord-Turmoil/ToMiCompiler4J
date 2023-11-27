@@ -11,7 +11,7 @@ import tomic.llvm.ir.type.PointerType;
 import tomic.llvm.ir.value.Value;
 import tomic.llvm.ir.value.ValueTypes;
 
-public class LoadInst extends UnaryInstruction{
+public class LoadInst extends UnaryInstruction {
     private final Value address;
 
     public LoadInst(Value address) {

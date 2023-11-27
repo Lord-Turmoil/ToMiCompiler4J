@@ -16,4 +16,6 @@ public interface IMipsWriter extends IAsmWriter {
     IMipsWriter pushDollar();
 
     IMipsWriter pushRegister(int reg);
+
+    IMipsWriter setIndent(int indent);
 }

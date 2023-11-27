@@ -6,6 +6,7 @@
 
 package tomic.llvm.mips.memory;
 
+import tomic.llvm.ir.type.Type;
 import tomic.llvm.ir.value.Value;
 
 /**
@@ -19,6 +20,7 @@ public interface IStackProfile {
      * @return The offset from $sp. $sp - offset = address.
      */
     int allocateOnStack(Value value);
+    int allocateOnStack(Value value, Type type);
 
     /**
      * Get the offset from $sp to the top of the stack. Used for
@@ -35,6 +37,7 @@ public interface IStackProfile {
      * @return The offset from $fp. $fp + offset = address.
      */
     int allocateTransient(Value value);
+    int allocateTransient(Value value, Type type);
 
     /**
      * Get the offset from $fp to the top of the transient stack. Used for
