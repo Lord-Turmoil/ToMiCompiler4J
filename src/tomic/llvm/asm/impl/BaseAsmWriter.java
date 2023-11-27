@@ -12,10 +12,12 @@ import tomic.llvm.asm.IAsmWriter;
 public class BaseAsmWriter implements IAsmWriter {
     private final ITwioWriter impl;
     private final char commentCharacter;
+    private final int indentSize;
 
-    public BaseAsmWriter(ITwioWriter impl, char commentCharacter) {
+    public BaseAsmWriter(ITwioWriter impl, char commentCharacter, int indentSize) {
         this.impl = impl;
         this.commentCharacter = commentCharacter;
+        this.indentSize = indentSize;
     }
 
     @Override
@@ -38,5 +40,10 @@ public class BaseAsmWriter implements IAsmWriter {
     @Override
     public IAsmWriter commentEnd() {
         return pushNewLine();
+    }
+
+    @Override
+    public IAsmWriter pushIndent() {
+        return pushSpaces(indentSize);
     }
 }

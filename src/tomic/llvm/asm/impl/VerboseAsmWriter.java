@@ -10,6 +10,6 @@ import lib.twio.ITwioWriter;
 
 public class VerboseAsmWriter extends BaseAsmWriter {
     public VerboseAsmWriter(ITwioWriter impl) {
-        super(impl, ';');
+        super(impl, ';', 4);
     }
 }

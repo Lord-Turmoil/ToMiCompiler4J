@@ -51,4 +51,6 @@ public interface IAsmWriter {
     IAsmWriter commentBegin();
 
     IAsmWriter commentEnd();
+
+    IAsmWriter pushIndent();
 }

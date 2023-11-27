@@ -13,7 +13,7 @@ import tomic.llvm.mips.memory.Registers;
 
 public class VerboseMipsWriter extends BaseAsmWriter implements IMipsWriter {
     public VerboseMipsWriter(ITwioWriter impl) {
-        super(impl, '#');
+        super(impl, '#', 4);
     }
 
     @Override
