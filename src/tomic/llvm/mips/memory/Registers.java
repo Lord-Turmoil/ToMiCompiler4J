@@ -40,6 +40,7 @@ public class Registers {
     public static final int SP = 29;
     public static final int FP = 30;
     public static final int RA = 31;
+    public static final int ONE = 32;   // a pseudo register
 
     public static final int[] ARGUMENT_REGISTERS = new int[]{ A0, A1, A2, A3 };
     public static final int[] CALLEE_SAVED_REGISTERS = new int[]{ S0, S1, S2, S3, S4, S5, S6, S7, FP, RA };
@@ -50,7 +51,8 @@ public class Registers {
             "zero", "at", "v0", "v1", "a0", "a1", "a2", "a3",
             "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
             "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
-            "t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra" };
+            "t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra",
+            "1" };
 
     public static String name(int id) {
         if (id == -1) {
@@ -58,6 +60,10 @@ public class Registers {
         }
 
         return REGISTER_NAMES[id];
+    }
+
+    public static boolean isPseudo(int id) {
+        return id > Registers.RA;
     }
 
     public static final int HOT_PRIORITY = 0;

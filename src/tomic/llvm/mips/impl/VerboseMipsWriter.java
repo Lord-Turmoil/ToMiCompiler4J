@@ -63,7 +63,10 @@ public class VerboseMipsWriter extends BaseAsmWriter implements IMipsWriter {
 
     @Override
     public IMipsWriter pushRegister(int reg) {
-        pushDollar().push(Registers.name(reg));
+        if (!Registers.isPseudo(reg)) {
+            pushDollar();
+        }
+        push(Registers.name(reg));
         return this;
     }
 

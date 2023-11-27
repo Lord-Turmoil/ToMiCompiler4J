@@ -161,6 +161,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
             generateBinaryOperator(inst);
         } else if (instruction instanceof UnaryOperator inst) {
             generateUnaryOperator(inst);
+        } else if (instruction instanceof CompInst inst) {
+            generateCompare(inst);
         } else if (instruction instanceof AllocaInst inst) {
             generateAllocaInst(inst);
         } else if (instruction instanceof LoadInst inst) {
@@ -284,12 +286,10 @@ public class StandardMipsGenerator implements IMipsGenerator {
          * Generate li for immediate value. We are sure here
          * we won't meet an array or pointer.
          */
-        if (lhs instanceof ConstantData constant) {
-            generateLoadImmediate(constant, constant.getValue());
-        }
+        int lhsRegId = acquireRegisterId(lhs);
 
         var rhs = inst.getRightOperand();
-        generateStoreWord(lhs, rhs);
+        generateStoreWord(lhsRegId, rhs);
     }
 
     /**
@@ -433,33 +433,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
      * @param inst The instruction.
      */
     private void generateBinaryOperator(BinaryOperator inst) {
-        var lhs = inst.getLeftOperand();
-        var rhs = inst.getRightOperand();
-
-        // Ensure lhs is not a constant.
-        int lhsRegId = Registers.INVALID;
-        if (lhs instanceof ConstantData constant) {
-            if (constant.isAllZero()) {
-                lhsRegId = Registers.ZERO;
-            } else {
-                generateLoadImmediate(constant, constant.getValue());
-            }
-        }
-        if (lhsRegId == Registers.INVALID) {
-            lhsRegId = memoryProfile.getRegisterProfile().acquire(lhs).getId();
-        }
-
-        int rhsRegId = Registers.INVALID;
-        if (rhs instanceof ConstantData constant) {
-            if (constant.isAllZero()) {
-                rhsRegId = Registers.ZERO;
-            } else {
-                generateLoadImmediate(constant, constant.getValue());
-            }
-        }
-        if (rhsRegId == Registers.INVALID) {
-            rhsRegId = memoryProfile.getRegisterProfile().acquire(rhs).getId();
-        }
+        int lhsRegId = acquireRegisterId(inst.getLeftOperand());
+        int rhsRegId = acquireRegisterId(inst.getRightOperand());
 
         var reg = memoryProfile.getRegisterProfile().acquire(inst);
         String op = switch (inst.getOpType()) {
@@ -474,26 +449,34 @@ public class StandardMipsGenerator implements IMipsGenerator {
     }
 
     private void generateUnaryOperator(UnaryOperator inst) {
-        var operand = inst.getOperand();
-        int operandRegId = Registers.INVALID;
-        if (operand instanceof ConstantData constant) {
-            if (constant.isAllZero()) {
-                operandRegId = Registers.ZERO;
-            } else {
-                generateLoadImmediate(constant, constant.getValue());
-            }
-        }
-        if (operandRegId == Registers.INVALID) {
-            operandRegId = memoryProfile.getRegisterProfile().acquire(operand).getId();
-        }
-
+        int operandRegId = acquireRegisterId(inst.getOperand());
         var reg = memoryProfile.getRegisterProfile().acquire(inst);
         String op = switch (inst.getOpType()) {
             case Pos -> "add";
             case Neg -> "sub";
-            case Not -> "not";
+            case Not -> "xor";
         };
-        printer.printBinaryOperator(out, op, reg.getId(), Registers.ZERO, operandRegId);
+
+        if (inst.getOpType() == UnaryOperator.UnaryOpTypes.Not) {
+            printer.printBinaryOperator(out, op, reg.getId(), operandRegId, Registers.ONE);
+        } else {
+            printer.printBinaryOperator(out, op, reg.getId(), Registers.ZERO, operandRegId);
+        }
+    }
+
+    private void generateCompare(CompInst inst) {
+        int lhsRegId = acquireRegisterId(inst.getLeftOperand());
+        int rhsRegId = acquireRegisterId(inst.getRightOperand());
+        var reg = memoryProfile.getRegisterProfile().acquire(inst);
+        String op = switch (inst.getOpType()) {
+            case Eq -> "seq";
+            case Ne -> "sne";
+            case Slt -> "slt";
+            case Sle -> "sle";
+            case Sgt -> "sgt";
+            case Sge -> "sge";
+        };
+        printer.printBinaryOperator(out, op, reg.getId(), lhsRegId, rhsRegId);
     }
 
 
@@ -531,6 +514,20 @@ public class StandardMipsGenerator implements IMipsGenerator {
             out.pushRegister(reg.getId());
             out.push(')');
         }
+    }
+
+    private int acquireRegisterId(Value value) {
+        if (value instanceof ConstantData constant) {
+            if (constant.isAllZero()) {
+                return Registers.ZERO;
+            } else {
+                generateLoadImmediate(constant, constant.getValue());
+            }
+        } else if (value instanceof ZExtInst inst) {
+            value = inst.getOperand();
+        }
+
+        return memoryProfile.getRegisterProfile().acquire(value).getId();
     }
 
     public static final int SYS_EXIT = 10;
