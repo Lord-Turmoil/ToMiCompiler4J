@@ -7,7 +7,9 @@
 package tomic.llvm.mips.memory.impl;
 
 import tomic.llvm.ir.value.Value;
+import tomic.llvm.mips.IMipsPrinter;
 import tomic.llvm.mips.IMipsWriter;
+import tomic.llvm.mips.impl.StandardMipsPrinter;
 import tomic.llvm.mips.memory.IRegisterProfile;
 import tomic.llvm.mips.memory.IStackProfile;
 import tomic.llvm.mips.memory.Register;
@@ -32,6 +34,7 @@ public class DefaultRegisterProfile implements IRegisterProfile {
 
     private final IStackProfile stackProfile;
     private final IMipsWriter out;
+    private final IMipsPrinter printer = new StandardMipsPrinter();
 
     public DefaultRegisterProfile(IStackProfile stackProfile, IMipsWriter out) {
         this.availableRegisters = new HashSet<>(ALL_REGISTERS);
@@ -127,6 +130,10 @@ public class DefaultRegisterProfile implements IRegisterProfile {
         registerMap.put(id, register);
 
         // TODO: load value from memory if exists in StackProfile
+        var address = stackProfile.getAddress(register.getValue());
+        if (address != null) {
+            printer.printLoadWord(out, register.getId(), address.offset(), address.base());
+        }
     }
 
     private void swapOut(Register register) {
@@ -134,12 +141,23 @@ public class DefaultRegisterProfile implements IRegisterProfile {
             return;
         }
 
+        // Write back value to memory, and allocate memory
+        // in StackProfile if necessary (not temporary)
+        if (!register.isTemporary()) {
+            var value = register.getValue();
+            var address = stackProfile.getAddress(value);
+            if (address == null) {
+                address = stackProfile.allocate(value);
+            }
+            printer.printStoreWord(out, register.getId(), address.offset(), address.base());
+        } else {
+            stackProfile.deallocate(register.getValue());
+        }
+
         availableRegisters.add(register.getId());
         registerMap.remove(register.getId());
         register.deactivate();
 
-        // TODO: write back value to memory, and allocate memory
-        //      in StackProfile if necessary (not temporary)
     }
 
     private Register findSwapOutCandidate() {

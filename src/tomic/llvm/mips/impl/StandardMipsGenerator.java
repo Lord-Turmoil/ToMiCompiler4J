@@ -12,6 +12,7 @@ import tomic.llvm.ir.type.Type;
 import tomic.llvm.ir.value.*;
 import tomic.llvm.ir.value.inst.*;
 import tomic.llvm.mips.IMipsGenerator;
+import tomic.llvm.mips.IMipsPrinter;
 import tomic.llvm.mips.IMipsWriter;
 import tomic.llvm.mips.memory.MemoryProfile;
 import tomic.llvm.mips.memory.Registers;
@@ -25,6 +26,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
     private IMipsWriter out;
     private Module module;
     private MemoryProfile memoryProfile;
+    private final IMipsPrinter printer = new StandardMipsPrinter();
 
     @Override
     public void generate(Module module, ITwioWriter output) {
@@ -134,7 +136,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
             out.pushNewLine();
         }
 
-        out.pushIndent().push(getLabelName(basicBlock)).push(":").pushNewLine();
+        out.pushIndent();
+        printer.printLabel(out, getLabelName(basicBlock));
         out.setIndent(2);
         for (var instruction : basicBlock.getInstructions()) {
             generateInstruction(instruction);
@@ -147,7 +150,9 @@ public class StandardMipsGenerator implements IMipsGenerator {
     }
 
     private void generateInstruction(Instruction instruction) {
-        if (instruction instanceof AllocaInst inst) {
+        if (instruction instanceof BinaryOperator inst) {
+            generateBinaryOperator(inst);
+        } else if (instruction instanceof AllocaInst inst) {
             generateAllocaInst(inst);
         } else if (instruction instanceof LoadInst inst) {
             generateLoadInst(inst);
@@ -164,7 +169,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
     }
 
     private void generateAllocaInst(AllocaInst inst) {
-        memoryProfile.getStackProfile().allocateOnStack(inst, inst.getAllocatedType());
+        memoryProfile.getStackProfile().allocate(inst, inst.getAllocatedType());
     }
 
     /**
@@ -229,7 +234,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
     private void generateLoadImmediate(Value value, int immediate) {
         var profile = memoryProfile.getRegisterProfile();
         out.push("li").pushSpace();
-        var reg = profile.acquire(value, true);
+        var reg = profile.acquire(value);
         out.pushRegister(reg.getId()).pushComma();
         out.pushNext(String.valueOf(immediate)).pushNewLine();
     }
@@ -251,13 +256,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
         var profile = memoryProfile.getRegisterProfile();
         var dstReg = profile.acquire(dst);
         var srcReg = profile.acquire(src);
-        generateMove(dstReg.getId(), srcReg.getId());
-    }
-
-    private void generateMove(int dst, int src) {
-        out.push("move").pushSpace();
-        out.pushRegister(dst).pushComma().pushSpace();
-        out.pushRegister(src).pushNewLine();
+        printer.printMove(out, dstReg.getId(), srcReg.getId());
     }
 
     private void generateStoreInst(StoreInst inst) {
@@ -294,7 +293,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
     private void generateInputInst(InputInst inst) {
         var reg = memoryProfile.getRegisterProfile().acquire(inst);
         generateSysCall(SYS_READ_INT);
-        generateMove(reg.getId(), Registers.V0);
+
+        printer.printMove(out, reg.getId(), Registers.V0);
     }
 
     private void generateOutputInst(OutputInst inst) {
@@ -309,7 +309,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
             generateSysCall(SYS_PRINT_INT);
         } else {
             var reg = memoryProfile.getRegisterProfile().acquire(value);
-            generateMove(Registers.A0, reg.getId());
+            printer.printMove(out, Registers.A0, reg.getId());
             generateSysCall(SYS_PRINT_INT);
         }
     }
@@ -328,10 +328,50 @@ public class StandardMipsGenerator implements IMipsGenerator {
             generateLoadWord(Registers.A0, value);
         } else {
             var reg = memoryProfile.getRegisterProfile().acquire(value);
-            generateMove(Registers.A0, reg.getId());
+            printer.printMove(out, Registers.A0, reg.getId());
         }
         generateSysCall(SYS_EXIT2);
     }
+
+    /*
+     * ==================== Arithmetic Instructions ====================
+     */
+
+    /**
+     * Generate binary instruction. We always use register override instead
+     * of immediate value.
+     *
+     * @param inst The instruction.
+     */
+    private void generateBinaryOperator(BinaryOperator inst) {
+        var lhs = inst.getLeftOperand();
+        var rhs = inst.getRightOperand();
+
+        // Ensure lhs is not a constant.
+        if (lhs instanceof ConstantData constant) {
+            generateLoadImmediate(constant, constant.getValue());
+        }
+        if (rhs instanceof ConstantData constant) {
+            generateLoadImmediate(constant, constant.getValue());
+        }
+
+        var reg = memoryProfile.getRegisterProfile().acquire(inst);
+        String op = switch (inst.getOpType()) {
+            case Add -> "add";
+            case Sub -> "sub";
+            case Mul -> "mul";
+            case Div -> "div";
+            case Mod -> "rem";
+        };
+
+        var lhsReg = memoryProfile.getRegisterProfile().acquire(lhs);
+        var rhsReg = memoryProfile.getRegisterProfile().acquire(rhs);
+        printer.printBinaryOperator(out, op, reg.getId(), lhsReg.getId(), rhsReg.getId());
+    }
+
+    /*
+     * ==================== Utility Methods ====================
+     */
 
     private void generateHeader() {
         out.pushComment("This file is generated by ToMiC4J");
@@ -354,11 +394,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
             out.push(address.getName());
         } else if (address instanceof AllocaInst) {
             var add = memoryProfile.getStackProfile().getAddress(address);
-            if (add.base() == Registers.SP) {
-                out.push(String.valueOf(-add.offset()));
-            } else {
-                out.push(String.valueOf(add.offset()));
-            }
+            out.push(String.valueOf(add.offset()));
             out.push('(');
             out.pushRegister(add.base()).push(')');
         } else {

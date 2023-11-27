@@ -19,8 +19,16 @@ public interface IStackProfile {
      * @param value The value to be allocated.
      * @return The offset from $sp. $sp - offset = address.
      */
-    int allocateOnStack(Value value);
-    int allocateOnStack(Value value, Type type);
+    StackAddress allocate(Value value);
+
+    StackAddress allocate(Value value, Type type);
+
+    /**
+     * Deallocate a value on stack.
+     *
+     * @param value The value to be deallocated.
+     */
+    void deallocate(Value value);
 
     /**
      * Get the offset from $sp to the top of the stack. Used for
@@ -28,24 +36,7 @@ public interface IStackProfile {
      *
      * @return The offset from $sp to the top of the stack.
      */
-    int getStackTopOffset();
-
-    /**
-     * Allocate a value to $fp.
-     *
-     * @param value The value to be allocated.
-     * @return The offset from $fp. $fp + offset = address.
-     */
-    int allocateTransient(Value value);
-    int allocateTransient(Value value, Type type);
-
-    /**
-     * Get the offset from $fp to the top of the transient stack. Used for
-     * calculating the size of function frame for function call.
-     *
-     * @return The offset from $fp to the top of the transient stack.
-     */
-    int getTransientTopOffset();
+    int getTotalOffset();
 
     /**
      * Get the address of a value.
