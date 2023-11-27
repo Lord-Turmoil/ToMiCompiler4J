@@ -8,6 +8,7 @@ package tomic.llvm.mips.impl;
 
 import tomic.llvm.mips.IMipsPrinter;
 import tomic.llvm.mips.IMipsWriter;
+import tomic.llvm.mips.memory.Registers;
 
 public class StandardMipsPrinter implements IMipsPrinter {
     @Override
@@ -44,5 +45,11 @@ public class StandardMipsPrinter implements IMipsPrinter {
         out.pushRegister(dst).pushComma().pushSpace();
         out.pushRegister(lhs).pushComma().pushSpace();
         out.pushRegister(rhs).pushNewLine();
+    }
+
+    @Override
+    public void printReturn(IMipsWriter out) {
+        out.push("jr").pushSpace();
+        out.pushRegister(Registers.RA).pushNewLine();
     }
 }

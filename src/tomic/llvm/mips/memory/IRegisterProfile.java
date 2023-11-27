@@ -35,13 +35,13 @@ public interface IRegisterProfile {
     Register retain(Value value);
 
     /**
-     * Force yield a register so that it can be swapped out
-     * easily by setting its priority to really low. If it is
-     * already in memory, it will do nothing.
+     * Force yield a register to memory.
      *
      * @param value The value asking for yielding.
      */
     void yield(Value value);
+
+    void yieldAll();
 
 
     /**

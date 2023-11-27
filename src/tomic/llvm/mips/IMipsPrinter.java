@@ -12,7 +12,10 @@ public interface IMipsPrinter {
     void printMove(IMipsWriter out, int dst, int src);
 
     void printLoadWord(IMipsWriter out, int dst, int offset, int base);
+
     void printStoreWord(IMipsWriter out, int src, int offset, int base);
 
     void printBinaryOperator(IMipsWriter out, String op, int dst, int lhs, int rhs);
+
+    void printReturn(IMipsWriter out);
 }

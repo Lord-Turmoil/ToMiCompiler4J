@@ -315,22 +315,24 @@ public class StandardMipsGenerator implements IMipsGenerator {
     }
 
     private void generateReturnInst(ReturnInst inst) {
+        boolean isMain = inst.getParentFunction().getName().equals("main");
+        int retReg = isMain ? Registers.A0 : Registers.V0;
+        if (inst.hasValue()) {
+            var value = inst.getValue();
+            if (value instanceof ConstantData constant) {
+                generateLoadImmediate(retReg, constant.getValue());
+            } else if (value.getType().isPointerTy()) {
+                generateLoadWord(retReg, value);
+            } else {
+                var reg = memoryProfile.getRegisterProfile().acquire(value);
+                printer.printMove(out, retReg, reg.getId());
+            }
+        }
         if (inst.getParentFunction().getName().equals("main")) {
-            generateExitInst(inst);
-        }
-    }
-
-    private void generateExitInst(ReturnInst inst) {
-        var value = inst.getValue();
-        if (value instanceof ConstantData constant) {
-            generateLoadImmediate(Registers.A0, constant.getValue());
-        } else if (value.getType().isPointerTy()) {
-            generateLoadWord(Registers.A0, value);
+            generateSysCall(SYS_EXIT2);
         } else {
-            var reg = memoryProfile.getRegisterProfile().acquire(value);
-            printer.printMove(out, Registers.A0, reg.getId());
+            printer.printReturn(out);
         }
-        generateSysCall(SYS_EXIT2);
     }
 
     /*
@@ -368,6 +370,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
         var rhsReg = memoryProfile.getRegisterProfile().acquire(rhs);
         printer.printBinaryOperator(out, op, reg.getId(), lhsReg.getId(), rhsReg.getId());
     }
+
 
     /*
      * ==================== Utility Methods ====================

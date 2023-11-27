@@ -86,7 +86,14 @@ public class DefaultRegisterProfile implements IRegisterProfile {
         }
 
         if (register.isActive()) {
-            register.setCold();
+            swapOut(register);
+        }
+    }
+
+    @Override
+    public void yieldAll() {
+        for (var value : valueRegisterMap.keySet()) {
+            this.yield(value);
         }
     }
 
@@ -148,8 +155,10 @@ public class DefaultRegisterProfile implements IRegisterProfile {
             var address = stackProfile.getAddress(value);
             if (address == null) {
                 address = stackProfile.allocate(value);
+                printer.printStoreWord(out, register.getId(), address.offset(), address.base());
+            } else if (register.isDirty()) {
+                printer.printStoreWord(out, register.getId(), address.offset(), address.base());
             }
-            printer.printStoreWord(out, register.getId(), address.offset(), address.base());
         } else {
             stackProfile.deallocate(register.getValue());
         }
@@ -157,7 +166,6 @@ public class DefaultRegisterProfile implements IRegisterProfile {
         availableRegisters.add(register.getId());
         registerMap.remove(register.getId());
         register.deactivate();
-
     }
 
     private Register findSwapOutCandidate() {
