@@ -74,6 +74,39 @@ public class DefaultRegisterProfile implements IRegisterProfile {
     }
 
     @Override
+    public Register acquire(Value value, int registerId) {
+        return acquire(value, registerId, false);
+    }
+
+    @Override
+    public Register acquire(Value value, int registerId, boolean temporary) {
+        var register = valueRegisterMap.getOrDefault(value, null);
+        if (register != null && register.isActive()) {
+            if (register.getId() == registerId) {
+                register.setHot();
+                return register;
+            }
+            swapOut(register);
+        }
+
+        if (activeRegisters.contains(registerId)) {
+            swapOut(registerMap.get(registerId));
+        }
+
+        if (register == null) {
+            register = allocateRegister(value, temporary);
+            valueRegisterMap.put(value, register);
+        } else {
+            register.setTemporary(temporary);
+        }
+
+        // Will not load value from memory.
+        register.activate(registerId);
+
+        return register;
+    }
+
+    @Override
     public Register retain(Value value) {
         return acquire(value);
     }
@@ -187,7 +220,14 @@ public class DefaultRegisterProfile implements IRegisterProfile {
             stackProfile.deallocate(register.getValue());
         }
 
-        availableRegisters.add(register.getId());
+        /*
+         * If the register is assigned manually and not in
+         * standard registers, don't add it.
+         */
+        if (ALL_REGISTERS.contains(register.getId())) {
+            availableRegisters.add(register.getId());
+        }
+
         registerMap.remove(register.getId());
         register.deactivate();
     }
