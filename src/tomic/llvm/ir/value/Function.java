@@ -10,7 +10,9 @@ import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.SlotTracker;
 import tomic.llvm.ir.type.FunctionType;
 import tomic.llvm.ir.type.Type;
-import tomic.llvm.ir.value.inst.*;
+import tomic.llvm.ir.value.inst.BranchInst;
+import tomic.llvm.ir.value.inst.JumpInst;
+import tomic.llvm.ir.value.inst.ReturnInst;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -21,7 +23,6 @@ public class Function extends GlobalValue {
     private final LinkedList<BasicBlock> basicBlocks;
     private BasicBlock returnBlock;
     private final SlotTracker slotTracker = new SlotTracker();
-    private AllocaInst returnValue;
 
     public static Function newInstance(Type returnType, String name, List<Argument> arguments) {
         ArrayList<Type> argTypes = new ArrayList<>();
@@ -44,13 +45,7 @@ public class Function extends GlobalValue {
         returnBlock = new BasicBlock(this);
 
         if (getReturnType().isVoidTy()) {
-            returnValue = null;
             returnBlock.insertInstruction(new ReturnInst(getContext()));
-        } else {
-            returnValue = new AllocaInst(getReturnType());
-            var value = new LoadInst(returnValue);
-            returnBlock.insertInstruction(value);
-            returnBlock.insertInstruction(new ReturnInst(value));
         }
     }
 
@@ -111,10 +106,6 @@ public class Function extends GlobalValue {
 
     public BasicBlock getReturnBlock() {
         return returnBlock;
-    }
-
-    public AllocaInst getReturnValue() {
-        return returnValue;
     }
 
     @Override
@@ -186,31 +177,17 @@ public class Function extends GlobalValue {
             var prevBlock = basicBlocks.get(basicBlocks.size() - 2);
             if (pred == prevBlock) {
                 if (pred.getInstructions().getLast() instanceof JumpInst jmp && jmp.isReturn()) {
-                    if (returnValue == null) {
-                        pred.removeInstruction(jmp);
-                        returnBlock.getInstructions().forEach(pred::insertInstruction);
-                        merged = true;
-                    } else {
-                        var instructions = pred.getInstructions();
-                        if (instructions.get(instructions.size() - 2) instanceof StoreInst store) {
-                            pred.removeInstruction(store);
-                            pred.removeInstruction(jmp);
-                            var value = store.getLeftOperand();
-                            pred.insertInstruction(new ReturnInst(value));
-                            merged = true;
-                        }
-                    }
+                    pred.removeInstruction(jmp);
+                    returnBlock.getInstructions().forEach(pred::insertInstruction);
+                    merged = true;
                 }
             }
+        } else if (preds.isEmpty()) {
+            merged = true;
         }
 
         if (merged) {
             removeBasicBlock(returnBlock);
-        }
-
-        // Add return value alloca
-        if (!merged && returnValue != null) {
-            basicBlocks.get(0).insertInstructionFirst(returnValue);
         }
     }
 
@@ -220,6 +197,10 @@ public class Function extends GlobalValue {
         }
 
         var inst = block.getInstructions().getLast();
-        return !(inst instanceof JumpInst || inst instanceof BranchInst);
+        if (inst instanceof JumpInst || inst instanceof BranchInst) {
+            return false;
+        }
+
+        return !(inst instanceof ReturnInst);
     }
 }

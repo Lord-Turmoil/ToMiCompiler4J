@@ -11,6 +11,7 @@ import tomic.llvm.ir.LlvmContext;
 import tomic.llvm.ir.value.inst.BranchInst;
 import tomic.llvm.ir.value.inst.Instruction;
 import tomic.llvm.ir.value.inst.JumpInst;
+import tomic.llvm.ir.value.inst.ReturnInst;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -141,6 +142,9 @@ public class BasicBlock extends Value {
                 break;
             } else if (i instanceof BranchInst branchInst) {
                 inst = branchInst;
+                break;
+            } else if (i instanceof ReturnInst returnInst) {
+                inst = returnInst;
                 break;
             }
         }

@@ -39,5 +39,4 @@ public class SlotTracker {
         }
         return valueSlot.get(value);
     }
-
 }

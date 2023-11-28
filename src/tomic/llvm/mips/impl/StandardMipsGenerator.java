@@ -162,7 +162,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
         } else if (instruction instanceof UnaryOperator inst) {
             generateUnaryOperator(inst);
         } else if (instruction instanceof CompInst inst) {
-            generateCompare(inst);
+            generateCompareInst(inst);
         } else if (instruction instanceof AllocaInst inst) {
             generateAllocaInst(inst);
         } else if (instruction instanceof LoadInst inst) {
@@ -172,9 +172,9 @@ public class StandardMipsGenerator implements IMipsGenerator {
         } else if (instruction instanceof InputInst inst) {
             generateInputInst(inst);
         } else if (instruction instanceof JumpInst inst) {
-            generateJump(inst);
+            generateJumpInst(inst);
         } else if (instruction instanceof BranchInst inst) {
-            generateBranch(inst);
+            generateBranchInst(inst);
         } else if (instruction instanceof OutputInst inst) {
             generateOutputInst(inst);
         } else if (instruction instanceof CallInst inst) {
@@ -263,20 +263,6 @@ public class StandardMipsGenerator implements IMipsGenerator {
         out.pushNext(String.valueOf(immediate)).pushNewLine();
     }
 
-    /**
-     * Generate move instruction. <br />
-     * move $t0, $t1
-     *
-     * @param dst The destination.
-     * @param src The source.
-     */
-    private void generateMove(Value dst, Value src) {
-        var profile = memoryProfile.getRegisterProfile();
-        var dstReg = profile.acquire(dst);
-        var srcReg = profile.acquire(src);
-        printer.printMove(out, dstReg.getId(), srcReg.getId());
-    }
-
     private void generateStoreInst(StoreInst inst) {
         var lhs = inst.getLeftOperand();
 
@@ -295,23 +281,6 @@ public class StandardMipsGenerator implements IMipsGenerator {
 
         var rhs = inst.getRightOperand();
         generateStoreWord(lhsRegId, rhs);
-    }
-
-    /**
-     * Generate sw instruction. <br />
-     * sw $t0, 0($t1) <br />
-     * sw $t0, ($t1) <br />
-     * sw $t0, -4($sp) <br />
-     * sw $t0, 4($fp)
-     */
-    private void generateStoreWord(Value value, Value address) {
-        var registerProfile = memoryProfile.getRegisterProfile();
-
-        out.push("sw").pushSpace();
-        var op1 = registerProfile.acquire(value);
-        out.pushRegister(op1.getId()).pushComma().pushSpace();
-        generateAddress(address);
-        out.pushNewLine();
     }
 
     private void generateStoreWord(int register, Value address) {
@@ -469,7 +438,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
         }
     }
 
-    private void generateCompare(CompInst inst) {
+    private void generateCompareInst(CompInst inst) {
         int lhsRegId = acquireRegisterId(inst.getLeftOperand());
         int rhsRegId = acquireRegisterId(inst.getRightOperand());
         var reg = memoryProfile.getRegisterProfile().acquire(inst);
@@ -484,7 +453,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
         printer.printBinaryOperator(out, op, reg.getId(), lhsRegId, rhsRegId);
     }
 
-    private void generateBranch(BranchInst inst) {
+    private void generateBranchInst(BranchInst inst) {
         int flag = acquireRegisterId(inst.getCondition());
         String trueLabel = getLabelName(inst.getTrueBlock());
         String falseLabel = getLabelName(inst.getFalseBlock());
@@ -492,11 +461,22 @@ public class StandardMipsGenerator implements IMipsGenerator {
         printer.printBranch(out, flag, trueLabel, falseLabel);
     }
 
-    private void generateJump(JumpInst inst) {
+    private void generateJumpInst(JumpInst inst) {
         String label = getLabelName(inst.getTarget());
 
         printer.printJump(out, label);
     }
+
+    /*
+     * ==================== Array Operations ====================
+     */
+
+    private void generateGetElementPtrInst(GetElementPtrInst inst) {
+        // First dimension offset.
+        var address = inst.getAddress();
+        inst.getAddress();
+    }
+
 
 
     /*
