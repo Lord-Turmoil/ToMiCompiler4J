@@ -368,7 +368,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
                 }
             } else {
                 var reg = profile.acquire(param);
-                printer.printSaveStack(out, reg.getId(), stackOffset - (i - 4) * 4);
+                // Should reserve stack for $a0 ~ $a3
+                printer.printSaveStack(out, reg.getId(), stackOffset - i * 4);
             }
         }
 
