@@ -35,10 +35,10 @@ public class DefaultStackProfile implements IStackProfile {
         int offset = findAvailableOffset(size);
         StackAddress address;
         if (offset == -1) {
-            address = new StackAddress(value, Registers.SP, totalOffset);
-            totalOffset -= value.getBytes();
+            address = new StackAddress(value, Registers.SP, totalOffset, size);
+            totalOffset -= size;
         } else {
-            address = new StackAddress(value, Registers.SP, -offset);
+            address = new StackAddress(value, Registers.SP, -offset, size);
         }
         allocated.set(-address.offset(), -address.offset() + size);
         addressMap.put(value, address);
@@ -54,7 +54,10 @@ public class DefaultStackProfile implements IStackProfile {
         }
 
         addressMap.remove(value);
-        allocated.set(address.offset(), address.offset() + value.getBytes());
+        allocated.clear(address.offset(), address.offset() + address.size());
+        while (totalOffset > 0 && !allocated.get(totalOffset - 1)) {
+            totalOffset--;
+        }
     }
 
     private int findAvailableOffset(int size) {

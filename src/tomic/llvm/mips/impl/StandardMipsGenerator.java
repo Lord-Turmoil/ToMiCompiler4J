@@ -7,6 +7,7 @@
 package tomic.llvm.mips.impl;
 
 import lib.twio.ITwioWriter;
+import lib.twio.TwioBufferWriter;
 import tomic.llvm.ir.Module;
 import tomic.llvm.ir.type.Type;
 import tomic.llvm.ir.value.*;
@@ -169,6 +170,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
             generateLoadInst(inst);
         } else if (instruction instanceof StoreInst inst) {
             generateStoreInst(inst);
+        } else if (instruction instanceof GetElementPtrInst inst) {
+            generateGetElementPtrInst(inst);
         } else if (instruction instanceof InputInst inst) {
             generateInputInst(inst);
         } else if (instruction instanceof JumpInst inst) {
@@ -197,7 +200,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
         if (inst.getType().isIntegerTy()) {
             generateLoadWord(inst, inst.getAddress());
         } else if (inst.getType().isPointerTy()) {
-            generateLoadAddress(inst, inst.getAddress());
+            generateLoadWord(inst, inst.getAddress());
         } else {
             throw new UnsupportedOperationException("Unsupported load type: " + inst.getType());
         }
@@ -218,9 +221,11 @@ public class StandardMipsGenerator implements IMipsGenerator {
     }
 
     private void generateLoadWord(int register, Value address) {
+        var addStr = generateAddress(address);
+
         out.push("lw").pushSpace();
         out.pushRegister(register).pushComma().pushSpace();
-        generateAddress(address);
+        out.push(addStr);
         out.pushNewLine();
     }
 
@@ -234,10 +239,11 @@ public class StandardMipsGenerator implements IMipsGenerator {
      */
     private void generateLoadAddress(Value value, Value address) {
         var profile = memoryProfile.getRegisterProfile();
-        out.push("la").pushSpace();
         var op1 = profile.acquire(value);
-        out.pushRegister(op1.getId()).pushComma();
-        generateAddress(address);
+        var addStr = generateAddress(address);
+        out.push("la").pushSpace();
+        out.pushRegister(op1.getId()).pushComma().pushSpace();
+        out.push(addStr);
         out.pushNewLine();
     }
 
@@ -284,9 +290,10 @@ public class StandardMipsGenerator implements IMipsGenerator {
     }
 
     private void generateStoreWord(int register, Value address) {
+        var addStr = generateAddress(address);
         out.push("sw").pushSpace();
         out.pushRegister(register).pushComma().pushSpace();
-        generateAddress(address);
+        out.push(addStr);
         out.pushNewLine();
     }
 
@@ -475,7 +482,39 @@ public class StandardMipsGenerator implements IMipsGenerator {
     private void generateGetElementPtrInst(GetElementPtrInst inst) {
         // First dimension offset.
         var address = inst.getAddress();
-        inst.getAddress();
+        var type = address.getPointerType().getElementType();
+
+        generateLoadAddress(inst, address);
+        int dstReg = acquireRegisterId(inst);
+        for (var subscript : inst.getSubscripts()) {
+            // Calculate subscript offset.
+            int size = type.getBytes();
+            int offsetRegId = Registers.INVALID;
+            if (subscript instanceof ConstantData constant) {
+                var offset = constant.getValue() * size;
+                if (offset != 0) {
+                    generateLoadImmediate(Registers.K1, offset);
+                    offsetRegId = Registers.K1;
+                }
+            } else {
+                var reg = memoryProfile.getRegisterProfile().acquire(subscript);
+                if (size == 1) {
+                    offsetRegId = reg.getId();
+                } else {
+                    generateLoadImmediate(Registers.K1, size);
+                    printer.printBinaryOperator(out, "mul", Registers.K1, Registers.K1, reg.getId());
+                    offsetRegId = Registers.K1;
+                }
+            }
+
+            if (offsetRegId != Registers.INVALID) {
+                printer.printBinaryOperator(out, "sub", dstReg, dstReg, offsetRegId);
+            }
+
+            if (type.isArrayTy()) {
+                type = type.asArray().getElementType();
+            }
+        }
     }
 
 
@@ -500,20 +539,24 @@ public class StandardMipsGenerator implements IMipsGenerator {
         out.push("syscall").pushNewLine();
     }
 
-    private void generateAddress(Value address) {
+    private String generateAddress(Value address) {
+        var bufferedOut = new VerboseMipsWriter(new TwioBufferWriter());
         if (address instanceof GlobalVariable) {
-            out.push(address.getName());
+            bufferedOut.push(address.getName());
         } else if (address instanceof AllocaInst) {
             var add = memoryProfile.getStackProfile().getAddress(address);
-            out.push(String.valueOf(add.offset()));
-            out.push('(');
-            out.pushRegister(add.base()).push(')');
+            if (add.offset() != 0) {
+                bufferedOut.push(String.valueOf(add.offset()));
+            }
+            bufferedOut.push('(');
+            bufferedOut.pushRegister(add.base()).push(')');
         } else {
             var reg = memoryProfile.getRegisterProfile().acquire(address);
-            out.push('(');
-            out.pushRegister(reg.getId());
-            out.push(')');
+            bufferedOut.push('(');
+            bufferedOut.pushRegister(reg.getId());
+            bufferedOut.push(')');
         }
+        return bufferedOut.dumps();
     }
 
     private int acquireRegisterId(Value value) {

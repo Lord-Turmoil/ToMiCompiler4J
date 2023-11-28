@@ -11,6 +11,8 @@ import tomic.llvm.asm.impl.BaseAsmWriter;
 import tomic.llvm.mips.IMipsWriter;
 import tomic.llvm.mips.memory.Registers;
 
+import java.io.InputStreamReader;
+
 public class VerboseMipsWriter extends BaseAsmWriter implements IMipsWriter {
     private int currentIndent = 0;
     private boolean isNewLine = true;
@@ -81,5 +83,24 @@ public class VerboseMipsWriter extends BaseAsmWriter implements IMipsWriter {
     public IMipsWriter setIndent(int indent) {
         currentIndent = indent;
         return this;
+    }
+
+
+    @Override
+    public String dumps() {
+        var reader = new InputStreamReader(impl.yield());
+        var builder = new StringBuilder();
+        try {
+            while (true) {
+                int ch = reader.read();
+                if (ch == -1) {
+                    break;
+                }
+                builder.append((char) ch);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return builder.toString();
     }
 }
