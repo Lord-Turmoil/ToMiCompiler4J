@@ -28,9 +28,8 @@ public class DefaultRegisterProfile implements IRegisterProfile {
             Registers.S4, Registers.S5, Registers.S6, Registers.S7);
 
     private final Set<Integer> availableRegisters;
-    private final Set<Integer> activeRegisters;
     private final Map<Value, Register> valueRegisterMap;
-    private final Map<Integer, Register> registerMap;
+    private final Map<Integer, Register> activeRegisters;
 
     private final IStackProfile stackProfile;
     private final IMipsWriter out;
@@ -38,9 +37,8 @@ public class DefaultRegisterProfile implements IRegisterProfile {
 
     public DefaultRegisterProfile(IStackProfile stackProfile, IMipsWriter out) {
         this.availableRegisters = new HashSet<>(ALL_REGISTERS);
-        this.activeRegisters = new HashSet<>();
         this.valueRegisterMap = new HashMap<>();
-        this.registerMap = new HashMap<>();
+        this.activeRegisters = new HashMap<>();
 
         this.stackProfile = stackProfile;
         this.out = out;
@@ -69,6 +67,7 @@ public class DefaultRegisterProfile implements IRegisterProfile {
 
         // swapIn ensures that the register is active.
         swapIn(register);
+        register.setDirty(false);
 
         return register;
     }
@@ -89,8 +88,8 @@ public class DefaultRegisterProfile implements IRegisterProfile {
             swapOut(register);
         }
 
-        if (activeRegisters.contains(registerId)) {
-            swapOut(registerMap.get(registerId));
+        if (activeRegisters.containsKey(registerId)) {
+            swapOut(activeRegisters.get(registerId));
         }
 
         if (register == null) {
@@ -157,14 +156,20 @@ public class DefaultRegisterProfile implements IRegisterProfile {
     public void release(Value value) {
         var register = valueRegisterMap.getOrDefault(value, null);
         if (register != null) {
-            swapOut(register);
+            stackProfile.deallocate(value);
+            if (activeRegisters.containsKey(register.getId())) {
+                activeRegisters.remove(register.getId());
+                if (ALL_REGISTERS.contains(register.getId())) {
+                    availableRegisters.add(register.getId());
+                }
+            }
             valueRegisterMap.remove(value);
         }
     }
 
     @Override
     public void tick() {
-        registerMap.values().forEach(Register::tick);
+        activeRegisters.values().forEach(Register::tick);
     }
 
     private Register allocateRegister(Value value, boolean temporary) {
@@ -190,7 +195,7 @@ public class DefaultRegisterProfile implements IRegisterProfile {
         register.setHot();
 
         availableRegisters.remove(id);
-        registerMap.put(id, register);
+        activeRegisters.put(id, register);
 
         // TODO: load value from memory if exists in StackProfile
         var address = stackProfile.getAddress(register.getValue());
@@ -228,14 +233,14 @@ public class DefaultRegisterProfile implements IRegisterProfile {
             availableRegisters.add(register.getId());
         }
 
-        registerMap.remove(register.getId());
+        activeRegisters.remove(register.getId());
         register.deactivate();
     }
 
     private Register findSwapOutCandidate() {
         int minPriority = 0;
         int candidate = Registers.INVALID;
-        for (var entry : registerMap.entrySet()) {
+        for (var entry : activeRegisters.entrySet()) {
             if (!entry.getValue().isActive()) {
                 continue;
             }
@@ -251,6 +256,6 @@ public class DefaultRegisterProfile implements IRegisterProfile {
             throw new IllegalStateException("No available register to swap out.");
         }
 
-        return registerMap.get(candidate);
+        return activeRegisters.get(candidate);
     }
 }

@@ -18,6 +18,8 @@ public class BinaryInstruction extends Instruction {
         super(valueType, type);
         leftOperand = lhs;
         rightOperand = rhs;
+        addOperand(leftOperand);
+        addOperand(rightOperand);
     }
 
     public Value getLeftOperand() {

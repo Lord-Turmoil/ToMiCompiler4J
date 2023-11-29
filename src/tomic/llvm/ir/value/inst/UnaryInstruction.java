@@ -16,7 +16,7 @@ public class UnaryInstruction extends Instruction {
     protected UnaryInstruction(ValueTypes valueType, Type type, Value operand) {
         super(valueType, type);
         this.operand = operand;
-        this.addOperand(operand);
+        addOperand(operand);
     }
 
     public Value getOperand() {
