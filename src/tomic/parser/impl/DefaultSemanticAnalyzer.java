@@ -470,8 +470,8 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
         }
 
         var dimensions = new ArrayList<Integer>();
-        dimensions.add(0);
-        if (dim > 1) {
+        if (dim > 0) {
+            dimensions.add(0);
             var dimNodes = AstExt.getDirectChildNodes(node, SyntaxTypes.CONST_EXP);
             for (int i = 0; i < dim - 1; i++) {
                 int size = validateConstSubscription(dimNodes.get(i));
