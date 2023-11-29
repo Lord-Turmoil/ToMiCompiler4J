@@ -17,6 +17,7 @@ public class JumpInst extends Instruction {
 
     public JumpInst(BasicBlock target) {
         this(target, false);
+        addOperand(target);
     }
 
     public JumpInst(BasicBlock target, boolean isReturn) {

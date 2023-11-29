@@ -26,6 +26,12 @@ public class CallInst extends Instruction {
         super(ValueTypes.CallInstTy, function.getReturnType());
         this.function = function;
         this.parameters = new ArrayList<>(parameters);
+
+        /*
+         * 2023/11/29 TS: FIX
+         * Remember to add operands to the instruction...
+         */
+        addOperands(parameters);
     }
 
     public ArrayList<Value> getParameters() {
