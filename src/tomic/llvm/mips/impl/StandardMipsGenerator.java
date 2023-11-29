@@ -424,8 +424,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
 
         var reg = memoryProfile.getRegisterProfile().acquire(inst);
         String op = switch (inst.getOpType()) {
-            case Add -> "add";
-            case Sub -> "sub";
+            case Add -> "addu";
+            case Sub -> "subu";
             case Mul -> "mul";
             case Div -> "div";
             case Mod -> "rem";
@@ -438,8 +438,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
         int operandRegId = acquireRegisterId(inst.getOperand());
         var reg = memoryProfile.getRegisterProfile().acquire(inst);
         String op = switch (inst.getOpType()) {
-            case Pos -> "add";
-            case Neg -> "sub";
+            case Pos -> "addu";
+            case Neg -> "subu";
             case Not -> "xor";
         };
 
@@ -530,7 +530,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
             }
 
             if (offsetRegId != Registers.INVALID) {
-                printer.printBinaryOperator(out, "add", dstReg, dstReg, offsetRegId);
+                printer.printBinaryOperator(out, "addu", dstReg, dstReg, offsetRegId);
             }
 
             if (type.isArrayTy()) {
