@@ -17,6 +17,7 @@ import tomic.parser.table.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Stack;
 
 public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
@@ -228,30 +229,21 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
     private boolean exitConstDef(SyntaxNode node) {
         int dim = AstExt.countDirectTerminalNode(node, TokenTypes.LEFT_BRACKET);
         SyntaxNode constInitVal = AstExt.getChildNode(node, SyntaxTypes.CONST_INIT_VAL);
-
         SyntaxNode ident = AstExt.getDirectChildNode(node, SyntaxTypes.TERMINATOR);
         var builder = ConstantEntry.builder(ident.getToken().lexeme);
         var type = SymbolValueTypes.values()[AstExt.getInheritedIntAttribute(node, "type")];
-        if (dim == 0) {
-            builder.setType(type);
-        } else if (dim == 1) {
-            int size = validateConstSubscription(AstExt.getDirectChildNode(node, SyntaxTypes.CONST_EXP));
-            builder.setType(type).setSize(size);
-        } else if (dim == 2) {
-            int size1 = validateConstSubscription(AstExt.getDirectChildNode(node, SyntaxTypes.CONST_EXP));
-            int size2 = validateConstSubscription(AstExt.getDirectChildNode(node, SyntaxTypes.CONST_EXP, 2));
-            builder.setType(type).setSize(size1, size2);
-        } else {
-            log(LogLevel.ERROR, "Invalid dimension: " + dim);
-            logError(ErrorTypes.UNKNOWN, "Invalid dimension: " + dim);
+
+        var dimNodes = AstExt.getDirectChildNodes(node, SyntaxTypes.CONST_EXP);
+        for (int i = 0; i < dim; i++) {
+            int size = validateConstSubscription(dimNodes.get(i));
+            builder.addDimension(size);
         }
 
         if (constInitVal.getBoolAttribute("det")) {
-            if (dim == 0) {
-                builder.setValue(constInitVal.getIntAttribute("value"));
-            } else {
-                builder.setValues(AstExt.deserializeArray(constInitVal.getAttribute("values")));
-            }
+            builder.setValues(AstExt.deserializeArray(constInitVal.getAttribute("value")));
+        } else {
+            log(LogLevel.ERROR, "Non-deterministic constant initialization");
+            logError(ErrorTypes.UNKNOWN, "Non-deterministic constant initialization");
         }
 
         if (dim != constInitVal.getIntAttribute("dim")) {
@@ -299,20 +291,13 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
         int dim = childDim + 1;
         node.setIntAttribute("dim", dim);
         node.setIntAttribute("size", size);
-        ArrayList<ArrayList<Integer>> values = new ArrayList<>();
+        ArrayList<Integer> values = new ArrayList<>();
         if (det) {
             node.setBoolAttribute("det", true);
-            if (dim == 1) {
-                values.add(new ArrayList<>());
-                for (var child : children) {
-                    values.get(0).add(child.getIntAttribute("value"));
-                }
-            } else if (dim == 2) {
-                for (var child : children) {
-                    values.add(AstExt.deserializeArray(child.getAttribute("values")).get(0));
-                }
+            for (var child : children) {
+                values.addAll(AstExt.deserializeArray(child.getAttribute("value")));
             }
-            node.setAttribute("values", AstExt.serializeArray(values));
+            node.setAttribute("value", AstExt.serializeArray(values));
         } else {
             node.setBoolAttribute("det", false);
             log(LogLevel.ERROR, "Non-deterministic constant initialization");
@@ -345,23 +330,16 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
         VariableEntry entry;
         var type = SymbolValueTypes.values()[AstExt.getInheritedIntAttribute(node, "type")];
         var builder = VariableEntry.builder(ident.getToken().lexeme);
-        if (dim == 0) {
-            entry = builder.setType(type).build();
-        } else if (dim == 1) {
-            int size = validateConstSubscription(AstExt.getDirectChildNode(node, SyntaxTypes.CONST_EXP));
-            entry = builder.setType(type).setSizes(size).build();
-        } else if (dim == 2) {
-            int size1 = validateConstSubscription(AstExt.getDirectChildNode(node, SyntaxTypes.CONST_EXP));
-            int size2 = validateConstSubscription(AstExt.getDirectChildNode(node, SyntaxTypes.CONST_EXP, 2));
-            entry = builder.setType(type).setSizes(size1, size2).build();
-        } else {
-            log(LogLevel.ERROR, "Invalid dimension: " + dim);
-            logError(ErrorTypes.UNKNOWN, "Invalid dimension: " + dim);
-            return true;
+        var dimNodes = AstExt.getDirectChildNodes(node, SyntaxTypes.CONST_EXP);
+
+        builder.setType(type);
+        for (int i = 0; i < dim; i++) {
+            int size = validateConstSubscription(dimNodes.get(i));
+            builder.addDimension(size);
         }
 
         node.setIntAttribute("dim", dim);
-        addToSymbolTable(entry);
+        addToSymbolTable(builder.build());
 
         return true;
     }
@@ -444,8 +422,12 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
                 var paramType = SymbolValueTypes.values()[param.getIntAttribute("type")];
                 int paramDim = param.getIntAttribute("dim");
                 String paramName = param.getAttribute("name");
-                int paramSize = param.getIntAttribute("size");
-                builder.addParam(paramType, paramName, paramDim, paramSize);
+                if (paramDim == 0) {
+                    builder.addParam(paramType, paramName);
+                } else {
+                    var sizes = AstExt.deserializeArray(param.getAttribute("sizes"));
+                    builder.addParam(paramType, paramName, sizes);
+                }
             }
         }
 
@@ -487,18 +469,16 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
             node.setIntAttribute("type", SymbolValueTypes.INT.ordinal());
         }
 
-        if (dim == 2) {
-            var constExp = AstExt.getDirectChildNode(node, SyntaxTypes.CONST_EXP);
-            if (constExp.getBoolAttribute("det")) {
-                int size = constExp.getIntAttribute("value");
-                if (size < 0) {
-                    log(LogLevel.ERROR, "Negative array size");
-                    logError(ErrorTypes.UNKNOWN, "Negative array size");
-                } else {
-                    node.setIntAttribute("size", size);
-                }
+        var dimensions = new ArrayList<Integer>();
+        dimensions.add(0);
+        if (dim > 1) {
+            var dimNodes = AstExt.getDirectChildNodes(node, SyntaxTypes.CONST_EXP);
+            for (int i = 0; i < dim; i++) {
+                int size = validateConstSubscription(dimNodes.get(i));
+                dimensions.add(size);
             }
         }
+        node.setAttribute("sizes", AstExt.serializeArray(dimensions));
 
         return true;
     }
@@ -603,18 +583,14 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
         }
 
         int expectedDim = 0;
-        int size = 0;
+        ArrayList<Integer> sizes = new ArrayList<>();
         if (rawEntry instanceof ConstantEntry entry) {
             node.setBoolAttribute("const", true);
             expectedDim = entry.getDimension();
-            if (expectedDim == 2) {
-                size = entry.getSize(1);
-            }
+            sizes.addAll(entry.getSizes());
         } else if (rawEntry instanceof VariableEntry entry) {
             expectedDim = entry.getDimension();
-            if (expectedDim == 2) {
-                size = entry.getSize(1);
-            }
+            sizes.addAll(entry.getSizes());
         } else {
             log(LogLevel.ERROR, "Invalid symbol: " + name);
             logError(ErrorTypes.UNDEFINED_SYMBOL, "Invalid symbol: " + name);
@@ -635,9 +611,10 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
             node.setIntAttribute("type", SymbolValueTypes.INT.ordinal());
         } else {
             node.setIntAttribute("type", SymbolValueTypes.ARRAY.ordinal());
-            if (finalDim == 2) {
-                node.setIntAttribute("size", size);
-            }
+            ArrayList<Integer> finalSizes = new ArrayList<>();
+            finalSizes.add(0);
+            finalSizes.addAll(sizes.subList(expectedDim - finalDim + 1, expectedDim));
+            node.setAttribute("sizes", AstExt.serializeArray(finalSizes));
         }
 
         if (currentBlock.findLocalEntry(name) == null) {
@@ -974,18 +951,22 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
                 continue;
             }
             if (argType == SymbolValueTypes.ARRAY) {
-                if (args.get(i).getIntAttribute("dim") != param.dimension) {
-                    log(LogLevel.ERROR, "Argument dimension mismatch");
-                    logError(ErrorTypes.ARGUMENT_TYPE_MISMATCH, "Argument dimension mismatch");
+                var actualSize = AstExt.deserializeArray(args.get(i).getAttribute("sizes"));
+                var expectedSize = param.dimensions;
+                if (actualSize.size() != expectedSize.size()) {
+                    log(LogLevel.ERROR, "Argument size mismatch");
+                    logError(ErrorTypes.ARGUMENT_TYPE_MISMATCH, "Argument size mismatch");
                     continue;
                 }
-                if (param.dimension == 2) {
-                    if (args.get(i).getIntAttribute("size") != param.sizes[1]) {
+
+                for (int j = 0; j < actualSize.size(); j++) {
+                    if (!Objects.equals(actualSize.get(j), expectedSize.get(j))) {
                         log(LogLevel.ERROR, "Argument size mismatch");
                         logError(ErrorTypes.ARGUMENT_TYPE_MISMATCH, "Argument size mismatch");
                         continue;
                     }
                 }
+
                 if (AstExt.getSynthesizedBoolAttribute(args.get(i), "const")) {
                     log(LogLevel.ERROR, "Passing constant array");
                     logError(ErrorTypes.ARGUMENT_TYPE_MISMATCH, "Passing constant array");

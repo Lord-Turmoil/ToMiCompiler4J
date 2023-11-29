@@ -30,11 +30,9 @@ public class SymbolTableExt {
             int dim = param.getIntAttribute("dim");
             var type = SymbolValueTypes.values()[param.getIntAttribute("type")];
             var builder = VariableEntry.builder(param.getAttribute("name")).setType(type);
-
-            if (dim == 1) {
-                builder.setSizes(0);
-            } else if (dim == 2) {
-                builder.setSizes(0, param.getIntAttribute("size"));
+            var sizes = AstExt.deserializeArray(param.getAttribute("sizes"));
+            for (var size : sizes) {
+                builder.addDimension(size);
             }
             entries.add(new ParamEntryPair(param, builder.build()));
         }

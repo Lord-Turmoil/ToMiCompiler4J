@@ -361,40 +361,22 @@ public class AstExt {
     /******************************************************************/
     // Array serialization
     // The format is like this:
-    // 1,2,3;4,5,6;7,8,9;
-    public static String serializeArray(ArrayList<ArrayList<Integer>> array) {
+    // 1 2 3 4 5
+    public static String serializeArray(List<Integer> array) {
         StringBuilder builder = new StringBuilder();
-        for (var row : array) {
-            int i = 0;
-            for (var col : row) {
-                builder.append(col);
-                if (++i != row.size()) {
-                    builder.append(',');
-                }
+        for (int i = 0; i < array.size(); i++) {
+            builder.append(array.get(i));
+            if (i != array.size() - 1) {
+                builder.append(' ');
             }
-            builder.append(';');
         }
         return builder.toString();
     }
 
-    public static ArrayList<ArrayList<Integer>> deserializeArray(String str) {
-        ArrayList<ArrayList<Integer>> array = new ArrayList<>();
-        ArrayList<Integer> row = new ArrayList<>();
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < str.length(); i++) {
-            char ch = str.charAt(i);
-            if (ch != ',' && ch != ';') {
-                builder.append(ch);
-            } else {
-                if (ch == ',') {
-                    row.add(Integer.parseInt(builder.toString()));
-                } else {
-                    row.add(Integer.parseInt(builder.toString()));
-                    array.add(row);
-                    row = new ArrayList<>();
-                }
-                builder = new StringBuilder();
-            }
+    public static ArrayList<Integer> deserializeArray(String str) {
+        ArrayList<Integer> array = new ArrayList<>();
+        for (var token : str.split(" ")) {
+            array.add(Integer.parseInt(token));
         }
         return array;
     }
@@ -456,28 +438,26 @@ public class AstExt {
             return false;
         }
         ConstantEntry entry = (ConstantEntry) rawEntry;
-        int dim = entry.getDimension();
-        if (dim == 0) {
+        if (entry.isInteger()) {
             value[0] = entry.getValue();
             return true;
-        } else if (dim == 1) {
-            var index = getDirectChildNode(node, SyntaxTypes.EXP, 1);
-            if (index == null || !index.getBoolAttribute("det")) {
-                return false;
-            }
-            value[0] = entry.getValue(index.getIntAttribute("value"));
-            return true;
-        } else {
-            var index1 = getDirectChildNode(node, SyntaxTypes.EXP, 1);
-            var index2 = getDirectChildNode(node, SyntaxTypes.EXP, 2);
-            if (index1 == null || index2 == null) {
-                return false;
-            }
-            if (!index1.getBoolAttribute("det") || !index2.getBoolAttribute("det")) {
-                return false;
-            }
-            value[0] = entry.getValue(index1.getIntAttribute("value"), index2.getIntAttribute("value"));
-            return true;
         }
+
+        var indexNodes = getDirectChildNodes(node, SyntaxTypes.EXP);
+        if (indexNodes.size() != entry.getDimension()) {
+            return false;
+        }
+
+        int size = 1;
+        ArrayList<Integer> indices = new ArrayList<>();
+        for (int i = indexNodes.size() - 1; i >= 0; i--) {
+            if (!indexNodes.get(i).getBoolAttribute("det")) {
+                return false;
+            }
+            indices.add(indexNodes.get(i).getIntAttribute("value"));
+        }
+
+        value[0] = entry.getValue(indices);
+        return true;
     }
 }
