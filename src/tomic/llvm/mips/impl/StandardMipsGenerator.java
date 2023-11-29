@@ -187,8 +187,9 @@ public class StandardMipsGenerator implements IMipsGenerator {
         if (lastInst != null) {
             postGenerateInstruction(lastInst);
         }
-
         lastInst = instruction;
+
+        memoryProfile.tick();
     }
 
     private void generateAllocaInst(AllocaInst inst) {
