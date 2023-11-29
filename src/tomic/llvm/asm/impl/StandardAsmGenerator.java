@@ -496,15 +496,13 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
 
     private void parseAssignStmt(SyntaxNode node) {
         var lVal = AstExt.getDirectChildNode(node, SyntaxTypes.LVAL);
-//        var address = getLValValue(lVal);
-        var address = parseLVal(lVal);
-
         var exp = AstExt.getDirectChildNode(node, SyntaxTypes.EXP);
-        var value = parseExpression(exp);
 
+        var value = parseExpression(exp);
         if (value.getIntegerType().isBoolean()) {
             value = insertInstruction(ZExtInst.toInt32(value));
         }
+        var address = parseLVal(lVal);
 
         insertInstruction(new StoreInst(value, address));
     }

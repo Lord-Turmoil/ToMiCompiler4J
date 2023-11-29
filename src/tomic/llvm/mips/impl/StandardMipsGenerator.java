@@ -123,11 +123,9 @@ public class StandardMipsGenerator implements IMipsGenerator {
         // Store $ra register if not main.
         if (!function.getName().equals("main")) {
             out.pushIndent().pushIndent();
-            printer.printSaveStack(out, Registers.RA, 4);
+            printer.printSaveStack(out, Registers.RA, 0);
         }
-        for (var basicBlock : function.getBasicBlocks()) {
-            generateBasicBlock(basicBlock);
-        }
+        function.getBasicBlocks().forEach(this::generateBasicBlock);
     }
 
     /**
@@ -147,9 +145,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
         out.pushIndent();
         printer.printLabel(out, getLabelName(basicBlock));
         out.setIndent(2);
-        for (var instruction : basicBlock.getInstructions()) {
-            generateInstruction(instruction);
-        }
+        basicBlock.getInstructions().forEach(this::generateInstruction);
         out.setIndent(0);
     }
 
@@ -185,6 +181,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
         } else if (instruction instanceof ReturnInst inst) {
             generateReturnInst(inst);
         }
+        postGenerateInstruction(instruction);
         memoryProfile.tick();
     }
 
@@ -256,7 +253,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
      */
     private void generateLoadImmediate(Value value, int immediate) {
         var profile = memoryProfile.getRegisterProfile();
-        var reg = profile.acquire(value);
+        var reg = profile.acquire(value, true);
 
         out.push("li").pushSpace();
         out.pushRegister(reg.getId()).pushComma();
@@ -339,7 +336,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
             generateSysCall(SYS_EXIT2);
         } else {
             // Load $ra register if not main.
-            printer.printLoadStack(out, Registers.RA, 4);
+            printer.printLoadStack(out, Registers.RA, 0);
             printer.printReturn(out);
         }
     }
@@ -376,7 +373,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
             } else {
                 var reg = profile.acquire(param);
                 // Should reserve stack for $a0 ~ $a3
-                printer.printSaveStack(out, reg.getId(), stackOffset - i * 4);
+                printer.printSaveStack(out, reg.getId(), stackOffset - (i + 1) * 4);
             }
         }
 
@@ -479,6 +476,24 @@ public class StandardMipsGenerator implements IMipsGenerator {
      * ==================== Array Operations ====================
      */
 
+    /**
+     * Generate getelementptr instruction. <br />
+     * WARNING: The first element's offset is not zero! It is -4! <br />
+     * It is not easy to do this here, so we make allocation in stack
+     * start from -4, and then we can use the same algorithm to calculate
+     * the offset. :( <br />
+     * <p>
+     * |----|<- $sp         <br />
+     * | a2 |               <br />
+     * |----|               <br />
+     * | a1 |               <br />
+     * |----|               <br />
+     * | a0 |               <br />
+     * |----|<- offset      <br />
+     * | .. |
+     *
+     * @param inst
+     */
     private void generateGetElementPtrInst(GetElementPtrInst inst) {
         // First dimension offset.
         var address = inst.getAddress();
@@ -508,7 +523,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
             }
 
             if (offsetRegId != Registers.INVALID) {
-                printer.printBinaryOperator(out, "sub", dstReg, dstReg, offsetRegId);
+                printer.printBinaryOperator(out, "add", dstReg, dstReg, offsetRegId);
             }
 
             if (type.isArrayTy()) {
@@ -560,6 +575,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
     }
 
     private int acquireRegisterId(Value value) {
+        boolean temporary = value.getUsers().size() < 2;
         if (value instanceof ConstantData constant) {
             if (constant.isAllZero()) {
                 return Registers.ZERO;
@@ -570,8 +586,22 @@ public class StandardMipsGenerator implements IMipsGenerator {
             value = inst.getOperand();
         }
 
-        return memoryProfile.getRegisterProfile().acquire(value).getId();
+        return memoryProfile.getRegisterProfile().acquire(value, temporary).getId();
     }
+
+    /**
+     * Release unused registers.
+     *
+     * @param inst The instruction just generated.
+     */
+    private void postGenerateInstruction(Instruction inst) {
+        for (var operand : inst.getOperands()) {
+            if (operand.getUsers().size() < 2) {
+                memoryProfile.getRegisterProfile().release(operand);
+            }
+        }
+    }
+
 
     public static final int SYS_EXIT = 10;
     public static final int SYS_EXIT2 = 17;
