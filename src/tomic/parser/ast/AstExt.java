@@ -466,7 +466,7 @@ public class AstExt {
 
         int size = 1;
         ArrayList<Integer> indices = new ArrayList<>();
-        for (int i = indexNodes.size() - 1; i >= 0; i--) {
+        for (int i = 0; i < indexNodes.size(); i++) {
             if (!indexNodes.get(i).getBoolAttribute("det")) {
                 return false;
             }

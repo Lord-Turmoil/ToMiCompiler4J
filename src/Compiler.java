@@ -12,13 +12,9 @@ public class Compiler {
         Config config = new Config();
 
         // Override default config
-//        config.target = Config.TargetTypes.ASM;
-//        config.input = "testfile.txt";
-//        config.output = "mips.txt";
-        config.target = Config.TargetTypes.IR;
+        config.target = Config.TargetTypes.ASM;
         config.input = "testfile.txt";
-        config.emitLlvm = true;
-        config.output = "llvm_ir.txt";
+        config.output = "mips.txt";
 
         new ToMiCompiler().configure(config).compile();
     }
