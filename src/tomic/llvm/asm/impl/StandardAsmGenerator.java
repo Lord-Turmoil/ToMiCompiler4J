@@ -675,8 +675,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
             inst = insertInstruction(GetElementPtrInst.create(inst, indices));
         }
 
-        for (
-                int i = doublePointer ? 1 : 0; i < indexNodes.size(); i++) {
+        for (int i = doublePointer ? 1 : 0; i < indexNodes.size(); i++) {
             indices.clear();
             indices.add(new ConstantData(IntegerType.get(module.getContext(), 32), 0));
             indices.add(ensureInt32(parseExpression(indexNodes.get(i))));
@@ -684,7 +683,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         }
 
         int i = indexNodes.size();
-        while (i < dim) {
+        if (i < dim) {
             indices.clear();
             indices.add(new ConstantData(IntegerType.get(module.getContext(), 32), 0));
             indices.add(new ConstantData(IntegerType.get(module.getContext(), 32), 0));
@@ -745,7 +744,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         }
 
         int i = indexNodes.size();
-        while (i < dim) {
+        if (i < dim) {
             indices.clear();
             indices.add(new ConstantData(IntegerType.get(module.getContext(), 32), 0));
             indices.add(new ConstantData(IntegerType.get(module.getContext(), 32), 0));

@@ -12,6 +12,7 @@ import tomic.parser.table.SymbolTableBlock;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class AstExt {
     private AstExt() {}
@@ -291,6 +292,20 @@ public class AstExt {
         return false;
     }
 
+    public static String getSynthesizedAttribute(SyntaxNode node, String name) {
+        return getSynthesizedAttribute(node, name, null);
+    }
+
+    public static String getSynthesizedAttribute(SyntaxNode node, String name, String defaultValue) {
+        String[] value = { defaultValue };
+
+        if (querySynthesizedAttribute(node, name, value, defaultValue)) {
+            return value[0];
+        }
+
+        return defaultValue;
+    }
+
     public static int getSynthesizedIntAttribute(SyntaxNode node, String name) {
         return getSynthesizedIntAttribute(node, name, 0);
     }
@@ -375,8 +390,9 @@ public class AstExt {
 
     public static ArrayList<Integer> deserializeArray(String str) {
         ArrayList<Integer> array = new ArrayList<>();
-        for (var token : str.split(" ")) {
-            array.add(Integer.parseInt(token));
+        Scanner scanner = new Scanner(str);
+        while (scanner.hasNextInt()) {
+            array.add(scanner.nextInt());
         }
         return array;
     }

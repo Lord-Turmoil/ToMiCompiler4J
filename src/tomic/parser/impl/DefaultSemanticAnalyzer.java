@@ -473,7 +473,7 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
         dimensions.add(0);
         if (dim > 1) {
             var dimNodes = AstExt.getDirectChildNodes(node, SyntaxTypes.CONST_EXP);
-            for (int i = 0; i < dim; i++) {
+            for (int i = 0; i < dim - 1; i++) {
                 int size = validateConstSubscription(dimNodes.get(i));
                 dimensions.add(size);
             }
@@ -609,6 +609,7 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
         node.setIntAttribute("dim", finalDim);
         if (finalDim == 0) {
             node.setIntAttribute("type", SymbolValueTypes.INT.ordinal());
+            node.setAttribute("sizes", "");
         } else {
             node.setIntAttribute("type", SymbolValueTypes.ARRAY.ordinal());
             ArrayList<Integer> finalSizes = new ArrayList<>();
@@ -951,16 +952,18 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
                 continue;
             }
             if (argType == SymbolValueTypes.ARRAY) {
-                var actualSize = AstExt.deserializeArray(args.get(i).getAttribute("sizes"));
+                String sizesStr = AstExt.getSynthesizedAttribute(args.get(i), "sizes", "");
+                List<Integer> actualSizes = AstExt.deserializeArray(sizesStr);
+
                 var expectedSize = param.dimensions;
-                if (actualSize.size() != expectedSize.size()) {
+                if (actualSizes.size() != expectedSize.size()) {
                     log(LogLevel.ERROR, "Argument size mismatch");
                     logError(ErrorTypes.ARGUMENT_TYPE_MISMATCH, "Argument size mismatch");
                     continue;
                 }
 
-                for (int j = 0; j < actualSize.size(); j++) {
-                    if (!Objects.equals(actualSize.get(j), expectedSize.get(j))) {
+                for (int j = 0; j < actualSizes.size(); j++) {
+                    if (!Objects.equals(actualSizes.get(j), expectedSize.get(j))) {
                         log(LogLevel.ERROR, "Argument size mismatch");
                         logError(ErrorTypes.ARGUMENT_TYPE_MISMATCH, "Argument size mismatch");
                         continue;
