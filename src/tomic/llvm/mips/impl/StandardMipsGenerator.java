@@ -153,6 +153,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
         return ".L." + basicBlock.getParent().getName() + "." + basicBlock.getIndex();
     }
 
+    private Instruction lastInst;
+
     private void generateInstruction(Instruction instruction) {
         if (instruction instanceof BinaryOperator inst) {
             generateBinaryOperator(inst);
@@ -181,7 +183,12 @@ public class StandardMipsGenerator implements IMipsGenerator {
         } else if (instruction instanceof ReturnInst inst) {
             generateReturnInst(inst);
         }
-        postGenerateInstruction(instruction);
+
+        if (lastInst != null) {
+            postGenerateInstruction(lastInst);
+        }
+        lastInst = instruction;
+
         memoryProfile.tick();
     }
 
