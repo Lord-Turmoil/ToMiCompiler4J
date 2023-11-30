@@ -45,6 +45,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         }
 
         module.refactor();
+        module.trace();
 
         return module;
     }

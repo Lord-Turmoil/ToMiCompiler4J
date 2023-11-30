@@ -25,6 +25,13 @@ public class Module {
         this.name = name;
     }
 
+    public void trace() {
+        for (var function : functions) {
+            function.trace();
+        }
+        mainFunction.trace();
+    }
+
     public LlvmContext getContext() {
         return context;
     }

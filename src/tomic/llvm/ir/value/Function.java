@@ -53,6 +53,10 @@ public class Function extends GlobalValue {
         this(type, name, new ArrayList<>());
     }
 
+    public void trace() {
+        slotTracker.trace(this);
+    }
+
     public BasicBlock newBasicBlock() {
         var block = new BasicBlock(this);
         insertBasicBlock(block);
@@ -95,23 +99,14 @@ public class Function extends GlobalValue {
         return ((FunctionType) getType()).getReturnType();
     }
 
-    public SlotTracker getSlotTracker() {
-        return slotTracker;
-    }
-
     // A utility method to get the slot of a value in this function.
     public int slot(Value value) {
         return slotTracker.slot(value);
     }
 
-    public BasicBlock getReturnBlock() {
-        return returnBlock;
-    }
-
     @Override
     public IAsmWriter printAsm(IAsmWriter out) {
         var type = (FunctionType) getType();
-        getSlotTracker().trace(this);
 
         if (type.getReturnType().isVoidTy()) {
             var block = getBasicBlocks().getLast();
