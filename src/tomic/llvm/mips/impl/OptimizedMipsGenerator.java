@@ -619,7 +619,20 @@ public class OptimizedMipsGenerator implements IMipsGenerator {
      */
     private void postGenerateInstruction(Instruction inst) {
         for (var operand : inst.getOperands()) {
-            if (operand.getUsers().size() == 1) {
+            int blockIndex = -1;
+            int instIndex = -1;
+            for (var user : operand.getUsers()) {
+                if (user instanceof Instruction instruction) {
+                    int temp = instruction.getParent().getIndex();
+                    if (blockIndex == temp) {
+                        instIndex = Math.max(instIndex, instruction.getIndex());
+                    } else if (blockIndex < temp) {
+                        blockIndex = temp;
+                        instIndex = instruction.getIndex();
+                    }
+                }
+            }
+            if ((inst.getParent().getIndex() == blockIndex) && (inst.getIndex() == instIndex)) {
                 memoryProfile.getRegisterProfile().release(operand);
             }
         }
