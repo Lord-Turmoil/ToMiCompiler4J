@@ -31,6 +31,12 @@ public class JumpInst extends Instruction {
         return target;
     }
 
+    public void setTarget(BasicBlock target) {
+        removeOperand(this.target);
+        this.target = target;
+        addOperand(target);
+    }
+
 
     public boolean isReturn() {
         return isReturn;

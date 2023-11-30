@@ -26,8 +26,9 @@ public class PassManager {
     /**
      * Register a pass.
      */
-    void registerPass(ILlvmPass pass) {
+    public PassManager registerPass(ILlvmPass pass) {
         passes.add(pass);
+        return this;
     }
 
     /**
@@ -35,5 +36,6 @@ public class PassManager {
      */
     public void run(Module module) {
         passes.forEach(pass -> pass.run(module));
+        module.trace();
     }
 }

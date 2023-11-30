@@ -23,7 +23,10 @@ import tomic.llvm.mips.memory.impl.DefaultStackProfile;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StandardMipsGenerator implements IMipsGenerator {
+/**
+ * With some little optimizations.
+ */
+public class OptimizedMipsGenerator implements IMipsGenerator {
     private IMipsWriter out;
     private Module module;
     private MemoryProfile memoryProfile;
@@ -187,6 +190,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
         } else {
             throw new UnsupportedOperationException("Unsupported instruction: " + instruction);
         }
+
+        postGenerateInstruction(instruction);
 
         memoryProfile.tick();
     }
@@ -605,6 +610,19 @@ public class StandardMipsGenerator implements IMipsGenerator {
         }
 
         return memoryProfile.getRegisterProfile().acquire(value, temporary).getId();
+    }
+
+    /**
+     * Release unused registers.
+     *
+     * @param inst The instruction just generated.
+     */
+    private void postGenerateInstruction(Instruction inst) {
+        for (var operand : inst.getOperands()) {
+            if (operand.getUsers().size() == 1) {
+                memoryProfile.getRegisterProfile().release(operand);
+            }
+        }
     }
 
 

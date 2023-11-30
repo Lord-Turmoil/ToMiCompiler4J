@@ -35,8 +35,20 @@ public class BranchInst extends Instruction {
         return trueBlock;
     }
 
+    public void setTrueBlock(BasicBlock trueBlock) {
+        removeOperand(this.trueBlock);
+        this.trueBlock = trueBlock;
+        addOperand(trueBlock);
+    }
+
     public BasicBlock getFalseBlock() {
         return falseBlock;
+    }
+
+    public void setFalseBlock(BasicBlock falseBlock) {
+        removeOperand(this.falseBlock);
+        this.falseBlock = falseBlock;
+        addOperand(falseBlock);
     }
 
     /**

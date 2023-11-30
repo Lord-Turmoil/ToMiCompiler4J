@@ -20,6 +20,9 @@ public class User extends Value {
     }
 
     public void addOperand(Value operand) {
+        if (operands.contains(operand)) {
+            return;
+        }
         operands.add(operand);
         operand.addUser(this);
     }

@@ -20,6 +20,7 @@ import tomic.llvm.asm.IAsmPrinter;
 import tomic.llvm.asm.impl.StandardAsmGenerator;
 import tomic.llvm.asm.impl.VerboseAsmPrinter;
 import tomic.llvm.mips.IMipsGenerator;
+import tomic.llvm.mips.impl.OptimizedMipsGenerator;
 import tomic.llvm.mips.impl.StandardMipsGenerator;
 import tomic.llvm.pass.IPassProvider;
 import tomic.llvm.pass.PassManager;
@@ -128,8 +129,8 @@ public class ToMiCompiler {
 
         //////////////////// LLVM IR
         impl.configure(service -> {
-            service.addTransient(IAsmGenerator.class, StandardAsmGenerator.class);
             service.addTransient(IAsmPrinter.class, VerboseAsmPrinter.class);
+            service.addTransient(IAsmGenerator.class, StandardAsmGenerator.class);
             if (config.enableOptimization) {
                 service.addTransient(IPassProvider.class, OptimizationPassProvider.class);
             } else {
@@ -140,7 +141,11 @@ public class ToMiCompiler {
 
         //////////////////// MIPS
         impl.configure(service -> {
-            service.addTransient(IMipsGenerator.class, StandardMipsGenerator.class);
+            if (config.enableOptimization) {
+                service.addTransient(IMipsGenerator.class, OptimizedMipsGenerator.class);
+            } else {
+                service.addTransient(IMipsGenerator.class, StandardMipsGenerator.class);
+            }
         });
 
         return this;

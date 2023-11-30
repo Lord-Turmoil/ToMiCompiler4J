@@ -26,7 +26,7 @@ public class DefaultRegisterProfile implements IRegisterProfile {
             Registers.T4, Registers.T5, Registers.T6, Registers.T7,
             Registers.S0, Registers.S1, Registers.S2, Registers.S3,
             Registers.S4, Registers.S5, Registers.S6, Registers.S7,
-            Registers.K0);
+            Registers.T8);
 
     private final Set<Integer> availableRegisters;
     private final Map<Value, Register> valueRegisterMap;
@@ -177,6 +177,11 @@ public class DefaultRegisterProfile implements IRegisterProfile {
     @Override
     public void tick() {
         activeRegisters.values().forEach(Register::tick);
+    }
+
+    @Override
+    public int getReservedRegisterId() {
+        return Registers.T9;
     }
 
     private Register allocateRegister(Value value, boolean temporary) {
