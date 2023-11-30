@@ -153,8 +153,6 @@ public class StandardMipsGenerator implements IMipsGenerator {
         return ".L." + basicBlock.getParent().getName() + "." + basicBlock.getIndex();
     }
 
-    private Instruction lastInst;
-
     private void generateInstruction(Instruction instruction) {
         if (instruction instanceof BinaryOperator inst) {
             generateBinaryOperator(inst);
@@ -182,12 +180,13 @@ public class StandardMipsGenerator implements IMipsGenerator {
             generateCall(inst);
         } else if (instruction instanceof ReturnInst inst) {
             generateReturnInst(inst);
+        } else if (instruction instanceof ZExtInst inst) {
+            generateZEInst(inst);
+        } else {
+            throw new UnsupportedOperationException("Unsupported instruction: " + instruction);
         }
 
-        if (lastInst != null) {
-            postGenerateInstruction(lastInst);
-        }
-        lastInst = instruction;
+        postGenerateInstruction(instruction);
 
         memoryProfile.tick();
     }
@@ -243,12 +242,19 @@ public class StandardMipsGenerator implements IMipsGenerator {
      */
     private void generateLoadAddress(Value value, Value address) {
         var profile = memoryProfile.getRegisterProfile();
-        var op1 = profile.acquire(value);
-        var addStr = generateAddress(address);
-        out.push("la").pushSpace();
-        out.pushRegister(op1.getId()).pushComma().pushSpace();
-        out.push(addStr);
-        out.pushNewLine();
+        var reg = profile.acquire(value);
+        if (address instanceof GlobalVariable) {
+            out.push("la").pushSpace();
+            out.pushRegister(reg.getId()).pushComma();
+            out.pushNext(address.getName()).pushNewLine();
+        } else if (address instanceof AllocaInst) {
+            var add = memoryProfile.getStackProfile().getAddress(address);
+            generateLoadImmediate(Registers.K1, -add.offset());
+            printer.printBinaryOperator(out, "subu", reg.getId(), add.base(), Registers.K1);
+        } else {
+            var reg2 = memoryProfile.getRegisterProfile().acquire(address);
+            printer.printMove(out, reg.getId(), reg2.getId());
+        }
     }
 
     /**
@@ -388,13 +394,15 @@ public class StandardMipsGenerator implements IMipsGenerator {
         profile.yieldAll();
 
         // At last, expand the stack.
-        printer.printStackGrow(out, stackOffset);
+        generateLoadImmediate(Registers.K1, -stackOffset);
+        printer.printStackGrow(out, Registers.K1);
 
         // Call function
         printer.printCall(out, inst.getFunction().getName());
 
         // Restore stack
-        printer.printStackGrow(out, -stackOffset);
+        generateLoadImmediate(Registers.K1, -stackOffset);
+        printer.printStackShrink(out, Registers.K1);
 
         // Get return value.
         if (!inst.getType().isVoidTy()) {
@@ -539,6 +547,16 @@ public class StandardMipsGenerator implements IMipsGenerator {
         }
     }
 
+    private void generateZEInst(ZExtInst inst) {
+        var reg = memoryProfile.getRegisterProfile().acquire(inst);
+        var operand = inst.getOperand();
+        if (operand instanceof ConstantData constant) {
+            generateLoadImmediate(reg.getId(), constant.getValue());
+        } else {
+            var operandReg = memoryProfile.getRegisterProfile().acquire(operand);
+            printer.printMove(out, reg.getId(), operandReg.getId());
+        }
+    }
 
 
     /*
@@ -589,8 +607,6 @@ public class StandardMipsGenerator implements IMipsGenerator {
             } else {
                 generateLoadImmediate(constant, constant.getValue());
             }
-        } else if (value instanceof ZExtInst inst) {
-            value = inst.getOperand();
         }
 
         return memoryProfile.getRegisterProfile().acquire(value, temporary).getId();
@@ -603,7 +619,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
      */
     private void postGenerateInstruction(Instruction inst) {
         for (var operand : inst.getOperands()) {
-            if (operand.getUsers().size() < 2) {
+            if (operand.getUsers().size() == 1) {
                 memoryProfile.getRegisterProfile().release(operand);
             }
         }

@@ -25,7 +25,8 @@ public class DefaultRegisterProfile implements IRegisterProfile {
             Registers.T0, Registers.T1, Registers.T2, Registers.T3,
             Registers.T4, Registers.T5, Registers.T6, Registers.T7,
             Registers.S0, Registers.S1, Registers.S2, Registers.S3,
-            Registers.S4, Registers.S5, Registers.S6, Registers.S7);
+            Registers.S4, Registers.S5, Registers.S6, Registers.S7,
+            Registers.K0);
 
     private final Set<Integer> availableRegisters;
     private final Map<Value, Register> valueRegisterMap;

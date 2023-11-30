@@ -19,7 +19,9 @@ public interface IMipsPrinter {
 
     void printReturn(IMipsWriter out);
 
-    void printStackGrow(IMipsWriter out, int size);
+    void printStackGrow(IMipsWriter out, int register);
+    void printStackShrink(IMipsWriter out, int register);
+
 
     void printSaveStack(IMipsWriter out, int src, int offset);
 
