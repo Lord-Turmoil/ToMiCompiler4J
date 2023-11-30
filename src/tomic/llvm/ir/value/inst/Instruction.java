@@ -14,7 +14,7 @@ import tomic.llvm.ir.value.Function;
 import tomic.llvm.ir.value.User;
 import tomic.llvm.ir.value.ValueTypes;
 
-public class Instruction extends User {
+public abstract class Instruction extends User {
     private BasicBlock parent;
 
     protected Instruction(ValueTypes valueType, Type type) {

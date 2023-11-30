@@ -55,6 +55,21 @@ public class CallInst extends Instruction {
     }
 
     @Override
+    public void replaceOperand(Value oldOperand, Value newOperand) {
+        super.replaceOperand(oldOperand, newOperand);
+        if (function == oldOperand) {
+            function = (Function) newOperand;
+        } else {
+            // WARNING! Must preserve the order!
+            int index = parameters.indexOf(oldOperand);
+            if (index != -1) {
+                parameters.remove(index);
+                parameters.add(index, newOperand);
+            }
+        }
+    }
+
+    @Override
     public IAsmWriter printAsm(IAsmWriter out) {
         if (!getType().isVoidTy()) {
             printName(out).pushNext('=').pushSpace();
@@ -64,11 +79,13 @@ public class CallInst extends Instruction {
         getFunction().getReturnType().printAsm(out).pushSpace();
 
         getFunction().printName(out).push('(');
+        boolean first = true;
         for (var param : parameters) {
-            if (param != parameters.get(0)) {
+            if (!first) {
                 out.push(", ");
             }
             param.printUse(out);
+            first = false;
         }
         return out.push(')').pushNewLine();
     }

@@ -145,6 +145,7 @@ public class ToMiCompiler {
                 service.addTransient(IMipsGenerator.class, OptimizedMipsGenerator.class);
             } else {
                 service.addTransient(IMipsGenerator.class, StandardMipsGenerator.class);
+//                service.addTransient(IMipsGenerator.class, OptimizedMipsGenerator.class);
             }
         });
 

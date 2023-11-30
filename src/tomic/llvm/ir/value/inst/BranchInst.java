@@ -51,6 +51,20 @@ public class BranchInst extends Instruction {
         addOperand(falseBlock);
     }
 
+    @Override
+    public void replaceOperand(Value oldOperand, Value newOperand) {
+        super.replaceOperand(oldOperand, newOperand);
+        if (condition == oldOperand) {
+            condition = newOperand;
+        }
+        if (trueBlock == oldOperand) {
+            trueBlock = (BasicBlock) newOperand;
+        }
+        if (falseBlock == oldOperand) {
+            falseBlock = (BasicBlock) newOperand;
+        }
+    }
+
     /**
      * br i1 %8, label %19, label %9
      */

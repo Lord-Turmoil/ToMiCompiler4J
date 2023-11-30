@@ -125,11 +125,13 @@ public class Function extends GlobalValue {
         type.getReturnType().printAsm(out).pushSpace();
 
         printName(out).push('(');
+        boolean first = true;
         for (var arg : getArguments()) {
-            if (arg != getArguments().get(0)) {
+            if (!first) {
                 out.push(", ");
             }
             arg.printAsm(out);
+            first = false;
         }
         out.push(')');
 

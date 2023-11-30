@@ -8,6 +8,7 @@ package tomic.llvm.ir.value.inst;
 
 import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.value.BasicBlock;
+import tomic.llvm.ir.value.Value;
 import tomic.llvm.ir.value.ValueTypes;
 
 // Just BranchInst without condition.
@@ -40,6 +41,14 @@ public class JumpInst extends Instruction {
 
     public boolean isReturn() {
         return isReturn;
+    }
+
+    @Override
+    public void replaceOperand(Value oldOperand, Value newOperand) {
+        super.replaceOperand(oldOperand, newOperand);
+        if (target == oldOperand) {
+            target = (BasicBlock) newOperand;
+        }
     }
 
     /**
