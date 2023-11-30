@@ -37,6 +37,10 @@ public class Instruction extends User {
         return getParentFunction().getParent();
     }
 
+    public int getIndex() {
+        return getParent().getInstructions().indexOf(this);
+    }
+
     @Override
     public IAsmWriter printName(IAsmWriter out) {
         return out.push('%').push(String.valueOf(getParentFunction().slot(this)));
