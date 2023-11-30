@@ -64,8 +64,6 @@ public class RemoveDuplicatedLoadPass implements ILlvmPass {
         ArrayList<Instruction> instructions = new ArrayList<>(block.getInstructions());
         int size = instructions.size();
         LoadInst source = (LoadInst) instructions.get(index);
-        int count = 0;
-        int threashold = 16;
 
         for (int i = index + 1; i < size; i++) {
             var instruction = instructions.get(i);
@@ -85,14 +83,6 @@ public class RemoveDuplicatedLoadPass implements ILlvmPass {
             } else if (instruction instanceof CallInst) {
                 // Also sink.
                 break;
-            }
-
-            // Don't go too far, as saving value to stack is worse.
-            if (!instruction.getType().isVoidTy()) {
-                count++;
-                if (count > threashold) {
-                    break;
-                }
             }
         }
     }

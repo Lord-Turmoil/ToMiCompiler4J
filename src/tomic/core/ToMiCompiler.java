@@ -144,8 +144,7 @@ public class ToMiCompiler {
             if (config.enableOptimization) {
                 service.addTransient(IMipsGenerator.class, OptimizedMipsGenerator.class);
             } else {
-//                service.addTransient(IMipsGenerator.class, StandardMipsGenerator.class);
-                service.addTransient(IMipsGenerator.class, OptimizedMipsGenerator.class);
+                service.addTransient(IMipsGenerator.class, StandardMipsGenerator.class);
             }
         });
 

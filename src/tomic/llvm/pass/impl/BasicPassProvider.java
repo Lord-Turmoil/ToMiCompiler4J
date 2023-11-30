@@ -16,6 +16,5 @@ import tomic.llvm.pass.PassManager;
 public class BasicPassProvider implements IPassProvider {
     @Override
     public void registerPasses(PassManager manager) {
-        manager.registerPass(new RemoveEmptyBasicBlocksPass());
     }
 }
