@@ -23,8 +23,11 @@ public class RemoveEmptyBasicBlocksPass implements ILlvmPass {
     @Override
     public void run(Module module) {
         for (var function : module.getAllFunctions()) {
-            while (cleanUpFunction(function)) {
-                continue;
+            if (cleanUpFunction(function)) {
+                while (cleanUpFunction(function)) {
+                    continue;
+                }
+                replaceBranchWithSameTarget(function);
             }
         }
     }
@@ -94,6 +97,19 @@ public class RemoveEmptyBasicBlocksPass implements ILlvmPass {
 
         for (var block : blocksToRemove) {
             function.removeBasicBlock(block.from());
+        }
+    }
+
+    private void replaceBranchWithSameTarget(Function function) {
+        for (var block : function.getBasicBlocks()) {
+            var instruction = block.getInstructions().getLast();
+            if (instruction instanceof BranchInst inst) {
+                if (inst.getTrueBlock() == inst.getFalseBlock()) {
+                    var target = inst.getTrueBlock();
+                    block.removeInstruction(inst);
+                    block.insertInstruction(new JumpInst(target));
+                }
+            }
         }
     }
 

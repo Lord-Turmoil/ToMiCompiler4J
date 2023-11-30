@@ -1,8 +1,9 @@
 int main()
 {
-    if (1) {
-        if (1) {
-            if (1) {
+    int a = 1;
+    if (a) {
+        if (a) {
+            if (a) {
             }
         }
     }
