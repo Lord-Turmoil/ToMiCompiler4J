@@ -141,8 +141,14 @@ public class DefaultRegisterProfile implements IRegisterProfile {
 
     @Override
     public void yieldAll() {
+        var prev = stackProfile.getTotalOffset();
         for (var value : valueRegisterMap.keySet()) {
             this.yield(value);
+        }
+        var next = stackProfile.getTotalOffset();
+
+        if (prev != next) {
+            throw new IllegalStateException("Stack profile is not balanced.");
         }
     }
 

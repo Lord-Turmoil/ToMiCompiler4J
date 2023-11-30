@@ -380,13 +380,13 @@ public class StandardMipsGenerator implements IMipsGenerator {
                 if (param instanceof ConstantData constant) {
                     generateLoadImmediate(Registers.A0 + i, constant.getValue());
                 } else {
-                    var reg = profile.acquire(param);
-                    printer.printMove(out, Registers.A0 + i, reg.getId());
+                    var reg = acquireRegisterId(param);
+                    printer.printMove(out, Registers.A0 + i, reg);
                 }
             } else {
-                var reg = profile.acquire(param);
+                var reg = acquireRegisterId(param);
                 // Should reserve stack for $a0 ~ $a3
-                printer.printSaveStack(out, reg.getId(), stackOffset - (i + 1) * 4);
+                printer.printSaveStack(out, reg, stackOffset - (i + 1) * 4);
             }
         }
 
@@ -493,11 +493,6 @@ public class StandardMipsGenerator implements IMipsGenerator {
 
     /**
      * Generate getelementptr instruction. <br />
-     * WARNING: The first element's offset is not zero! It is -4! <br />
-     * It is not easy to do this here, so we make allocation in stack
-     * start from -4, and then we can use the same algorithm to calculate
-     * the offset. :( <br />
-     * <p>
      * |----|<- $sp         <br />
      * | a2 |               <br />
      * |----|               <br />
