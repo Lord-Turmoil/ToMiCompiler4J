@@ -14,6 +14,7 @@ import tomic.llvm.asm.IAsmGenerator;
 import tomic.llvm.asm.IAsmPrinter;
 import tomic.llvm.ir.Module;
 import tomic.llvm.mips.IMipsGenerator;
+import tomic.llvm.pass.PassManager;
 import tomic.logger.debug.IDebugLogger;
 import tomic.logger.debug.LogLevel;
 import tomic.logger.error.IErrorLogger;
@@ -194,6 +195,14 @@ class ToMiCompilerImpl {
             return false;
         }
 
+
+        // Run passes.
+        var manager = container.resolve(PassManager.class);
+        if (manager != null) {
+            manager.run(module);
+        }
+
+        // Output LLVM IR.
         if (config.emitLlvm) {
             outputLlvmAsm(config.llvmOutput, module);
         }
