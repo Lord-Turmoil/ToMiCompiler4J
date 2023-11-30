@@ -8,10 +8,7 @@ package tomic.llvm.pass.impl;
 
 import tomic.llvm.ir.Module;
 import tomic.llvm.ir.value.BasicBlock;
-import tomic.llvm.ir.value.inst.AllocaInst;
-import tomic.llvm.ir.value.inst.Instruction;
-import tomic.llvm.ir.value.inst.LoadInst;
-import tomic.llvm.ir.value.inst.StoreInst;
+import tomic.llvm.ir.value.inst.*;
 import tomic.llvm.pass.ILlvmPass;
 
 import java.util.ArrayList;
@@ -67,6 +64,8 @@ public class RemoveDuplicatedLoadPass implements ILlvmPass {
         ArrayList<Instruction> instructions = new ArrayList<>(block.getInstructions());
         int size = instructions.size();
         LoadInst source = (LoadInst) instructions.get(index);
+        int count = 0;
+        int threashold = 16;
 
         for (int i = index + 1; i < size; i++) {
             var instruction = instructions.get(i);
@@ -81,6 +80,17 @@ public class RemoveDuplicatedLoadPass implements ILlvmPass {
             } else if (instruction instanceof StoreInst inst) {
                 if (inst.getRightOperand() == source.getOperand()) {
                     // Sink found!
+                    break;
+                }
+            } else if (instruction instanceof CallInst) {
+                // Also sink.
+                break;
+            }
+
+            // Don't go too far, as saving value to stack is worse.
+            if (!instruction.getType().isVoidTy()) {
+                count++;
+                if (count > threashold) {
                     break;
                 }
             }
