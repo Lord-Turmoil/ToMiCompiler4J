@@ -19,7 +19,7 @@ import java.util.Set;
  * Remove duplicated load instructions.
  * This should be restricted in one basic block.
  */
-public class RemoveDuplicatedLoadPass implements ILlvmPass {
+public class RemoveRedundantLoadPass implements ILlvmPass {
     @Override
     public void run(Module module) {
         for (var function : module.getAllFunctions()) {

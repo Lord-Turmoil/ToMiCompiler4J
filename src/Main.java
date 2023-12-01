@@ -29,7 +29,7 @@ public class Main {
         boolean error = false;
         int argCnt = 0;
 
-        while (parser.getopt(argc, argv, "o:t:l:e:va:ci:hO") != 0) {
+        while (parser.getopt(argc, argv, "o:t:l:e:va:ci:hO:") != 0) {
             if (parser.opterr != 0) {
                 System.err.println(parser.optmsg);
                 parser.reset();
@@ -47,7 +47,7 @@ public class Main {
                 case 'c' -> handleLongOpt("complete-ast", parser.optarg, config);
                 case 'i' -> handleLongOpt("emit-llvm", parser.optarg, config);
                 case 'h' -> handleLongOpt("help", parser.optarg, config);
-                case 'O' -> config.enableOptimization = true;
+                case 'O' -> config.optimizationLevel = Integer.parseInt(parser.optarg);
                 case '@' -> {
                     if (!handleLongOpt(parser.longopt, parser.optarg, config)) {
                         error = true;
