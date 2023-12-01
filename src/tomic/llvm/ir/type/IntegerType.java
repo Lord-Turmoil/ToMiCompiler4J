@@ -55,6 +55,6 @@ public class IntegerType extends Type {
 
     @Override
     public int getBytes() {
-        return bitWidth / 8;
+        return Math.max(1, bitWidth / 8);
     }
 }

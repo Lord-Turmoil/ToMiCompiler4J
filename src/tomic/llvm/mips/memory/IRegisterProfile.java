@@ -25,6 +25,18 @@ public interface IRegisterProfile {
     Register acquire(Value value, boolean temporary);
 
     /**
+     * Acquire a specific register for the given value.
+     * Use with caution as it may cause register conflict.
+     *
+     * @param value    The value asking for a register.
+     * @param registerId The register to be allocated.
+     * @return The register allocated for the value.
+     */
+    Register acquire(Value value, int registerId);
+
+    Register acquire(Value value, int registerId, boolean temporary);
+
+    /**
      * Force retain a register so that it won't be swapped out
      * in the current instruction. If the register is not in
      * register, it will be loaded from memory.
@@ -68,4 +80,6 @@ public interface IRegisterProfile {
      * of all registers.
      */
     void tick();
+
+    int getReservedRegisterId();
 }

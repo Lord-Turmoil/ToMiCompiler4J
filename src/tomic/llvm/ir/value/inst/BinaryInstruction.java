@@ -18,6 +18,8 @@ public class BinaryInstruction extends Instruction {
         super(valueType, type);
         leftOperand = lhs;
         rightOperand = rhs;
+        addOperand(leftOperand);
+        addOperand(rightOperand);
     }
 
     public Value getLeftOperand() {
@@ -26,5 +28,19 @@ public class BinaryInstruction extends Instruction {
 
     public Value getRightOperand() {
         return rightOperand;
+    }
+
+    @Override
+    public boolean replaceOperand(Value oldOperand, Value newOperand) {
+        if (super.replaceOperand(oldOperand, newOperand)) {
+            if (leftOperand == oldOperand) {
+                leftOperand = newOperand;
+            }
+            if (rightOperand == oldOperand) {
+                rightOperand = newOperand;
+            }
+            return true;
+        }
+        return false;
     }
 }

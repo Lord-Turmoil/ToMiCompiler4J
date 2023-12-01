@@ -26,6 +26,12 @@ public class CallInst extends Instruction {
         super(ValueTypes.CallInstTy, function.getReturnType());
         this.function = function;
         this.parameters = new ArrayList<>(parameters);
+
+        /*
+         * 2023/11/29 TS: FIX
+         * Remember to add operands to the instruction...
+         */
+        addOperands(parameters);
     }
 
     public ArrayList<Value> getParameters() {
@@ -49,6 +55,27 @@ public class CallInst extends Instruction {
     }
 
     @Override
+    public boolean replaceOperand(Value oldOperand, Value newOperand) {
+        if (!super.replaceOperand(oldOperand, newOperand)) {
+            return false;
+        }
+
+        if (function == oldOperand) {
+            function = (Function) newOperand;
+        } else {
+            // WARNING! Must preserve the order! And find all the occurrences!
+            int index = parameters.indexOf(oldOperand);
+            while (index != -1) {
+                parameters.remove(index);
+                parameters.add(index, newOperand);
+                index = parameters.indexOf(oldOperand);
+            }
+        }
+
+        return true;
+    }
+
+    @Override
     public IAsmWriter printAsm(IAsmWriter out) {
         if (!getType().isVoidTy()) {
             printName(out).pushNext('=').pushSpace();
@@ -58,11 +85,13 @@ public class CallInst extends Instruction {
         getFunction().getReturnType().printAsm(out).pushSpace();
 
         getFunction().printName(out).push('(');
+        boolean first = true;
         for (var param : parameters) {
-            if (param != parameters.get(0)) {
+            if (!first) {
                 out.push(", ");
             }
             param.printUse(out);
+            first = false;
         }
         return out.push(')').pushNewLine();
     }

@@ -14,6 +14,7 @@ import tomic.llvm.asm.IAsmGenerator;
 import tomic.llvm.asm.IAsmPrinter;
 import tomic.llvm.ir.Module;
 import tomic.llvm.mips.IMipsGenerator;
+import tomic.llvm.pass.PassManager;
 import tomic.logger.debug.IDebugLogger;
 import tomic.logger.debug.LogLevel;
 import tomic.logger.error.IErrorLogger;
@@ -53,6 +54,10 @@ class ToMiCompilerImpl {
         ITwioWriter[] writer = { null };
         if (!preprocess(writer)) {
             logErrors();
+            return;
+        }
+
+        if (config.target == Config.TargetTypes.Preprocess) {
             return;
         }
 
@@ -132,6 +137,8 @@ class ToMiCompilerImpl {
 
         if (logger.count(LogLevel.ERROR) > 0) {
             logger.error("Syntactic parse completed with errors");
+        } else {
+            logger.debug("Syntactic parse completed");
         }
 
         if (config.target == Config.TargetTypes.Syntactic) {
@@ -165,6 +172,8 @@ class ToMiCompilerImpl {
         if (table == null || errorLogger.count() > 0) {
             logger.fatal("Semantic analyzing failed, compilation aborted");
             return false;
+        } else {
+            logger.debug("Semantic analyzing completed");
         }
 
         return true;
@@ -194,11 +203,21 @@ class ToMiCompilerImpl {
             return false;
         }
 
+
+        // Run passes.
+        var manager = container.resolve(PassManager.class);
+        if (manager != null) {
+            manager.run(module);
+        }
+
+        // Output LLVM IR.
         if (config.emitLlvm) {
             outputLlvmAsm(config.llvmOutput, module);
         }
 
         outModule[0] = module;
+
+        logger.debug("LLVM IR generated");
 
         return true;
     }

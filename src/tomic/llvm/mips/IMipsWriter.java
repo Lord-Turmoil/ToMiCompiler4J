@@ -18,4 +18,6 @@ public interface IMipsWriter extends IAsmWriter {
     IMipsWriter pushRegister(int reg);
 
     IMipsWriter setIndent(int indent);
+
+    String dumps();
 }

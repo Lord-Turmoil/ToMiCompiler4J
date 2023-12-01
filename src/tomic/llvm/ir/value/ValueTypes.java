@@ -7,6 +7,9 @@
 package tomic.llvm.ir.value;
 
 public enum ValueTypes {
+    // === Temp ===
+    TempTy,
+
     // === Value ===
     ArgumentTy,
     BasicBlockTy,

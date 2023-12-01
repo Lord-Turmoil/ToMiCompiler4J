@@ -16,10 +16,21 @@ public class UnaryInstruction extends Instruction {
     protected UnaryInstruction(ValueTypes valueType, Type type, Value operand) {
         super(valueType, type);
         this.operand = operand;
-        this.addOperand(operand);
+        addOperand(operand);
     }
 
     public Value getOperand() {
         return operand;
+    }
+
+    @Override
+    public boolean replaceOperand(Value oldOperand, Value newOperand) {
+        if (super.replaceOperand(oldOperand, newOperand)) {
+        if (operand == oldOperand) {
+            operand = newOperand;
+        }
+            return true;
+        }
+        return false;
     }
 }

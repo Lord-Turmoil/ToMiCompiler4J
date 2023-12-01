@@ -10,7 +10,7 @@ import lib.twio.ITwioWriter;
 import tomic.llvm.asm.IAsmWriter;
 
 public class BaseAsmWriter implements IAsmWriter {
-    private final ITwioWriter impl;
+    protected final ITwioWriter impl;
     private final char commentCharacter;
     private final int indentSize;
 

@@ -7,6 +7,7 @@
 package tomic.llvm.mips.impl;
 
 import lib.twio.ITwioWriter;
+import lib.twio.TwioBufferWriter;
 import tomic.llvm.ir.Module;
 import tomic.llvm.ir.type.Type;
 import tomic.llvm.ir.value.*;
@@ -27,6 +28,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
     private Module module;
     private MemoryProfile memoryProfile;
     private final IMipsPrinter printer = new StandardMipsPrinter();
+    private int reservedRegisterId;
 
     @Override
     public void generate(Module module, ITwioWriter output) {
@@ -122,11 +124,9 @@ public class StandardMipsGenerator implements IMipsGenerator {
         // Store $ra register if not main.
         if (!function.getName().equals("main")) {
             out.pushIndent().pushIndent();
-            printer.printSaveStack(out, Registers.RA, 4);
+            printer.printSaveStack(out, Registers.RA, 0);
         }
-        for (var basicBlock : function.getBasicBlocks()) {
-            generateBasicBlock(basicBlock);
-        }
+        function.getBasicBlocks().forEach(this::generateBasicBlock);
     }
 
     /**
@@ -136,6 +136,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
         var stackProfile = new DefaultStackProfile();
         var registerProfile = new DefaultRegisterProfile(stackProfile, out);
         memoryProfile = new MemoryProfile(registerProfile, stackProfile);
+        reservedRegisterId = registerProfile.getReservedRegisterId();
     }
 
     private void generateBasicBlock(BasicBlock basicBlock) {
@@ -146,9 +147,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
         out.pushIndent();
         printer.printLabel(out, getLabelName(basicBlock));
         out.setIndent(2);
-        for (var instruction : basicBlock.getInstructions()) {
-            generateInstruction(instruction);
-        }
+        basicBlock.getInstructions().forEach(this::generateInstruction);
         out.setIndent(0);
     }
 
@@ -169,6 +168,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
             generateLoadInst(inst);
         } else if (instruction instanceof StoreInst inst) {
             generateStoreInst(inst);
+        } else if (instruction instanceof GetElementPtrInst inst) {
+            generateGetElementPtrInst(inst);
         } else if (instruction instanceof InputInst inst) {
             generateInputInst(inst);
         } else if (instruction instanceof JumpInst inst) {
@@ -181,7 +182,12 @@ public class StandardMipsGenerator implements IMipsGenerator {
             generateCall(inst);
         } else if (instruction instanceof ReturnInst inst) {
             generateReturnInst(inst);
+        } else if (instruction instanceof ZExtInst inst) {
+            generateZEInst(inst);
+        } else {
+            throw new UnsupportedOperationException("Unsupported instruction: " + instruction);
         }
+
         memoryProfile.tick();
     }
 
@@ -197,7 +203,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
         if (inst.getType().isIntegerTy()) {
             generateLoadWord(inst, inst.getAddress());
         } else if (inst.getType().isPointerTy()) {
-            generateLoadAddress(inst, inst.getAddress());
+            generateLoadWord(inst, inst.getAddress());
         } else {
             throw new UnsupportedOperationException("Unsupported load type: " + inst.getType());
         }
@@ -218,9 +224,11 @@ public class StandardMipsGenerator implements IMipsGenerator {
     }
 
     private void generateLoadWord(int register, Value address) {
+        var addStr = generateAddress(address);
+
         out.push("lw").pushSpace();
         out.pushRegister(register).pushComma().pushSpace();
-        generateAddress(address);
+        out.push(addStr);
         out.pushNewLine();
     }
 
@@ -234,11 +242,19 @@ public class StandardMipsGenerator implements IMipsGenerator {
      */
     private void generateLoadAddress(Value value, Value address) {
         var profile = memoryProfile.getRegisterProfile();
-        out.push("la").pushSpace();
-        var op1 = profile.acquire(value);
-        out.pushRegister(op1.getId()).pushComma();
-        generateAddress(address);
-        out.pushNewLine();
+        var reg = profile.acquire(value);
+        if (address instanceof GlobalVariable) {
+            out.push("la").pushSpace();
+            out.pushRegister(reg.getId()).pushComma();
+            out.pushNext(address.getName()).pushNewLine();
+        } else if (address instanceof AllocaInst) {
+            var add = memoryProfile.getStackProfile().getAddress(address);
+            generateLoadImmediate(reservedRegisterId, -add.offset());
+            printer.printBinaryOperator(out, "subu", reg.getId(), add.base(), reservedRegisterId);
+        } else {
+            var reg2 = memoryProfile.getRegisterProfile().acquire(address);
+            printer.printMove(out, reg.getId(), reg2.getId());
+        }
     }
 
     /**
@@ -250,7 +266,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
      */
     private void generateLoadImmediate(Value value, int immediate) {
         var profile = memoryProfile.getRegisterProfile();
-        var reg = profile.acquire(value);
+        var reg = profile.acquire(value, true);
 
         out.push("li").pushSpace();
         out.pushRegister(reg.getId()).pushComma();
@@ -284,9 +300,10 @@ public class StandardMipsGenerator implements IMipsGenerator {
     }
 
     private void generateStoreWord(int register, Value address) {
+        var addStr = generateAddress(address);
         out.push("sw").pushSpace();
         out.pushRegister(register).pushComma().pushSpace();
-        generateAddress(address);
+        out.push(addStr);
         out.pushNewLine();
     }
 
@@ -332,7 +349,7 @@ public class StandardMipsGenerator implements IMipsGenerator {
             generateSysCall(SYS_EXIT2);
         } else {
             // Load $ra register if not main.
-            printer.printLoadStack(out, Registers.RA, 4);
+            printer.printLoadStack(out, Registers.RA, 0);
             printer.printReturn(out);
         }
     }
@@ -363,12 +380,13 @@ public class StandardMipsGenerator implements IMipsGenerator {
                 if (param instanceof ConstantData constant) {
                     generateLoadImmediate(Registers.A0 + i, constant.getValue());
                 } else {
-                    var reg = profile.acquire(param);
-                    printer.printMove(out, Registers.A0 + i, reg.getId());
+                    var reg = acquireRegisterId(param);
+                    printer.printMove(out, Registers.A0 + i, reg);
                 }
             } else {
-                var reg = profile.acquire(param);
-                printer.printSaveStack(out, reg.getId(), stackOffset - (i - 4) * 4);
+                var reg = acquireRegisterId(param);
+                // Should reserve stack for $a0 ~ $a3
+                printer.printSaveStack(out, reg, stackOffset - (i + 1) * 4);
             }
         }
 
@@ -376,13 +394,15 @@ public class StandardMipsGenerator implements IMipsGenerator {
         profile.yieldAll();
 
         // At last, expand the stack.
-        printer.printStackGrow(out, stackOffset);
+        generateLoadImmediate(reservedRegisterId, -stackOffset);
+        printer.printStackGrow(out, reservedRegisterId);
 
         // Call function
         printer.printCall(out, inst.getFunction().getName());
 
         // Restore stack
-        printer.printStackGrow(out, -stackOffset);
+        generateLoadImmediate(reservedRegisterId, -stackOffset);
+        printer.printStackShrink(out, reservedRegisterId);
 
         // Get return value.
         if (!inst.getType().isVoidTy()) {
@@ -412,8 +432,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
 
         var reg = memoryProfile.getRegisterProfile().acquire(inst);
         String op = switch (inst.getOpType()) {
-            case Add -> "add";
-            case Sub -> "sub";
+            case Add -> "addu";
+            case Sub -> "subu";
             case Mul -> "mul";
             case Div -> "div";
             case Mod -> "rem";
@@ -426,8 +446,8 @@ public class StandardMipsGenerator implements IMipsGenerator {
         int operandRegId = acquireRegisterId(inst.getOperand());
         var reg = memoryProfile.getRegisterProfile().acquire(inst);
         String op = switch (inst.getOpType()) {
-            case Pos -> "add";
-            case Neg -> "sub";
+            case Pos -> "addu";
+            case Neg -> "subu";
             case Not -> "xor";
         };
 
@@ -471,12 +491,67 @@ public class StandardMipsGenerator implements IMipsGenerator {
      * ==================== Array Operations ====================
      */
 
+    /**
+     * Generate getelementptr instruction. <br />
+     * |----|<- $sp         <br />
+     * | a2 |               <br />
+     * |----|               <br />
+     * | a1 |               <br />
+     * |----|               <br />
+     * | a0 |               <br />
+     * |----|<- offset      <br />
+     * | .. |
+     *
+     * @param inst
+     */
     private void generateGetElementPtrInst(GetElementPtrInst inst) {
         // First dimension offset.
         var address = inst.getAddress();
-        inst.getAddress();
+        var type = address.getPointerType().getElementType();
+
+        generateLoadAddress(inst, address);
+        int dstReg = acquireRegisterId(inst);
+        for (var subscript : inst.getSubscripts()) {
+            // Calculate subscript offset.
+            int size = type.getBytes();
+            int offsetRegId = Registers.INVALID;
+            if (subscript instanceof ConstantData constant) {
+                var offset = constant.getValue() * size;
+                if (offset != 0) {
+                    generateLoadImmediate(reservedRegisterId, offset);
+                    offsetRegId = reservedRegisterId;
+                }
+            } else {
+                var reg = memoryProfile.getRegisterProfile().acquire(subscript);
+                if (size == 1) {
+                    offsetRegId = reg.getId();
+                } else {
+                    generateLoadImmediate(reservedRegisterId, size);
+                    printer.printBinaryOperator(out, "mul", reservedRegisterId, reservedRegisterId, reg.getId());
+                    offsetRegId = reservedRegisterId;
+                }
+            }
+
+            if (offsetRegId != Registers.INVALID) {
+                printer.printBinaryOperator(out, "addu", dstReg, dstReg, offsetRegId);
+            }
+
+            if (type.isArrayTy()) {
+                type = type.asArray().getElementType();
+            }
+        }
     }
 
+    private void generateZEInst(ZExtInst inst) {
+        var reg = memoryProfile.getRegisterProfile().acquire(inst);
+        var operand = inst.getOperand();
+        if (operand instanceof ConstantData constant) {
+            generateLoadImmediate(reg.getId(), constant.getValue());
+        } else {
+            var operandReg = memoryProfile.getRegisterProfile().acquire(operand);
+            printer.printMove(out, reg.getId(), operandReg.getId());
+        }
+    }
 
 
     /*
@@ -499,35 +574,39 @@ public class StandardMipsGenerator implements IMipsGenerator {
         out.push("syscall").pushNewLine();
     }
 
-    private void generateAddress(Value address) {
+    private String generateAddress(Value address) {
+        var bufferedOut = new VerboseMipsWriter(new TwioBufferWriter());
         if (address instanceof GlobalVariable) {
-            out.push(address.getName());
+            bufferedOut.push(address.getName());
         } else if (address instanceof AllocaInst) {
             var add = memoryProfile.getStackProfile().getAddress(address);
-            out.push(String.valueOf(add.offset()));
-            out.push('(');
-            out.pushRegister(add.base()).push(')');
+            if (add.offset() != 0) {
+                bufferedOut.push(String.valueOf(add.offset()));
+            }
+            bufferedOut.push('(');
+            bufferedOut.pushRegister(add.base()).push(')');
         } else {
             var reg = memoryProfile.getRegisterProfile().acquire(address);
-            out.push('(');
-            out.pushRegister(reg.getId());
-            out.push(')');
+            bufferedOut.push('(');
+            bufferedOut.pushRegister(reg.getId());
+            bufferedOut.push(')');
         }
+        return bufferedOut.dumps();
     }
 
     private int acquireRegisterId(Value value) {
+        boolean temporary = value.getUsers().size() < 2;
         if (value instanceof ConstantData constant) {
             if (constant.isAllZero()) {
                 return Registers.ZERO;
             } else {
                 generateLoadImmediate(constant, constant.getValue());
             }
-        } else if (value instanceof ZExtInst inst) {
-            value = inst.getOperand();
         }
 
-        return memoryProfile.getRegisterProfile().acquire(value).getId();
+        return memoryProfile.getRegisterProfile().acquire(value, temporary).getId();
     }
+
 
     public static final int SYS_EXIT = 10;
     public static final int SYS_EXIT2 = 17;

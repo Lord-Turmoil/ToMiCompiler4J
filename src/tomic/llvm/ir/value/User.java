@@ -11,7 +11,7 @@ import tomic.llvm.ir.type.Type;
 import java.util.LinkedList;
 import java.util.List;
 
-public class User extends Value {
+public abstract class User extends Value {
     LinkedList<Value> operands;
 
     protected User(ValueTypes valueType, Type type) {
@@ -20,6 +20,9 @@ public class User extends Value {
     }
 
     public void addOperand(Value operand) {
+        if (operands.contains(operand)) {
+            return;
+        }
         operands.add(operand);
         operand.addUser(this);
     }
@@ -28,9 +31,21 @@ public class User extends Value {
         operands.forEach(this::addOperand);
     }
 
-    public void removeOperand(Value operand) {
-        operands.remove(operand);
-        operand.removeUser(this);
+    public boolean removeOperand(Value operand) {
+        if (operands.contains(operand)) {
+            operands.remove(operand);
+            operand.removeUser(this);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean replaceOperand(Value oldOperand, Value newOperand) {
+        if (removeOperand(oldOperand)) {
+            addOperand(newOperand);
+            return true;
+        }
+        return false;
     }
 
     public void removeOperands() {

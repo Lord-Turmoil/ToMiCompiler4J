@@ -8,4 +8,4 @@ package tomic.llvm.mips.memory;
 
 import tomic.llvm.ir.value.Value;
 
-public record StackAddress(Value value, int base, int offset) {}
+public record StackAddress(Value value, int base, int offset, int size) {}

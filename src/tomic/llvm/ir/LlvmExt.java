@@ -17,21 +17,19 @@ public class LlvmExt {
     private LlvmExt() {}
 
     public static Type getEntryType(LlvmContext context, VariableEntry entry) {
-        return switch (entry.getDimension()) {
-            case 0 -> IntegerType.get(context, 32);
-            case 1 -> ArrayType.get(IntegerType.get(context, 32), entry.getSize(0));
-            case 2 -> ArrayType.get(ArrayType.get(IntegerType.get(context, 32), entry.getSize(1)), entry.getSize(0));
-            default -> throw new IllegalStateException("Unsupported dimension: " + entry.getDimension());
-        };
+        Type type = IntegerType.get(context, 32);
+        for (int i = entry.getDimension() - 1; i >= 0; i--) {
+            type = ArrayType.get(type, entry.getSize(i));
+        }
+        return type;
     }
 
     public static Type getEntryType(LlvmContext context, ConstantEntry entry) {
-        return switch (entry.getDimension()) {
-            case 0 -> IntegerType.get(context, 32);
-            case 1 -> ArrayType.get(IntegerType.get(context, 32), entry.getSize(0));
-            case 2 -> ArrayType.get(ArrayType.get(IntegerType.get(context, 32), entry.getSize(1)), entry.getSize(0));
-            default -> throw new IllegalStateException("Unsupported dimension: " + entry.getDimension());
-        };
+        Type type = IntegerType.get(context, 32);
+        for (int i = entry.getDimension() - 1; i >= 0; i--) {
+            type = ArrayType.get(type, entry.getSize(i));
+        }
+        return type;
     }
 
     public static Type getEntryType(LlvmContext context, FunctionEntry entry) {
@@ -50,11 +48,16 @@ public class LlvmExt {
     }
 
     public static Type getEntryType(LlvmContext context, FunctionEntry.ParamEntry entry) {
-        return switch (entry.dimension) {
-            case 0 -> IntegerType.get(context, 32);
-            case 1 -> PointerType.get(IntegerType.get(context, 32));
-            case 2 -> PointerType.get(ArrayType.get(IntegerType.get(context, 32), entry.sizes[1]));
-            default -> throw new IllegalStateException("Unsupported dimension: " + entry.dimension);
-        };
+        if (entry.getDimension() == 0) {
+            return IntegerType.get(context, 32);
+        }
+
+        var sizes = entry.getSizes();
+        Type type = IntegerType.get(context, 32);
+        for (int i = sizes.size() - 1; i >= 1; i--) {
+            type = ArrayType.get(type, sizes.get(i));
+        }
+
+        return PointerType.get(type);
     }
 }

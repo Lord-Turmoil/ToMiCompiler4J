@@ -25,12 +25,12 @@ public class DefaultRegisterProfile implements IRegisterProfile {
             Registers.T0, Registers.T1, Registers.T2, Registers.T3,
             Registers.T4, Registers.T5, Registers.T6, Registers.T7,
             Registers.S0, Registers.S1, Registers.S2, Registers.S3,
-            Registers.S4, Registers.S5, Registers.S6, Registers.S7);
+            Registers.S4, Registers.S5, Registers.S6, Registers.S7,
+            Registers.T8);
 
     private final Set<Integer> availableRegisters;
-    private final Set<Integer> activeRegisters;
     private final Map<Value, Register> valueRegisterMap;
-    private final Map<Integer, Register> registerMap;
+    private final Map<Integer, Register> activeRegisters;
 
     private final IStackProfile stackProfile;
     private final IMipsWriter out;
@@ -38,9 +38,8 @@ public class DefaultRegisterProfile implements IRegisterProfile {
 
     public DefaultRegisterProfile(IStackProfile stackProfile, IMipsWriter out) {
         this.availableRegisters = new HashSet<>(ALL_REGISTERS);
-        this.activeRegisters = new HashSet<>();
         this.valueRegisterMap = new HashMap<>();
-        this.registerMap = new HashMap<>();
+        this.activeRegisters = new HashMap<>();
 
         this.stackProfile = stackProfile;
         this.out = out;
@@ -69,6 +68,40 @@ public class DefaultRegisterProfile implements IRegisterProfile {
 
         // swapIn ensures that the register is active.
         swapIn(register);
+        register.setDirty(false);
+
+        return register;
+    }
+
+    @Override
+    public Register acquire(Value value, int registerId) {
+        return acquire(value, registerId, false);
+    }
+
+    @Override
+    public Register acquire(Value value, int registerId, boolean temporary) {
+        var register = valueRegisterMap.getOrDefault(value, null);
+        if (register != null && register.isActive()) {
+            if (register.getId() == registerId) {
+                register.setHot();
+                return register;
+            }
+            swapOut(register);
+        }
+
+        if (activeRegisters.containsKey(registerId)) {
+            swapOut(activeRegisters.get(registerId));
+        }
+
+        if (register == null) {
+            register = allocateRegister(value, temporary);
+            valueRegisterMap.put(value, register);
+        } else {
+            register.setTemporary(temporary);
+        }
+
+        // Will not load value from memory.
+        register.activate(registerId);
 
         return register;
     }
@@ -108,15 +141,21 @@ public class DefaultRegisterProfile implements IRegisterProfile {
 
     @Override
     public void yieldAll() {
+        var prev = stackProfile.getTotalOffset();
         for (var value : valueRegisterMap.keySet()) {
             this.yield(value);
+        }
+        var next = stackProfile.getTotalOffset();
+
+        if (prev != next) {
+            throw new IllegalStateException("Stack profile is not balanced.");
         }
     }
 
     @Override
     public void tryYieldAll() {
-        for (var value : valueRegisterMap.keySet()) {
-            this.tryYield(value);
+        for (var register : activeRegisters.values()) {
+            tryYield(register.getValue());
         }
     }
 
@@ -124,14 +163,24 @@ public class DefaultRegisterProfile implements IRegisterProfile {
     public void release(Value value) {
         var register = valueRegisterMap.getOrDefault(value, null);
         if (register != null) {
-            swapOut(register);
+            if (activeRegisters.containsKey(register.getId())) {
+                activeRegisters.remove(register.getId());
+                if (ALL_REGISTERS.contains(register.getId())) {
+                    availableRegisters.add(register.getId());
+                }
+            }
             valueRegisterMap.remove(value);
         }
     }
 
     @Override
     public void tick() {
-        registerMap.values().forEach(Register::tick);
+        activeRegisters.values().forEach(Register::tick);
+    }
+
+    @Override
+    public int getReservedRegisterId() {
+        return Registers.T9;
     }
 
     private Register allocateRegister(Value value, boolean temporary) {
@@ -157,7 +206,7 @@ public class DefaultRegisterProfile implements IRegisterProfile {
         register.setHot();
 
         availableRegisters.remove(id);
-        registerMap.put(id, register);
+        activeRegisters.put(id, register);
 
         // TODO: load value from memory if exists in StackProfile
         var address = stackProfile.getAddress(register.getValue());
@@ -187,15 +236,22 @@ public class DefaultRegisterProfile implements IRegisterProfile {
             stackProfile.deallocate(register.getValue());
         }
 
-        availableRegisters.add(register.getId());
-        registerMap.remove(register.getId());
+        /*
+         * If the register is assigned manually and not in
+         * standard registers, don't add it.
+         */
+        if (ALL_REGISTERS.contains(register.getId())) {
+            availableRegisters.add(register.getId());
+        }
+
+        activeRegisters.remove(register.getId());
         register.deactivate();
     }
 
     private Register findSwapOutCandidate() {
         int minPriority = 0;
         int candidate = Registers.INVALID;
-        for (var entry : registerMap.entrySet()) {
+        for (var entry : activeRegisters.entrySet()) {
             if (!entry.getValue().isActive()) {
                 continue;
             }
@@ -211,6 +267,6 @@ public class DefaultRegisterProfile implements IRegisterProfile {
             throw new IllegalStateException("No available register to swap out.");
         }
 
-        return registerMap.get(candidate);
+        return activeRegisters.get(candidate);
     }
 }

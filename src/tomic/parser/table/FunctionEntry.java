@@ -7,6 +7,7 @@
 package tomic.parser.table;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class FunctionEntry extends SymbolTableEntry {
     private final SymbolValueTypes type;
@@ -46,15 +47,20 @@ public class FunctionEntry extends SymbolTableEntry {
     public static class ParamEntry {
         public SymbolValueTypes type;
         public String name;
-        public int dimension;
-        public int[] sizes = { 0, 0 };
+        public final ArrayList<Integer> dimensions;
 
-        public ParamEntry(SymbolValueTypes type, String name, int dimension, int s1, int s2) {
+        public ParamEntry(SymbolValueTypes type, String name, ArrayList<Integer> dimensions) {
             this.type = type;
             this.name = name;
-            this.dimension = dimension;
-            this.sizes[0] = s1;
-            this.sizes[1] = s2;
+            this.dimensions = dimensions;
+        }
+
+        public int getDimension() {
+            return dimensions.size();
+        }
+
+        public List<Integer> getSizes() {
+            return dimensions;
         }
     }
 
@@ -72,8 +78,14 @@ public class FunctionEntry extends SymbolTableEntry {
             return this;
         }
 
-        public Builder addParam(SymbolValueTypes type, String name, int dim, int size) {
-            params.add(new ParamEntry(type, name, dim, 0, size));
+        public Builder addParam(SymbolValueTypes type, String name, List<Integer> dims) {
+            ArrayList<Integer> dimensions = new ArrayList<>(dims);
+            params.add(new ParamEntry(type, name, dimensions));
+            return this;
+        }
+
+        public Builder addParam(SymbolValueTypes type, String name) {
+            params.add(new ParamEntry(type, name, new ArrayList<>()));
             return this;
         }
 

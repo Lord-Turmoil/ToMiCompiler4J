@@ -45,6 +45,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         }
 
         module.refactor();
+        module.trace();
 
         return module;
     }
@@ -496,15 +497,13 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
 
     private void parseAssignStmt(SyntaxNode node) {
         var lVal = AstExt.getDirectChildNode(node, SyntaxTypes.LVAL);
-//        var address = getLValValue(lVal);
-        var address = parseLVal(lVal);
-
         var exp = AstExt.getDirectChildNode(node, SyntaxTypes.EXP);
-        var value = parseExpression(exp);
 
+        var value = parseExpression(exp);
         if (value.getIntegerType().isBoolean()) {
             value = insertInstruction(ZExtInst.toInt32(value));
         }
+        var address = parseLVal(lVal);
 
         insertInstruction(new StoreInst(value, address));
     }
@@ -630,7 +629,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
             Collections.reverse(paramNodes);
             ArrayList<Value> paramValues = new ArrayList<>();
             for (var paramNode : paramNodes) {
-                paramValues.add(0, parseExpression(paramNode.getFirstChild()));
+                paramValues.add(0, ensureInt32(parseExpression(paramNode.getFirstChild())));
             }
             return insertInstruction(new CallInst(function, paramValues));
         }
@@ -677,8 +676,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
             inst = insertInstruction(GetElementPtrInst.create(inst, indices));
         }
 
-        for (
-                int i = doublePointer ? 1 : 0; i < indexNodes.size(); i++) {
+        for (int i = doublePointer ? 1 : 0; i < indexNodes.size(); i++) {
             indices.clear();
             indices.add(new ConstantData(IntegerType.get(module.getContext(), 32), 0));
             indices.add(ensureInt32(parseExpression(indexNodes.get(i))));
@@ -686,7 +684,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         }
 
         int i = indexNodes.size();
-        while (i < dim) {
+        if (i < dim) {
             indices.clear();
             indices.add(new ConstantData(IntegerType.get(module.getContext(), 32), 0));
             indices.add(new ConstantData(IntegerType.get(module.getContext(), 32), 0));
@@ -747,7 +745,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         }
 
         int i = indexNodes.size();
-        while (i < dim) {
+        if (i < dim) {
             indices.clear();
             indices.add(new ConstantData(IntegerType.get(module.getContext(), 32), 0));
             indices.add(new ConstantData(IntegerType.get(module.getContext(), 32), 0));
@@ -1015,14 +1013,14 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
      */
     private Value ensureInt32(Value value) {
         // If it is a pointer, it will not be converted.
-        if (value.getType().isPointerTy()) {
-            return value;
-        }
-
-        if (!value.getIntegerType().isInteger()) {
-            var extInst = ZExtInst.toInt32(value);
-            insertInstruction(extInst);
-            return extInst;
+        if (value.getType() instanceof IntegerType type) {
+            if (type.isBoolean()) {
+                var extInst = ZExtInst.toInt32(value);
+                insertInstruction(extInst);
+                return extInst;
+            } else {
+                return value;
+            }
         } else {
             return value;
         }

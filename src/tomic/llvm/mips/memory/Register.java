@@ -79,8 +79,8 @@ public class Register {
         this.priority = Registers.HIGH_PRIORITY;
     }
 
-    public int tick() {
-        return ++priority;
+    public void tick() {
+        priority++;
     }
 
     public void activate(int id) {
