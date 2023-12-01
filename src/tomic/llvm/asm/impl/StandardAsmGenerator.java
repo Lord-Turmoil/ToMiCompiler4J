@@ -629,7 +629,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
             Collections.reverse(paramNodes);
             ArrayList<Value> paramValues = new ArrayList<>();
             for (var paramNode : paramNodes) {
-                paramValues.add(0, parseExpression(paramNode.getFirstChild()));
+                paramValues.add(0, ensureInt32(parseExpression(paramNode.getFirstChild())));
             }
             return insertInstruction(new CallInst(function, paramValues));
         }
@@ -1013,14 +1013,14 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
      */
     private Value ensureInt32(Value value) {
         // If it is a pointer, it will not be converted.
-        if (value.getType().isPointerTy()) {
-            return value;
-        }
-
-        if (!value.getIntegerType().isInteger()) {
-            var extInst = ZExtInst.toInt32(value);
-            insertInstruction(extInst);
-            return extInst;
+        if (value.getType() instanceof IntegerType type) {
+            if (type.isBoolean()) {
+                var extInst = ZExtInst.toInt32(value);
+                insertInstruction(extInst);
+                return extInst;
+            } else {
+                return value;
+            }
         } else {
             return value;
         }
