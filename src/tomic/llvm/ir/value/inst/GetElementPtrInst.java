@@ -51,6 +51,21 @@ public class GetElementPtrInst extends Instruction {
         return subscripts;
     }
 
+    @Override
+    public void replaceOperand(Value oldOperand, Value newOperand) {
+        super.replaceOperand(oldOperand, newOperand);
+        if (address == oldOperand) {
+            address = newOperand;
+        } else {
+            // WARNING! Must preserve the order!
+            int index = subscripts.indexOf(oldOperand);
+            if (index != -1) {
+                subscripts.remove(index);
+                subscripts.add(index, newOperand);
+            }
+        }
+    }
+
     /**
      * %3 = getelementptr [5 x [7 x i32]], [5 x [7 x i32]]* @a, i32 0, i32 3, i32 4
      */

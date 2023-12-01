@@ -26,6 +26,9 @@ public class Value {
     }
 
     public void addUser(User user) {
+        if (users.contains(user)) {
+            return;
+        }
         users.add(user);
     }
 

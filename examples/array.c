@@ -14,8 +14,6 @@ int main()
 
     __vec_mul(result, matrix, vector);
     printf("Result = [%d, %d]\n", result[0], result[1]);
-    __vec_mul(result, matrix, vector);
-    printf("Result = [%d, %d]\n", result[0], result[1]);
 
     return 0;
 }

@@ -1,15 +1,16 @@
 #!/bin/bash
 
 if [ "$1" = "dev" ]; then
+    filename=${2:-"llvm.ll"}
     echo "===== DEV:"
     echo "Compiling libsysy.c to lib.ll..."
     clang -S -emit-llvm libsysy.c -o lib.ll -O0
 
-    echo "Linking llvm.ll and lib.ll to std.ll..."
-    llvm-link llvm.ll lib.ll -S -o out.ll
+    echo "Linking $filename and lib.ll to std.ll..."
+    llvm-link $filename lib.ll -S -o out.ll
 
     if [ $? -ne 0 ]; then
-        echo "Linking failed!"
+        echo "Linking failed!"./
         exit 1
     fi
 

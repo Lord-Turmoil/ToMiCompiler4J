@@ -29,4 +29,15 @@ public class BinaryInstruction extends Instruction {
     public Value getRightOperand() {
         return rightOperand;
     }
+
+    @Override
+    public void replaceOperand(Value oldOperand, Value newOperand) {
+        super.replaceOperand(oldOperand, newOperand);
+        if (leftOperand == oldOperand) {
+            leftOperand = newOperand;
+        }
+        if (rightOperand == oldOperand) {
+            rightOperand = newOperand;
+        }
+    }
 }

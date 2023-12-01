@@ -17,6 +17,12 @@ public class ReturnInst extends Instruction {
     public ReturnInst(Value value) {
         super(ValueTypes.ReturnInstTy, value.getContext().getVoidTy());
         this.value = value;
+
+        /*
+         * 2023/11/29 TS: FIX
+         * Remember to add operand.
+         */
+        addOperand(value);
     }
 
     public ReturnInst(LlvmContext context) {

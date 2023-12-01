@@ -19,10 +19,19 @@ public class Module {
     private final ArrayList<GlobalVariable> globalVariables = new ArrayList<>();
     private final ArrayList<GlobalString> globalStrings = new ArrayList<>();
     private final ArrayList<Function> functions = new ArrayList<>();
+    private ArrayList<Function> allFunctions;
+
     Function mainFunction;
 
     public Module(String name) {
         this.name = name;
+    }
+
+    public void trace() {
+        for (var function : functions) {
+            function.trace();
+        }
+        mainFunction.trace();
     }
 
     public LlvmContext getContext() {
@@ -54,6 +63,16 @@ public class Module {
 
     public Function getMainFunction() {
         return mainFunction;
+    }
+
+    public ArrayList<Function> getAllFunctions() {
+        if (allFunctions != null) {
+            return allFunctions;
+        }
+        allFunctions = new ArrayList<>();
+        allFunctions.addAll(functions);
+        allFunctions.add(mainFunction);
+        return allFunctions;
     }
 
     public void addFunction(Function function) {

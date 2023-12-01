@@ -106,5 +106,4 @@ public class ConstantData extends Constant {
         getType().printAsm(out).pushSpace();
         return printName(out);
     }
-
 }

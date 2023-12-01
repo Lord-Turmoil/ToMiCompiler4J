@@ -25,7 +25,8 @@ public class DefaultRegisterProfile implements IRegisterProfile {
             Registers.T0, Registers.T1, Registers.T2, Registers.T3,
             Registers.T4, Registers.T5, Registers.T6, Registers.T7,
             Registers.S0, Registers.S1, Registers.S2, Registers.S3,
-            Registers.S4, Registers.S5, Registers.S6, Registers.S7);
+            Registers.S4, Registers.S5, Registers.S6, Registers.S7,
+            Registers.T8);
 
     private final Set<Integer> availableRegisters;
     private final Map<Value, Register> valueRegisterMap;
@@ -140,15 +141,21 @@ public class DefaultRegisterProfile implements IRegisterProfile {
 
     @Override
     public void yieldAll() {
+        var prev = stackProfile.getTotalOffset();
         for (var value : valueRegisterMap.keySet()) {
             this.yield(value);
+        }
+        var next = stackProfile.getTotalOffset();
+
+        if (prev != next) {
+            throw new IllegalStateException("Stack profile is not balanced.");
         }
     }
 
     @Override
     public void tryYieldAll() {
-        for (var value : valueRegisterMap.keySet()) {
-            this.tryYield(value);
+        for (var register : activeRegisters.values()) {
+            tryYield(register.getValue());
         }
     }
 
@@ -156,7 +163,6 @@ public class DefaultRegisterProfile implements IRegisterProfile {
     public void release(Value value) {
         var register = valueRegisterMap.getOrDefault(value, null);
         if (register != null) {
-            stackProfile.deallocate(value);
             if (activeRegisters.containsKey(register.getId())) {
                 activeRegisters.remove(register.getId());
                 if (ALL_REGISTERS.contains(register.getId())) {
@@ -170,6 +176,11 @@ public class DefaultRegisterProfile implements IRegisterProfile {
     @Override
     public void tick() {
         activeRegisters.values().forEach(Register::tick);
+    }
+
+    @Override
+    public int getReservedRegisterId() {
+        return Registers.T9;
     }
 
     private Register allocateRegister(Value value, boolean temporary) {

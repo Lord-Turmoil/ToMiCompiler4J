@@ -84,6 +84,9 @@ public class DefaultLexicalParser implements ILexicalParser {
 
     @Override
     public void rollBack(int checkpoint) {
+        if (checkpoint > tokens.size()) {
+            checkpoint = tokens.size();
+        }
         cursor = checkpoint;
     }
 

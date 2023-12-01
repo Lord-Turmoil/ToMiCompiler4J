@@ -6,16 +6,16 @@
 
 package tomic.parser.table;
 
+import java.util.ArrayList;
+
 public class VariableEntry extends SymbolTableEntry {
     private SymbolValueTypes type;
-    private final int dimension;
-    private final int[] sizes;
+    private final ArrayList<Integer> dimensions;
 
-    private VariableEntry(String name, SymbolValueTypes type, int dimension, int[] sizes) {
+    private VariableEntry(String name, SymbolValueTypes type, ArrayList<Integer> dimensions) {
         super(name);
         this.type = type;
-        this.dimension = dimension;
-        this.sizes = sizes;
+        this.dimensions = dimensions;
     }
 
     @Override
@@ -28,11 +28,19 @@ public class VariableEntry extends SymbolTableEntry {
     }
 
     public int getDimension() {
-        return dimension;
+        return dimensions.size();
+    }
+
+    public boolean isInteger() {
+        return getDimension() == 0;
     }
 
     public int getSize(int dim) {
-        return sizes[dim];
+        return dimensions.get(dim);
+    }
+
+    public ArrayList<Integer> getSizes() {
+        return dimensions;
     }
 
     public static Builder builder(String name) {
@@ -41,9 +49,8 @@ public class VariableEntry extends SymbolTableEntry {
 
     public static class Builder {
         private final String name;
-        private int dimension;
-        private final int[] sizes = { 0, 0 };
-        SymbolValueTypes type;
+        private SymbolValueTypes type;
+        private final ArrayList<Integer> dimensions = new ArrayList<>();
 
         public Builder(String name) {
             this.name = name;
@@ -54,21 +61,13 @@ public class VariableEntry extends SymbolTableEntry {
             return this;
         }
 
-        public Builder setSizes(int d1) {
-            dimension = 1;
-            sizes[0] = d1;
-            return this;
-        }
-
-        public Builder setSizes(int d1, int d2) {
-            dimension = 2;
-            sizes[0] = d1;
-            sizes[1] = d2;
+        public Builder addDimension(int size) {
+            dimensions.add(size);
             return this;
         }
 
         public VariableEntry build() {
-            return new VariableEntry(name, type, dimension, sizes);
+            return new VariableEntry(name, type, dimensions);
         }
     }
 }

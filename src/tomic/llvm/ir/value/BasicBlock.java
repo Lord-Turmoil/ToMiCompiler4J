@@ -63,7 +63,7 @@ public class BasicBlock extends Value {
     }
 
     public void removeInstruction(Instruction instruction) {
-        instruction.getOperands().forEach(operand -> operand.removeUser(instruction));
+        instruction.removeOperands();
         instructions.remove(instruction);
     }
 

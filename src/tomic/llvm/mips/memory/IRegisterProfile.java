@@ -80,4 +80,6 @@ public interface IRegisterProfile {
      * of all registers.
      */
     void tick();
+
+    int getReservedRegisterId();
 }

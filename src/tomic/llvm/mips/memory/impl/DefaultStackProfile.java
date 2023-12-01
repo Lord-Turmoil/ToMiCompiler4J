@@ -32,6 +32,10 @@ public class DefaultStackProfile implements IStackProfile {
     }
 
     private StackAddress allocate(Value value, int size) {
+        // Round up to 4 bytes.
+        size = Math.max(1, size);
+        size = (size + 3) & ~3;
+
         int offset = findAvailableOffset(size);
         StackAddress address;
         if (offset == -1) {

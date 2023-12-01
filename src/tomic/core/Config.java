@@ -41,6 +41,9 @@ public class Config {
     public boolean enableVerboseError;
     public String errorOutput;
 
+    // Optimization
+    public int optimizationLevel;
+
     public Config() {
         target = TargetTypes.Initial;
         enableCompleteAst = false;
@@ -50,6 +53,7 @@ public class Config {
         enableLog = false;
         enableError = false;
         enableVerboseError = false;
+        optimizationLevel = 0;
     }
 
     @Override

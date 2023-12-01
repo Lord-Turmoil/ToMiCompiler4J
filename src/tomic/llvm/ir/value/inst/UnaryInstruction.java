@@ -22,4 +22,12 @@ public class UnaryInstruction extends Instruction {
     public Value getOperand() {
         return operand;
     }
+
+    @Override
+    public void replaceOperand(Value oldOperand, Value newOperand) {
+        super.replaceOperand(oldOperand, newOperand);
+        if (operand == oldOperand) {
+            operand = newOperand;
+        }
+    }
 }

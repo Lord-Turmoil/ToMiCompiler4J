@@ -20,7 +20,13 @@ import tomic.llvm.asm.IAsmPrinter;
 import tomic.llvm.asm.impl.StandardAsmGenerator;
 import tomic.llvm.asm.impl.VerboseAsmPrinter;
 import tomic.llvm.mips.IMipsGenerator;
+import tomic.llvm.mips.impl.OptimizedMipsGenerator;
 import tomic.llvm.mips.impl.StandardMipsGenerator;
+import tomic.llvm.pass.IPassProvider;
+import tomic.llvm.pass.PassManager;
+import tomic.llvm.pass.impl.BasicPassProvider;
+import tomic.llvm.pass.impl.OptimizationPassProvider;
+import tomic.llvm.pass.impl.SemiOptimizationPassProvider;
 import tomic.logger.debug.IDebugLogger;
 import tomic.logger.debug.LogLevel;
 import tomic.logger.debug.impl.DefaultLogger;
@@ -124,13 +130,23 @@ public class ToMiCompiler {
 
         //////////////////// LLVM IR
         impl.configure(service -> {
-            service.addTransient(IAsmGenerator.class, StandardAsmGenerator.class);
             service.addTransient(IAsmPrinter.class, VerboseAsmPrinter.class);
+            service.addTransient(IAsmGenerator.class, StandardAsmGenerator.class);
+            switch (config.optimizationLevel) {
+                case 1 -> service.addTransient(IPassProvider.class, SemiOptimizationPassProvider.class);
+                case 2 -> service.addTransient(IPassProvider.class, OptimizationPassProvider.class);
+                default -> service.addTransient(IPassProvider.class, BasicPassProvider.class);
+            }
+            service.addTransient(PassManager.class, PassManager.class, IPassProvider.class);
         });
 
         //////////////////// MIPS
         impl.configure(service -> {
-            service.addTransient(IMipsGenerator.class, StandardMipsGenerator.class);
+            if (config.optimizationLevel > 0) {
+                service.addTransient(IMipsGenerator.class, OptimizedMipsGenerator.class);
+            } else {
+                service.addTransient(IMipsGenerator.class, StandardMipsGenerator.class);
+            }
         });
 
         return this;

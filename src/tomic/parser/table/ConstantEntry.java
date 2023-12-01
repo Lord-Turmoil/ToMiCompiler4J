@@ -7,30 +7,18 @@
 package tomic.parser.table;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ConstantEntry extends SymbolTableEntry {
     private final SymbolValueTypes type;
-    private final int dimension;
-    private final int value;
-    private final int[] sizes;
-    ArrayList<ArrayList<Integer>> values;
+    private final ArrayList<Integer> dimensions;
+    private final ArrayList<Integer> values;
 
-    private ConstantEntry(String name, SymbolValueTypes type, int value) {
+    private ConstantEntry(String name, SymbolValueTypes type, ArrayList<Integer> dimensions, ArrayList<Integer> values) {
         super(name);
         this.type = type;
-        this.dimension = 0;
-        this.value = value;
-        this.values = null;
-        this.sizes = new int[]{ 0, 0 };
-    }
-
-    private ConstantEntry(String name, SymbolValueTypes type, int dimension, int[] sizes, ArrayList<ArrayList<Integer>> values) {
-        super(name);
-        this.type = type;
-        this.dimension = dimension;
-        this.value = 0;
+        this.dimensions = dimensions;
         this.values = values;
-        this.sizes = sizes;
     }
 
     @Override
@@ -42,24 +30,41 @@ public class ConstantEntry extends SymbolTableEntry {
         return type;
     }
 
+
     public int getDimension() {
-        return dimension;
+        return dimensions.size();
     }
+
+    public boolean isInteger() {
+        return getDimension() == 0;
+    }
+
 
     public int getValue() {
-        return value;
+        return values.get(0);
     }
 
-    public int getValue(int d1) {
-        return values.get(0).get(d1);
-    }
+    public int getValue(List<Integer> dims) {
+        if (dims.size() != dimensions.size()) {
+            throw new IllegalArgumentException("Dimension mismatch");
+        }
 
-    public int getValue(int d1, int d2) {
-        return values.get(d1).get(d2);
+        int index = 0;
+        int size = 1;
+        for (int i = dims.size() - 1; i >= 0; i--) {
+            index += dims.get(i) * size;
+            size *= getSize(i);
+        }
+
+        return values.get(index);
     }
 
     public int getSize(int dim) {
-        return sizes[dim];
+        return dimensions.get(dim);
+    }
+
+    public ArrayList<Integer> getSizes() {
+        return dimensions;
     }
 
     public static Builder builder(String name) {
@@ -69,10 +74,8 @@ public class ConstantEntry extends SymbolTableEntry {
     public static class Builder {
         private final String name;
         private SymbolValueTypes type;
-        private int dimension;
-        private int value;
-        private final int[] sizes = { 0, 0 };
-        ArrayList<ArrayList<Integer>> values;
+        private final ArrayList<Integer> dimensions = new ArrayList<>();
+        private final ArrayList<Integer> values = new ArrayList<>();
 
         public Builder(String name) {
             this.name = name;
@@ -83,41 +86,23 @@ public class ConstantEntry extends SymbolTableEntry {
             return this;
         }
 
-        public Builder setDimension(int dimension) {
-            this.dimension = dimension;
-            return this;
-        }
-
-        public Builder setSize(int d1) {
-            this.dimension = 1;
-            this.sizes[0] = d1;
-            return this;
-        }
-
-        public Builder setSize(int d1, int d2) {
-            this.dimension = 2;
-            this.sizes[0] = d1;
-            this.sizes[1] = d2;
+        public Builder addDimension(int size) {
+            dimensions.add(size);
             return this;
         }
 
         public Builder setValue(int value) {
-            this.dimension = 0;
-            this.value = value;
+            values.add(value);
             return this;
         }
 
-        public Builder setValues(ArrayList<ArrayList<Integer>> values) {
-            this.values = values;
+        public Builder setValues(List<Integer> values) {
+            this.values.addAll(values);
             return this;
         }
 
         public ConstantEntry build() {
-            if (dimension == 0) {
-                return new ConstantEntry(name, type, value);
-            } else {
-                return new ConstantEntry(name, type, dimension, sizes, values);
-            }
+            return new ConstantEntry(name, type, dimensions, values);
         }
     }
 }

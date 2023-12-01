@@ -60,12 +60,21 @@ public class StandardMipsPrinter implements IMipsPrinter {
      * @param size Size of stack to grow.
      */
     @Override
-    public void printStackGrow(IMipsWriter out, int size) {
-        out.push("addi").pushSpace();
+    public void printStackGrow(IMipsWriter out, int register) {
+        out.push("subu").pushSpace();
         out.pushRegister(Registers.SP).pushComma().pushSpace();
         out.pushRegister(Registers.SP).pushComma().pushSpace();
-        out.push(String.valueOf(size)).pushNewLine();
+        out.pushRegister(register).pushNewLine();
     }
+
+    @Override
+    public void printStackShrink(IMipsWriter out, int register) {
+        out.push("addu").pushSpace();
+        out.pushRegister(Registers.SP).pushComma().pushSpace();
+        out.pushRegister(Registers.SP).pushComma().pushSpace();
+        out.pushRegister(register).pushNewLine();
+    }
+
 
     /**
      * sw {src}, offset($sp)
