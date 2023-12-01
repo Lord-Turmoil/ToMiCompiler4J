@@ -73,6 +73,7 @@ public class Config {
                 ",\n\tenableError = " + enableError +
                 ",\n\tenableVerboseError = " + enableVerboseError +
                 ",\n\terrorOutput = '" + errorOutput + '\'' +
+                ",\n\toptimizationLevel = " + optimizationLevel +
                 "\n}";
     }
 }
