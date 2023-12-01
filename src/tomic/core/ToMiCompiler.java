@@ -137,7 +137,7 @@ public class ToMiCompiler {
                 case 2 -> service.addTransient(IPassProvider.class, OptimizationPassProvider.class);
                 default -> service.addTransient(IPassProvider.class, BasicPassProvider.class);
             }
-            service.addTransient(PassManager.class, PassManager.class, IPassProvider.class);
+            service.addTransient(PassManager.class, PassManager.class, IPassProvider.class, IDebugLogger.class);
         });
 
         //////////////////// MIPS
