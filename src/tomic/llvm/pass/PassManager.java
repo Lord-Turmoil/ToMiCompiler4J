@@ -7,6 +7,7 @@
 package tomic.llvm.pass;
 
 import tomic.llvm.ir.Module;
+import tomic.logger.debug.IDebugLogger;
 
 import java.util.ArrayList;
 
@@ -16,10 +17,12 @@ import java.util.ArrayList;
 public class PassManager {
     private final ArrayList<ILlvmPass> passes;
     private final IPassProvider provider;
+    private final IDebugLogger logger;
 
-    public PassManager(IPassProvider provider) {
+    public PassManager(IPassProvider provider, IDebugLogger logger) {
         this.passes = new ArrayList<>();
         this.provider = provider;
+        this.logger = logger;
         provider.registerPasses(this);
     }
 
@@ -35,7 +38,10 @@ public class PassManager {
      * Run all the passes.
      */
     public void run(Module module) {
-        passes.forEach(pass -> pass.run(module));
+        for (var pass : passes) {
+            logger.info("Running pass: " + pass.getClass().getSimpleName());
+            pass.run(module);
+        }
         module.trace();
     }
 }
