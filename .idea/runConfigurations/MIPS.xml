@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="MIPS" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="Main" />
+    <module name="ToMiCompiler4J" />
+    <option name="PROGRAM_PARAMETERS" value="--target=asm in.c -o mips.asm --enable-logger --enable-error --verbose-error --emit-ast=ast.xml --complete-ast --emit-llvm=llvm.ll --verbose-llvm" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/work" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
