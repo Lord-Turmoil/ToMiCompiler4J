@@ -39,6 +39,18 @@ public class ReturnInst extends Instruction {
     }
 
     @Override
+    public boolean replaceOperand(Value oldOperand, Value newOperand) {
+        if (super.replaceOperand(oldOperand, newOperand)) {
+            if (value == oldOperand) {
+                value = newOperand;
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
     public IAsmWriter printAsm(IAsmWriter out) {
         out.push("ret");
         if (value != null && !value.getType().isVoidTy()) {
