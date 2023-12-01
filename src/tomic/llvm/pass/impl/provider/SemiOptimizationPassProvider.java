@@ -4,10 +4,12 @@
  *   For BUAA 2023 Compiler Technology
  */
 
-package tomic.llvm.pass.impl;
+package tomic.llvm.pass.impl.provider;
 
 import tomic.llvm.pass.IPassProvider;
 import tomic.llvm.pass.PassManager;
+import tomic.llvm.pass.impl.pass.RemoveEmptyBasicBlocksPass;
+import tomic.llvm.pass.impl.pass.RemoveRedundantLoadPass;
 
 public class SemiOptimizationPassProvider implements IPassProvider {
     @Override

@@ -4,7 +4,7 @@
  *   For BUAA 2023 Compiler Technology
  */
 
-package tomic.llvm.pass.impl;
+package tomic.llvm.pass.impl.provider;
 
 import tomic.llvm.pass.IPassProvider;
 import tomic.llvm.pass.PassManager;

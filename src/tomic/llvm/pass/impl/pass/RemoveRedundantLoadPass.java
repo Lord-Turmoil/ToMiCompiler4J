@@ -4,7 +4,7 @@
  *   For BUAA 2023 Compiler Technology
  */
 
-package tomic.llvm.pass.impl;
+package tomic.llvm.pass.impl.pass;
 
 import tomic.llvm.ir.Module;
 import tomic.llvm.ir.value.BasicBlock;
