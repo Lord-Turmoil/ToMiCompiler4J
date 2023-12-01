@@ -57,6 +57,10 @@ class ToMiCompilerImpl {
             return;
         }
 
+        if (config.target == Config.TargetTypes.Preprocess) {
+            return;
+        }
+
         // Syntactic
         SyntaxTree[] ast = { null };
         if (!syntacticParse(new TwioReader(writer[0].yield()), ast)) {

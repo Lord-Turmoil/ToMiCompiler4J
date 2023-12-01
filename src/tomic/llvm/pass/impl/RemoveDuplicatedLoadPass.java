@@ -27,9 +27,11 @@ public class RemoveDuplicatedLoadPass implements ILlvmPass {
         }
     }
 
-    private static final Set<Integer> handled = new HashSet<>();
+    private final Set<Integer> handled = new HashSet<>();
 
     private void handleBasicBlock(BasicBlock block) {
+        handled.clear();
+
         int index = findLoadInst(block);
         while (index != -1) {
             handleLoadInst(block, index);

@@ -15,7 +15,9 @@ public class Compiler {
         config.target = Config.TargetTypes.ASM;
         config.input = "testfile.txt";
         config.output = "mips.txt";
-        config.enableOptimization = true;
+        config.optimizationLevel = 2;
+        // config.emitLlvm = true;
+        // config.llvmOutput = "llvm_ir.txt";
 
         new ToMiCompiler().configure(config).compile();
     }

@@ -154,8 +154,8 @@ public class DefaultRegisterProfile implements IRegisterProfile {
 
     @Override
     public void tryYieldAll() {
-        for (var value : valueRegisterMap.keySet()) {
-            this.tryYield(value);
+        for (var register : activeRegisters.values()) {
+            tryYield(register.getValue());
         }
     }
 
@@ -163,7 +163,6 @@ public class DefaultRegisterProfile implements IRegisterProfile {
     public void release(Value value) {
         var register = valueRegisterMap.getOrDefault(value, null);
         if (register != null) {
-            stackProfile.deallocate(value);
             if (activeRegisters.containsKey(register.getId())) {
                 activeRegisters.remove(register.getId());
                 if (ALL_REGISTERS.contains(register.getId())) {

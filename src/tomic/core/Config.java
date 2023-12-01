@@ -42,7 +42,7 @@ public class Config {
     public String errorOutput;
 
     // Optimization
-    public boolean enableOptimization;
+    public int optimizationLevel;
 
     public Config() {
         target = TargetTypes.Initial;
@@ -53,7 +53,7 @@ public class Config {
         enableLog = false;
         enableError = false;
         enableVerboseError = false;
-        enableOptimization = false;
+        optimizationLevel = 0;
     }
 
     @Override
