@@ -55,18 +55,24 @@ public class CallInst extends Instruction {
     }
 
     @Override
-    public void replaceOperand(Value oldOperand, Value newOperand) {
-        super.replaceOperand(oldOperand, newOperand);
+    public boolean replaceOperand(Value oldOperand, Value newOperand) {
+        if (!super.replaceOperand(oldOperand, newOperand)) {
+            return false;
+        }
+
         if (function == oldOperand) {
             function = (Function) newOperand;
         } else {
-            // WARNING! Must preserve the order!
+            // WARNING! Must preserve the order! And find all the occurrences!
             int index = parameters.indexOf(oldOperand);
-            if (index != -1) {
+            while (index != -1) {
                 parameters.remove(index);
                 parameters.add(index, newOperand);
+                index = parameters.indexOf(oldOperand);
             }
         }
+
+        return true;
     }
 
     @Override

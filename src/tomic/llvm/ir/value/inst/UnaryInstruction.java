@@ -24,10 +24,13 @@ public class UnaryInstruction extends Instruction {
     }
 
     @Override
-    public void replaceOperand(Value oldOperand, Value newOperand) {
-        super.replaceOperand(oldOperand, newOperand);
+    public boolean replaceOperand(Value oldOperand, Value newOperand) {
+        if (super.replaceOperand(oldOperand, newOperand)) {
         if (operand == oldOperand) {
             operand = newOperand;
         }
+            return true;
+        }
+        return false;
     }
 }

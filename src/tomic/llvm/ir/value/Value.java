@@ -36,8 +36,8 @@ public class Value {
         users.forEach(this::addUser);
     }
 
-    public void removeUser(User user) {
-        users.remove(user);
+    public boolean removeUser(User user) {
+        return users.remove(user);
     }
 
     public void removeUsers() {

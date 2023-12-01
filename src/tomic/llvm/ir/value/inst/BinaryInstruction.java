@@ -31,13 +31,16 @@ public class BinaryInstruction extends Instruction {
     }
 
     @Override
-    public void replaceOperand(Value oldOperand, Value newOperand) {
-        super.replaceOperand(oldOperand, newOperand);
-        if (leftOperand == oldOperand) {
-            leftOperand = newOperand;
+    public boolean replaceOperand(Value oldOperand, Value newOperand) {
+        if (super.replaceOperand(oldOperand, newOperand)) {
+            if (leftOperand == oldOperand) {
+                leftOperand = newOperand;
+            }
+            if (rightOperand == oldOperand) {
+                rightOperand = newOperand;
+            }
+            return true;
         }
-        if (rightOperand == oldOperand) {
-            rightOperand = newOperand;
-        }
+        return false;
     }
 }

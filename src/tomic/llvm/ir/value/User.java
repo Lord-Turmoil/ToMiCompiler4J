@@ -31,14 +31,21 @@ public abstract class User extends Value {
         operands.forEach(this::addOperand);
     }
 
-    public void removeOperand(Value operand) {
-        operands.remove(operand);
-        operand.removeUser(this);
+    public boolean removeOperand(Value operand) {
+        if (operands.contains(operand)) {
+            operands.remove(operand);
+            operand.removeUser(this);
+            return true;
+        }
+        return false;
     }
 
-    public void replaceOperand(Value oldOperand, Value newOperand) {
-        removeOperand(oldOperand);
-        addOperand(newOperand);
+    public boolean replaceOperand(Value oldOperand, Value newOperand) {
+        if (removeOperand(oldOperand)) {
+            addOperand(newOperand);
+            return true;
+        }
+        return false;
     }
 
     public void removeOperands() {

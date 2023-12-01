@@ -52,17 +52,20 @@ public class BranchInst extends Instruction {
     }
 
     @Override
-    public void replaceOperand(Value oldOperand, Value newOperand) {
-        super.replaceOperand(oldOperand, newOperand);
-        if (condition == oldOperand) {
-            condition = newOperand;
+    public boolean replaceOperand(Value oldOperand, Value newOperand) {
+        if (super.replaceOperand(oldOperand, newOperand)) {
+            if (condition == oldOperand) {
+                condition = newOperand;
+            }
+            if (trueBlock == oldOperand) {
+                trueBlock = (BasicBlock) newOperand;
+            }
+            if (falseBlock == oldOperand) {
+                falseBlock = (BasicBlock) newOperand;
+            }
+            return true;
         }
-        if (trueBlock == oldOperand) {
-            trueBlock = (BasicBlock) newOperand;
-        }
-        if (falseBlock == oldOperand) {
-            falseBlock = (BasicBlock) newOperand;
-        }
+        return false;
     }
 
     /**

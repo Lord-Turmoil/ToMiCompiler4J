@@ -52,18 +52,22 @@ public class GetElementPtrInst extends Instruction {
     }
 
     @Override
-    public void replaceOperand(Value oldOperand, Value newOperand) {
-        super.replaceOperand(oldOperand, newOperand);
+    public boolean replaceOperand(Value oldOperand, Value newOperand) {
+        if (!super.replaceOperand(oldOperand, newOperand)) {
+            return false;
+        }
         if (address == oldOperand) {
             address = newOperand;
         } else {
-            // WARNING! Must preserve the order!
+            // WARNING! Must preserve the order! And find all the occurrences!
             int index = subscripts.indexOf(oldOperand);
-            if (index != -1) {
+            while (index != -1) {
                 subscripts.remove(index);
                 subscripts.add(index, newOperand);
+                index = subscripts.indexOf(oldOperand);
             }
         }
+        return true;
     }
 
     /**
