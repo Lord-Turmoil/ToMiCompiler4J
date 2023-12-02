@@ -17,6 +17,9 @@ public class Compiler {
         config.output = "mips.txt";
         config.optimizationLevel = 2;
 
+        config.emitLlvm = true;
+        config.llvmOutput = "llvm_ir.txt";
+
         new ToMiCompiler().configure(config).compile();
     }
 }

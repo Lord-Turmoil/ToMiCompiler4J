@@ -8,6 +8,7 @@ package tomic.llvm.pass.impl.pass;
 
 import tomic.llvm.ir.Module;
 import tomic.llvm.ir.value.BasicBlock;
+import tomic.llvm.ir.value.GlobalVariable;
 import tomic.llvm.ir.value.inst.*;
 import tomic.llvm.pass.ILlvmPass;
 
@@ -49,7 +50,8 @@ public class RemoveRedundantLoadPass implements ILlvmPass {
                  * as array (GetElementPtr) may be modified in an
                  * "unexpected" way.
                  */
-                if (inst.getOperand() instanceof AllocaInst) {
+                var operand = inst.getOperand();
+                if (operand instanceof AllocaInst || operand instanceof GlobalVariable) {
                     if (!handled.contains(i)) {
                         return i;
                     }
