@@ -18,6 +18,7 @@ public class OptimizationPassProvider implements IPassProvider {
     public void registerPasses(PassManager manager) {
         manager.registerPass(new RemoveRedundantLoadPass())
                 .registerPass(new RemoveRedundantStorePass())
+                .registerPass(new RemoveStoreLoadPass())
                 .registerPass(new CombineUnaryOperatorPass())
                 .registerPass(new CombineCommonExpressionPass())
                 .registerPass(new RemoveEmptyBasicBlocksPass());

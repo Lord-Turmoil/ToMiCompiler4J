@@ -54,7 +54,7 @@ public class CombineUnaryOperatorPass extends BasicBlockPass {
 
     private void removeInstructionPair(UnaryOperator current, UnaryOperator next) {
         Value source = current.getOperand();
-        next.getUsers().forEach(user -> user.replaceOperand(next, source));
+        PassExt.replaceOperand(next, source);
     }
 
     private boolean canRemove(UnaryOperator operator) {

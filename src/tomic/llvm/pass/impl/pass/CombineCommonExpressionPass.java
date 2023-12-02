@@ -87,7 +87,7 @@ public class CombineCommonExpressionPass extends BasicBlockPass {
         for (int i = index + 1; i < instructions.size(); i++) {
             if (instructions.get(i) instanceof UnaryOperator inst) {
                 if (match(source, inst)) {
-                    inst.getUsers().forEach(user -> user.replaceOperand(inst, source));
+                    PassExt.replaceOperand(inst, source);
                     instructionsToRemove.add(inst);
                     handled.add(i);
                 }

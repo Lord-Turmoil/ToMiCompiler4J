@@ -66,9 +66,7 @@ public class RemoveRedundantLoadPass extends BasicBlockPass {
             if (instruction instanceof LoadInst inst) {
                 if (inst.getOperand() == source.getOperand()) {
                     // Duplicated load!
-                    for (var user : inst.getUsers()) {
-                        user.replaceOperand(inst, source);
-                    }
+                    PassExt.replaceOperand(inst, source);
                     block.removeInstruction(inst);
                 }
             } else if (instruction instanceof StoreInst inst) {
