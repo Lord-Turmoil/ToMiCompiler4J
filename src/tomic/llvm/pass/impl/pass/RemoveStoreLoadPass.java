@@ -6,6 +6,7 @@
 
 package tomic.llvm.pass.impl.pass;
 
+import tomic.llvm.ir.value.Argument;
 import tomic.llvm.ir.value.BasicBlock;
 import tomic.llvm.ir.value.inst.Instruction;
 import tomic.llvm.ir.value.inst.LoadInst;
@@ -38,6 +39,11 @@ public class RemoveStoreLoadPass extends BasicBlockPass {
     private int findStoreLoad(ArrayList<Instruction> instructions, int index) {
         for (int i = index; i < instructions.size() - 1; i++) {
             if (instructions.get(i) instanceof StoreInst storeInst) {
+                if (storeInst.getLeftOperand() instanceof Argument argument) {
+                    if (argument.getArgNo() < 4) {
+                        continue;
+                    }
+                }
                 if (instructions.get(i + 1) instanceof LoadInst loadInst) {
                     if (storeInst.getRightOperand() == loadInst.getOperand()) {
                         return i;
