@@ -53,7 +53,14 @@ public class ResilientSyntacticParser implements ISyntacticParser {
         tree = new SyntaxTree();
         tryParse = 0;
 
-        SyntaxNode compUnit = parseCompUnit();
+        SyntaxNode compUnit;
+        try {
+            compUnit = parseCompUnit();
+        } catch (Exception e) {
+            debugLogger.fatal("Failed to parse the source code");
+            return null;
+        }
+
         if (compUnit == null) {
             debugLogger.fatal("Failed to parse the source code");
             return null;
@@ -157,6 +164,7 @@ public class ResilientSyntacticParser implements ISyntacticParser {
         }
         if (actual.is(TokenTypes.TERMINATOR)) {
             log(LogLevel.ERROR, actual, String.format("Expect %s, but got EOF", descr));
+            throw new RuntimeException("Unexpected EOF");
         } else {
             log(LogLevel.ERROR, actual, String.format("Expect %s, bug got %s", descr, actual));
         }
