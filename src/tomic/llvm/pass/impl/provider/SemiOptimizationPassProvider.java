@@ -15,8 +15,9 @@ public class SemiOptimizationPassProvider implements IPassProvider {
     public void registerPasses(PassManager manager) {
         manager.registerPass(new RemoveRedundantLoadPass());
         manager.registerPass(new RemoveRedundantStorePass());
+        manager.registerPass(new RemoveStoreLoadPass());
         manager.registerPass(new CombineUnaryOperatorPass());
-        manager.registerPass(new CombineCommonExpressionPass());
+        // manager.registerPass(new CombineCommonExpressionPass());
         manager.registerPass(new RemoveEmptyBasicBlocksPass());
     }
 }
