@@ -34,12 +34,17 @@ public class Argument extends Value {
 
     @Override
     public IAsmWriter printAsm(IAsmWriter out) {
-        getType().printAsm(out).pushNext('%');
-        return out.push(String.valueOf(getParent().slot(this)));
+        return printUse(out);
     }
 
     @Override
     public IAsmWriter printUse(IAsmWriter out) {
-        return printAsm(out);
+        getType().printAsm(out).pushSpace();
+        return printName(out);
+    }
+
+    @Override
+    public IAsmWriter printName(IAsmWriter out) {
+        return out.push('%').push(String.valueOf(getParent().slot(this)));
     }
 }
