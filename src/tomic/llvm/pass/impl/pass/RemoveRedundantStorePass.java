@@ -6,28 +6,20 @@
 
 package tomic.llvm.pass.impl.pass;
 
-import tomic.llvm.ir.Module;
 import tomic.llvm.ir.value.BasicBlock;
 import tomic.llvm.ir.value.GlobalVariable;
 import tomic.llvm.ir.value.inst.*;
-import tomic.llvm.pass.ILlvmPass;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-public class RemoveRedundantStorePass implements ILlvmPass {
-    @Override
-    public void run(Module module) {
-        for (var function : module.getAllFunctions()) {
-            function.getBasicBlocks().forEach(this::handleBasicBlock);
-        }
-    }
-
+public class RemoveRedundantStorePass extends BasicBlockPass {
     private final Set<Integer> handled = new HashSet<>();
     private final ArrayList<Instruction> storeToRemove = new ArrayList<>();
 
-    private void handleBasicBlock(BasicBlock block) {
+    @Override
+    protected void handleBasicBlock(BasicBlock block) {
         handled.clear();
         storeToRemove.clear();
 

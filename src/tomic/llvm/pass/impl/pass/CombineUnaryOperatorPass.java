@@ -6,26 +6,16 @@
 
 package tomic.llvm.pass.impl.pass;
 
-import tomic.llvm.ir.Module;
 import tomic.llvm.ir.value.BasicBlock;
 import tomic.llvm.ir.value.Value;
 import tomic.llvm.ir.value.inst.Instruction;
 import tomic.llvm.ir.value.inst.UnaryOperator;
-import tomic.llvm.pass.ILlvmPass;
 
 import java.util.ArrayList;
 
-public class CombineUnaryOperatorPass implements ILlvmPass {
+public class CombineUnaryOperatorPass extends BasicBlockPass {
     @Override
-    public void run(Module module) {
-        for (var function : module.getAllFunctions()) {
-            for (var basicBlock : function.getBasicBlocks()) {
-                handleBasicBlock(basicBlock);
-            }
-        }
-    }
-
-    private void handleBasicBlock(BasicBlock basicBlock) {
+    protected void handleBasicBlock(BasicBlock basicBlock) {
         ArrayList<Instruction> instructionsToRemove = new ArrayList<>();
         var instructions = basicBlock.getInstructions();
 
@@ -33,11 +23,10 @@ public class CombineUnaryOperatorPass implements ILlvmPass {
         // The last instruction is always a branch instruction.
         while (i < instructions.size() - 1) {
             var inst = instructions.get(i);
-            if (!(inst instanceof UnaryOperator)) {
+            if (!(inst instanceof UnaryOperator current)) {
                 i++;
                 continue;
             }
-            var current = (UnaryOperator) inst;
 
             if (canRemove(current)) {
                 instructionsToRemove.add(inst);

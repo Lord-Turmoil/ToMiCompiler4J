@@ -6,11 +6,9 @@
 
 package tomic.llvm.pass.impl.pass;
 
-import tomic.llvm.ir.Module;
 import tomic.llvm.ir.value.BasicBlock;
 import tomic.llvm.ir.value.GlobalVariable;
 import tomic.llvm.ir.value.inst.*;
-import tomic.llvm.pass.ILlvmPass;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -20,17 +18,11 @@ import java.util.Set;
  * Remove duplicated load instructions.
  * This should be restricted in one basic block.
  */
-public class RemoveRedundantLoadPass implements ILlvmPass {
-    @Override
-    public void run(Module module) {
-        for (var function : module.getAllFunctions()) {
-            function.getBasicBlocks().forEach(this::handleBasicBlock);
-        }
-    }
-
+public class RemoveRedundantLoadPass extends BasicBlockPass {
     private final Set<Integer> handled = new HashSet<>();
 
-    private void handleBasicBlock(BasicBlock block) {
+    @Override
+    protected void handleBasicBlock(BasicBlock block) {
         handled.clear();
 
         int index = findLoadInst(block);
