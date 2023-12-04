@@ -47,7 +47,11 @@ public class DefaultRegisterProfile implements IRegisterProfile {
 
     @Override
     public Register acquire(Value value) {
-        return acquire(value, false);
+        var register = get(value);
+        if (register == null) {
+            return acquire(value, false);
+        }
+        return acquire(value, register.isTemporary());
     }
 
     @Override
@@ -75,7 +79,11 @@ public class DefaultRegisterProfile implements IRegisterProfile {
 
     @Override
     public Register acquire(Value value, int registerId) {
-        return acquire(value, registerId, false);
+        var register = get(value);
+        if (register == null) {
+            return acquire(value, registerId, false);
+        }
+        return acquire(value, registerId, register.isTemporary());
     }
 
     @Override
@@ -102,13 +110,23 @@ public class DefaultRegisterProfile implements IRegisterProfile {
 
         // Will not load value from memory.
         register.activate(registerId);
+        register.setDirty(false);
 
         return register;
     }
 
     @Override
+    public Register get(Value value) {
+        return valueRegisterMap.getOrDefault(value, null);
+    }
+
+    @Override
     public Register retain(Value value) {
-        return acquire(value);
+        var reg = get(value);
+        if (reg == null) {
+            return acquire(value);
+        }
+        return acquire(value, reg.isTemporary());
     }
 
     @Override

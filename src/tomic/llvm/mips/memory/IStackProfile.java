@@ -24,6 +24,15 @@ public interface IStackProfile {
     StackAddress allocate(Value value, Type type);
 
     /**
+     * Force allocate a value on stack at a specific address.
+     *
+     * @param value   The value to be allocated.
+     * @param address The address to be allocated.
+     * @return The address of the value.
+     */
+    StackAddress allocate(Value value, StackAddress address);
+
+    /**
      * Deallocate a value on stack.
      *
      * @param value The value to be deallocated.

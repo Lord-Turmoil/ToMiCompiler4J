@@ -36,6 +36,8 @@ public interface IRegisterProfile {
 
     Register acquire(Value value, int registerId, boolean temporary);
 
+    Register get(Value value);
+
     /**
      * Force retain a register so that it won't be swapped out
      * in the current instruction. If the register is not in
@@ -61,9 +63,7 @@ public interface IRegisterProfile {
 
     void yieldAll();
 
-
     void tryYieldAll();
-
 
     /**
      * Release a register. It has nothing to do with the memory.

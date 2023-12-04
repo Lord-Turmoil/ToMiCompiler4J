@@ -31,6 +31,16 @@ public class DefaultStackProfile implements IStackProfile {
         return allocate(value, type.getBytes());
     }
 
+    @Override
+    public StackAddress allocate(Value value, StackAddress address) {
+        if (addressMap.containsKey(value)) {
+            deallocate(value);
+        }
+        addressMap.put(value, address);
+
+        return address;
+    }
+
     private StackAddress allocate(Value value, int size) {
         // Round up to 4 bytes.
         size = Math.max(1, size);
