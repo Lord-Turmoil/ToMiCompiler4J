@@ -448,19 +448,19 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         if (type.getElementType().isIntegerTy()) {
             int size = type.getElementCount();
             var inst = GetElementPtrInst.create(base, List.of(
-                    new ConstantData(IntegerType.get(module.getContext(), 64), 0),
-                    new ConstantData(IntegerType.get(module.getContext(), 64), 0)));
+                    new ConstantData(IntegerType.get(module.getContext(), 32), 0),
+                    new ConstantData(IntegerType.get(module.getContext(), 32), 0)));
             insertInstruction(inst);
             storeArrayInit(inst, size, initValues, offset);
         } else {
             var inst = GetElementPtrInst.create(base, List.of(
-                    new ConstantData(IntegerType.get(module.getContext(), 64), 0),
-                    new ConstantData(IntegerType.get(module.getContext(), 64), 0)));
+                    new ConstantData(IntegerType.get(module.getContext(), 32), 0),
+                    new ConstantData(IntegerType.get(module.getContext(), 32), 0)));
             insertInstruction(inst);
             initArray(inst, initValues, offset);
             int size = ((ArrayType) type.getElementType()).getSize();
             for (int i = 1; i < type.getElementCount(); i++) {
-                inst = GetElementPtrInst.create(inst, List.of(new ConstantData(IntegerType.get(module.getContext(), 64), 1)));
+                inst = GetElementPtrInst.create(inst, List.of(new ConstantData(IntegerType.get(module.getContext(), 32), 1)));
                 insertInstruction(inst);
                 initArray(inst, initValues, offset + i * size);
             }
@@ -472,7 +472,7 @@ public class StandardAsmGenerator implements IAsmGenerator, IAstVisitor {
         insertInstruction(new StoreInst(value, base));
         Instruction inst = (Instruction) base;
         for (int i = 1; i < size; i++) {
-            inst = GetElementPtrInst.create(inst, List.of(new ConstantData(IntegerType.get(module.getContext(), 64), 1)));
+            inst = GetElementPtrInst.create(inst, List.of(new ConstantData(IntegerType.get(module.getContext(), 32), 1)));
             insertInstruction(inst);
             value = ensureInt32(parseExpression(initValues.get(offset + i)));
             insertInstruction(new StoreInst(value, inst));
