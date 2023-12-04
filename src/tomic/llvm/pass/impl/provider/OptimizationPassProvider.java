@@ -21,6 +21,7 @@ public class OptimizationPassProvider implements IPassProvider {
                 .registerPass(new RemoveStoreLoadPass())
                 .registerPass(new CombineUnaryOperatorPass())
                 .registerPass(new CombineCommonExpressionPass())
+                .registerPass(new RemoveUnusedInstPass())
                 .registerPass(new RemoveEmptyBasicBlocksPass());
     }
 }
