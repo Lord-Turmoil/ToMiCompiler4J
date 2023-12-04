@@ -17,6 +17,7 @@ import tomic.lexer.token.ITokenMapper;
 import tomic.lexer.token.impl.DefaultTokenMapper;
 import tomic.llvm.asm.IAsmGenerator;
 import tomic.llvm.asm.IAsmPrinter;
+import tomic.llvm.asm.impl.OptimizedAsmGenerator;
 import tomic.llvm.asm.impl.StandardAsmGenerator;
 import tomic.llvm.asm.impl.VerboseAsmPrinter;
 import tomic.llvm.mips.IMipsGenerator;
@@ -131,7 +132,11 @@ public class ToMiCompiler {
         //////////////////// LLVM IR
         impl.configure(service -> {
             service.addTransient(IAsmPrinter.class, VerboseAsmPrinter.class);
-            service.addTransient(IAsmGenerator.class, StandardAsmGenerator.class);
+            if (config.optimizationLevel > 0) {
+                service.addTransient(IAsmGenerator.class, OptimizedAsmGenerator.class);
+            } else {
+                service.addTransient(IAsmGenerator.class, StandardAsmGenerator.class);
+            }
             switch (config.optimizationLevel) {
                 case 1 -> service.addTransient(IPassProvider.class, SemiOptimizationPassProvider.class);
                 case 2 -> service.addTransient(IPassProvider.class, OptimizationPassProvider.class);
