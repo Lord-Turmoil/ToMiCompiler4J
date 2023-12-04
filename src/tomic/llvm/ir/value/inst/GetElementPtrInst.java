@@ -10,6 +10,7 @@ import tomic.llvm.asm.IAsmWriter;
 import tomic.llvm.ir.type.ArrayType;
 import tomic.llvm.ir.type.PointerType;
 import tomic.llvm.ir.type.Type;
+import tomic.llvm.ir.value.ConstantData;
 import tomic.llvm.ir.value.Value;
 import tomic.llvm.ir.value.ValueTypes;
 
@@ -49,6 +50,15 @@ public class GetElementPtrInst extends Instruction {
 
     public ArrayList<Value> getSubscripts() {
         return subscripts;
+    }
+
+    public boolean hasFixedDimension() {
+        for (var subscript : subscripts) {
+            if (!(subscript instanceof ConstantData)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
