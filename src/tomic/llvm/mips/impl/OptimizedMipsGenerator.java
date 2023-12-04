@@ -432,19 +432,96 @@ public class OptimizedMipsGenerator implements IMipsGenerator {
      * @param inst The instruction.
      */
     private void generateBinaryOperator(BinaryOperator inst) {
-        int lhsRegId = acquireRegisterId(inst.getLeftOperand());
-        int rhsRegId = acquireRegisterId(inst.getRightOperand());
+        if (inst.getOpType() == BinaryOperator.BinaryOpTypes.Mul) {
+            generateMulInst(inst);
+        } else if (inst.getOpType() == BinaryOperator.BinaryOpTypes.Div) {
+            generateDivInst(inst);
+        } else {
+            int lhsRegId = acquireRegisterId(inst.getLeftOperand());
+            int rhsRegId = acquireRegisterId(inst.getRightOperand());
+            var reg = memoryProfile.getRegisterProfile().acquire(inst);
+            String op = switch (inst.getOpType()) {
+                case Add -> "addu";
+                case Sub -> "subu";
+                case Mod -> "rem";
+                default -> throw new UnsupportedOperationException("Unsupported binary type: " + inst.getOpType());
+            };
+            printer.printBinaryOperator(out, op, reg.getId(), lhsRegId, rhsRegId);
+        }
+    }
+
+    private void generateMulInst(BinaryOperator inst) {
+        Value lhs = inst.getLeftOperand();
+        Value rhs = inst.getRightOperand();
+
+        // Only one of them can be constant.
+        if (lhs instanceof ConstantData) {
+            Value temp = lhs;
+            lhs = rhs;
+            rhs = temp;
+        }
 
         var reg = memoryProfile.getRegisterProfile().acquire(inst);
-        String op = switch (inst.getOpType()) {
-            case Add -> "addu";
-            case Sub -> "subu";
-            case Mul -> "mul";
-            case Div -> "div";
-            case Mod -> "rem";
-        };
+        if (rhs instanceof ConstantData constant) {
+            int value = constant.getValue();
+            if (value == 0) {
+                printer.printMove(out, reg.getId(), Registers.ZERO);
+                return;
+            } else if (Math.abs(value) == 1) {
+                int lhsRegId = acquireRegisterId(lhs);
+                printer.printMove(out, reg.getId(), lhsRegId);
+                if (value < 0) {
+                    printer.printBinaryOperator(out, "subu", reg.getId(), Registers.ZERO, reg.getId());
+                }
+                return;
+            } else if (isPowerOfTwo(Math.abs(value))) {
+                int lhsRegId = acquireRegisterId(lhs);
+                String rhsValue = String.valueOf(getPowerOfTwo(Math.abs(value)));
+                printer.printBinaryOperator(out, "sll", reg.getId(), lhsRegId, rhsValue);
+                if (value < 0) {
+                    printer.printBinaryOperator(out, "subu", reg.getId(), Registers.ZERO, reg.getId());
+                }
+                return;
+            }
+        }
 
-        printer.printBinaryOperator(out, op, reg.getId(), lhsRegId, rhsRegId);
+        int lhsRegId = acquireRegisterId(inst.getLeftOperand());
+        int rhsRegId = acquireRegisterId(inst.getRightOperand());
+        printer.printBinaryOperator(out, "mul", reg.getId(), lhsRegId, rhsRegId);
+    }
+
+    /**
+     * Warning: Negative integer cannot shift right!
+     *
+     * @param inst Division instruction.
+     */
+    private void generateDivInst(BinaryOperator inst) {
+        Value lhs = inst.getLeftOperand();
+        Value rhs = inst.getRightOperand();
+
+        var reg = memoryProfile.getRegisterProfile().acquire(inst);
+        if (lhs instanceof ConstantData constant) {
+            if (constant.isAllZero()) {
+                printer.printMove(out, reg.getId(), Registers.ZERO);
+                return;
+            }
+        }
+
+        if (rhs instanceof ConstantData constant) {
+            int value = constant.getValue();
+            if (Math.abs(value) == 1) {
+                int lhsRegId = acquireRegisterId(inst.getLeftOperand());
+                printer.printMove(out, reg.getId(), lhsRegId);
+                if (value < 0) {
+                    printer.printBinaryOperator(out, "subu", reg.getId(), Registers.ZERO, reg.getId());
+                }
+                return;
+            }
+        }
+
+        int lhsRegId = acquireRegisterId(inst.getLeftOperand());
+        int rhsRegId = acquireRegisterId(inst.getRightOperand());
+        printer.printBinaryOperator(out, "div", reg.getId(), lhsRegId, rhsRegId);
     }
 
     private void generateUnaryOperator(UnaryOperator inst) {
@@ -610,6 +687,19 @@ public class OptimizedMipsGenerator implements IMipsGenerator {
         }
 
         return memoryProfile.getRegisterProfile().acquire(value, temporary).getId();
+    }
+
+    private boolean isPowerOfTwo(int n) {
+        return (n & (n - 1)) == 0;
+    }
+
+    private int getPowerOfTwo(int n) {
+        int ret = 0;
+        while (n > 1) {
+            n >>= 1;
+            ret++;
+        }
+        return ret;
     }
 
     /**

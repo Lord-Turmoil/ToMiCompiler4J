@@ -48,6 +48,14 @@ public class StandardMipsPrinter implements IMipsPrinter {
     }
 
     @Override
+    public void printBinaryOperator(IMipsWriter out, String op, int dst, int lhs, String rhs) {
+        out.push(op).pushSpace();
+        out.pushRegister(dst).pushComma().pushSpace();
+        out.pushRegister(lhs).pushComma().pushSpace();
+        out.push(rhs).pushNewLine();
+    }
+
+    @Override
     public void printReturn(IMipsWriter out) {
         out.push("jr").pushSpace();
         out.pushRegister(Registers.RA).pushNewLine();
@@ -57,7 +65,7 @@ public class StandardMipsPrinter implements IMipsPrinter {
      * subu $sp, $sp, size
      *
      * @param out  Output writer
-     * @param size Size of stack to grow.
+     * @param register Size of stack to grow.
      */
     @Override
     public void printStackGrow(IMipsWriter out, int register) {

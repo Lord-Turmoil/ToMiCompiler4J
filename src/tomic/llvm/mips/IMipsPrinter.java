@@ -16,6 +16,7 @@ public interface IMipsPrinter {
     void printStoreWord(IMipsWriter out, int src, int offset, int base);
 
     void printBinaryOperator(IMipsWriter out, String op, int dst, int lhs, int rhs);
+    void printBinaryOperator(IMipsWriter out, String op, int dst, int lhs, String rhs);
 
     void printReturn(IMipsWriter out);
 
