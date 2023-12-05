@@ -587,30 +587,38 @@ public class OptimizedMipsGenerator implements IMipsGenerator {
      * @param inst
      */
     private void generateGetElementPtrInst(GetElementPtrInst inst) {
+        // Fixed dimension array leave to its use.
+        if (inst.hasFixedDimension()) {
+            return;
+        }
+
         // First dimension offset.
         var address = inst.getAddress();
         var type = address.getPointerType().getElementType();
 
         generateLoadAddress(inst, address);
         int dstReg = acquireRegisterId(inst);
+        int fixedOffset = 0;
+
         for (var subscript : inst.getSubscripts()) {
             // Calculate subscript offset.
             int size = type.getBytes();
             int offsetRegId = Registers.INVALID;
             if (subscript instanceof ConstantData constant) {
-                var offset = constant.getValue() * size;
-                if (offset != 0) {
-                    generateLoadImmediate(reservedRegisterId, offset);
-                    offsetRegId = reservedRegisterId;
-                }
+                fixedOffset += constant.getValue() * size;
             } else {
                 var reg = memoryProfile.getRegisterProfile().acquire(subscript);
                 if (size == 1) {
                     offsetRegId = reg.getId();
                 } else {
-                    generateLoadImmediate(reservedRegisterId, size);
-                    printer.printBinaryOperator(out, "mul", reservedRegisterId, reservedRegisterId, reg.getId());
-                    offsetRegId = reservedRegisterId;
+                    if (isPowerOfTwo(size)) {
+                        String rhsValue = String.valueOf(getPowerOfTwo(size));
+                        printer.printBinaryOperator(out, "sll", reservedRegisterId, reg.getId(), rhsValue);
+                    } else {
+                        generateLoadImmediate(reservedRegisterId, size);
+                        printer.printBinaryOperator(out, "mul", reservedRegisterId, reg.getId(), reservedRegisterId);
+                        offsetRegId = reservedRegisterId;
+                    }
                 }
             }
 
@@ -622,6 +630,42 @@ public class OptimizedMipsGenerator implements IMipsGenerator {
                 type = type.asArray().getElementType();
             }
         }
+    }
+
+    private String generateFixedGetElementPtrInstAddress(GetElementPtrInst inst) {
+        var address = inst.getAddress();
+        var type = address.getPointerType().getElementType();
+
+        int offset = 0;
+        for (var subscript : inst.getSubscripts()) {
+            if (!(subscript instanceof ConstantData constant)) {
+                throw new UnsupportedOperationException("Unsupported subscript type: " + subscript);
+            }
+            offset += constant.getValue() * type.getBytes();
+        }
+
+        var bufferedOut = new VerboseMipsWriter(new TwioBufferWriter());
+        if (address instanceof GlobalVariable) {
+            if (offset != 0) {
+                bufferedOut.push(String.valueOf(offset));
+            }
+            out.push('(');
+            out.push(address.getName()).push(')');
+        } else if (address instanceof AllocaInst) {
+            var add = memoryProfile.getStackProfile().getAddress(address);
+            out.push(String.valueOf(offset + add.offset()));
+            out.push('(');
+            out.pushRegister(add.base()).push(')');
+        } else {
+            if (offset != 0) {
+                bufferedOut.push(String.valueOf(offset));
+            }
+            var reg = memoryProfile.getRegisterProfile().acquire(address);
+            out.push('(');
+            out.pushRegister(reg.getId()).push(')');
+        }
+
+        return out.dumps();
     }
 
     private void generateZEInst(ZExtInst inst) {
