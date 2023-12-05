@@ -56,6 +56,20 @@ public class StandardMipsPrinter implements IMipsPrinter {
     }
 
     @Override
+    public void printUnaryOperator(IMipsWriter out, String op, int dst, int operand) {
+        out.push(op).pushSpace();
+        out.pushRegister(dst).pushComma().pushSpace();
+        out.pushRegister(operand).pushNewLine();
+    }
+
+    @Override
+    public void printUnaryOperator(IMipsWriter out, String op, int dst, String operand) {
+        out.push(op).pushSpace();
+        out.pushRegister(dst).pushComma().pushSpace();
+        out.push(operand).pushNewLine();
+    }
+
+    @Override
     public void printReturn(IMipsWriter out) {
         out.push("jr").pushSpace();
         out.pushRegister(Registers.RA).pushNewLine();

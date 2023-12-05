@@ -587,8 +587,7 @@ public class OptimizedMipsGenerator implements IMipsGenerator {
      * @param inst
      */
     private void generateGetElementPtrInst(GetElementPtrInst inst) {
-        // Fixed dimension array leave to its use.
-        if (inst.hasFixedDimension()) {
+        if (isFixedGetElementPtrInst(inst)) {
             return;
         }
 
@@ -598,27 +597,24 @@ public class OptimizedMipsGenerator implements IMipsGenerator {
 
         generateLoadAddress(inst, address);
         int dstReg = acquireRegisterId(inst);
-        int fixedOffset = 0;
-
         for (var subscript : inst.getSubscripts()) {
             // Calculate subscript offset.
             int size = type.getBytes();
             int offsetRegId = Registers.INVALID;
             if (subscript instanceof ConstantData constant) {
-                fixedOffset += constant.getValue() * size;
+                var offset = constant.getValue() * size;
+                if (offset != 0) {
+                    generateLoadImmediate(reservedRegisterId, offset);
+                    offsetRegId = reservedRegisterId;
+                }
             } else {
                 var reg = memoryProfile.getRegisterProfile().acquire(subscript);
                 if (size == 1) {
                     offsetRegId = reg.getId();
                 } else {
-                    if (isPowerOfTwo(size)) {
-                        String rhsValue = String.valueOf(getPowerOfTwo(size));
-                        printer.printBinaryOperator(out, "sll", reservedRegisterId, reg.getId(), rhsValue);
-                    } else {
-                        generateLoadImmediate(reservedRegisterId, size);
-                        printer.printBinaryOperator(out, "mul", reservedRegisterId, reg.getId(), reservedRegisterId);
-                        offsetRegId = reservedRegisterId;
-                    }
+                    generateLoadImmediate(reservedRegisterId, size);
+                    printer.printBinaryOperator(out, "mul", reservedRegisterId, reservedRegisterId, reg.getId());
+                    offsetRegId = reservedRegisterId;
                 }
             }
 
@@ -642,30 +638,43 @@ public class OptimizedMipsGenerator implements IMipsGenerator {
                 throw new UnsupportedOperationException("Unsupported subscript type: " + subscript);
             }
             offset += constant.getValue() * type.getBytes();
+            if (type.isArrayTy()) {
+                type = type.asArray().getElementType();
+            }
         }
 
         var bufferedOut = new VerboseMipsWriter(new TwioBufferWriter());
-        if (address instanceof GlobalVariable) {
-            if (offset != 0) {
-                bufferedOut.push(String.valueOf(offset));
-            }
-            out.push('(');
-            out.push(address.getName()).push(')');
-        } else if (address instanceof AllocaInst) {
+        if (address instanceof AllocaInst) {
             var add = memoryProfile.getStackProfile().getAddress(address);
-            out.push(String.valueOf(offset + add.offset()));
-            out.push('(');
-            out.pushRegister(add.base()).push(')');
+            bufferedOut.push(String.valueOf(offset + add.offset()));
+            bufferedOut.push('(');
+            bufferedOut.pushRegister(add.base()).push(')');
         } else {
             if (offset != 0) {
                 bufferedOut.push(String.valueOf(offset));
             }
             var reg = memoryProfile.getRegisterProfile().acquire(address);
-            out.push('(');
-            out.pushRegister(reg.getId()).push(')');
+            bufferedOut.push('(');
+            bufferedOut.pushRegister(reg.getId()).push(')');
         }
 
-        return out.dumps();
+        return bufferedOut.dumps();
+    }
+
+    private boolean isFixedGetElementPtrInst(GetElementPtrInst inst) {
+        if (!(inst.getAddress() instanceof AllocaInst)) {
+            return false;
+        }
+        if (!inst.hasFixedDimension()) {
+            return false;
+        }
+        for (var user : inst.getUsers()) {
+            if (!(user instanceof LoadInst || user instanceof StoreInst)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void generateZEInst(ZExtInst inst) {
@@ -712,6 +721,11 @@ public class OptimizedMipsGenerator implements IMipsGenerator {
             bufferedOut.push('(');
             bufferedOut.pushRegister(add.base()).push(')');
         } else {
+            if (address instanceof GetElementPtrInst inst) {
+                if (isFixedGetElementPtrInst(inst)) {
+                    return generateFixedGetElementPtrInstAddress(inst);
+                }
+            }
             var reg = memoryProfile.getRegisterProfile().acquire(address);
             bufferedOut.push('(');
             bufferedOut.pushRegister(reg.getId());

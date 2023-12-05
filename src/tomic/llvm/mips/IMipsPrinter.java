@@ -18,6 +18,9 @@ public interface IMipsPrinter {
     void printBinaryOperator(IMipsWriter out, String op, int dst, int lhs, int rhs);
     void printBinaryOperator(IMipsWriter out, String op, int dst, int lhs, String rhs);
 
+    void printUnaryOperator(IMipsWriter out, String op, int dst, int operand);
+    void printUnaryOperator(IMipsWriter out, String op, int dst, String operand);
+
     void printReturn(IMipsWriter out);
 
     void printStackGrow(IMipsWriter out, int register);

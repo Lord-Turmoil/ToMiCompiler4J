@@ -13,11 +13,13 @@ import tomic.llvm.pass.impl.pass.*;
 public class SemiOptimizationPassProvider implements IPassProvider {
     @Override
     public void registerPasses(PassManager manager) {
-        manager.registerPass(new RemoveRedundantLoadPass());
-        manager.registerPass(new RemoveRedundantStorePass());
-        manager.registerPass(new RemoveStoreLoadPass());
-        manager.registerPass(new CombineUnaryOperatorPass());
-        manager.registerPass(new CombineCommonExpressionPass());
-        manager.registerPass(new RemoveEmptyBasicBlocksPass());
+        manager.registerPass(new RemoveRedundantLoadPass())
+                .registerPass(new RemoveRedundantStorePass())
+                .registerPass(new RemoveStoreLoadPass())
+//                .registerPass(new OptimizeArrayPass())
+                .registerPass(new CombineUnaryOperatorPass())
+                .registerPass(new CombineCommonExpressionPass())
+                .registerPass(new RemoveUnusedInstPass())
+                .registerPass(new RemoveEmptyBasicBlocksPass());
     }
 }
