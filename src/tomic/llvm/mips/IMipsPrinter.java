@@ -36,4 +36,5 @@ public interface IMipsPrinter {
     void printJump(IMipsWriter out, String label);
 
     void printBranch(IMipsWriter out, int flag, String trueLabel, String falseLabel);
+    void printInverseBranch(IMipsWriter out, int flag, String trueLabel, String falseLabel);
 }

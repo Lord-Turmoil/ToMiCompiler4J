@@ -137,6 +137,18 @@ public class StandardMipsPrinter implements IMipsPrinter {
         out.push("bnez").pushSpace();
         out.pushRegister(flag).pushComma();
         out.pushNext(trueLabel).pushNewLine();
-        printJump(out, falseLabel);
+        if (falseLabel != null) {
+            printJump(out, falseLabel);
+        }
+    }
+
+    @Override
+    public void printInverseBranch(IMipsWriter out, int flag, String trueLabel, String falseLabel) {
+        out.push("beqz").pushSpace();
+        out.pushRegister(flag).pushComma();
+        out.pushNext(trueLabel).pushNewLine();
+        if (falseLabel != null) {
+            printJump(out, falseLabel);
+        }
     }
 }

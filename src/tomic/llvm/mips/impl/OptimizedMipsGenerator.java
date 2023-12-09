@@ -557,15 +557,30 @@ public class OptimizedMipsGenerator implements IMipsGenerator {
 
     private void generateBranchInst(BranchInst inst) {
         int flag = acquireRegisterId(inst.getCondition());
-        String trueLabel = getLabelName(inst.getTrueBlock());
-        String falseLabel = getLabelName(inst.getFalseBlock());
+        BasicBlock from = inst.getParent();
+        BasicBlock trueBlock = inst.getTrueBlock();
+        BasicBlock falseBlock = inst.getFalseBlock();
 
-        printer.printBranch(out, flag, trueLabel, falseLabel);
+        if (trueBlock == falseBlock) {
+            generateJump(from, trueBlock);
+        } else if (isJumpToNeighboring(from, trueBlock)) {
+            printer.printInverseBranch(out, flag, getLabelName(falseBlock), null);
+        } else if (isJumpToNeighboring(from, falseBlock)) {
+            printer.printBranch(out, flag, getLabelName(trueBlock), null);
+        } else {
+            printer.printBranch(out, flag, getLabelName(trueBlock), getLabelName(falseBlock));
+        }
     }
 
     private void generateJumpInst(JumpInst inst) {
-        String label = getLabelName(inst.getTarget());
+        generateJump(inst.getParent(), inst.getTarget());
+    }
 
+    private void generateJump(BasicBlock from, BasicBlock to) {
+        if (isJumpToNeighboring(from, to)) {
+            return;
+        }
+        String label = getLabelName(to);
         printer.printJump(out, label);
     }
 
@@ -786,6 +801,14 @@ public class OptimizedMipsGenerator implements IMipsGenerator {
         }
     }
 
+    private boolean isJumpToNeighboring(BasicBlock from, BasicBlock to) {
+        if (from.getIndex() + 1 != to.getIndex()) {
+            return false;
+        }
+
+        var preds = to.getPredecessors();
+        return preds.size() == 1 && preds.get(0) == from;
+    }
 
     public static final int SYS_EXIT = 10;
     public static final int SYS_EXIT2 = 17;
