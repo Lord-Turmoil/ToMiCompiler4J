@@ -1,15 +1,9 @@
 # ToMiCompiler4J
 
-> Java implementation of [ToMiCompiler](https://github.com/Lord-Turmoil/ToMiCompiler). 😡
+> Copyright &copy; Tony's Studio 2023
+>
+> Java implementation of [ToMiCompiler](https://github.com/Lord-Turmoil/ToMiCompiler).
 
 ---
 
-This project is built with negative feelings, thus there is few comments in it.
-
-Java is a good language, but not an elegant one.
-Unifying everything with object turns out to be clumsy.
-On the contrary, although we have to manually manage our memory in C++,
-it provides us all the possibility of doing everything.
-
-With Java, you can build a fully-functional skyscraper, but of an ordinary look. However, with C++, although some extra efforts required, truly splendid and magnificent you're able to construct.
-
+As the successor of [ToMiCompiler](https://github.com/Lord-Turmoil/ToMiCompiler), it completes LLVM generation and MIPS generation, and some basic optimizations. For the documentation, see that repository.
