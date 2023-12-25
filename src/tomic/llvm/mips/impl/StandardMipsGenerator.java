@@ -23,6 +23,14 @@ import tomic.llvm.mips.memory.impl.DefaultStackProfile;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 12/25/2023 TS: <br />
+ * BUG: This generator is buggy! When register overflows, it may
+ *  save unnecessary registers to stack. Or it may not save registers
+ *  at all. This will cause the program to run incorrectly. <br />
+ * Use {@link OptimizedMipsGenerator} instead. Or always enable O1
+ *  optimization.
+ */
 public class StandardMipsGenerator implements IMipsGenerator {
     private IMipsWriter out;
     private Module module;
