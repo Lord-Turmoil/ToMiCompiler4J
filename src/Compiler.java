@@ -15,10 +15,13 @@ public class Compiler {
         config.target = Config.TargetTypes.ASM;
         config.input = "testfile.txt";
         config.output = "mips.txt";
-        config.optimizationLevel = 2;
+        config.optimizationLevel = 1;
 
         config.emitLlvm = true;
         config.llvmOutput = "llvm_ir.txt";
+
+        config.enableError = true;
+        config.errorOutput = "error.txt";
 
         new ToMiCompiler().configure(config).compile();
     }
