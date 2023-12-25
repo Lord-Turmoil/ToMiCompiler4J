@@ -603,6 +603,7 @@ public class OptimizedAsmGenerator implements IAsmGenerator, IAstVisitor {
                 case "*" -> insertInstruction(new BinaryOperator(lhs, rhs, BinaryOperator.BinaryOpTypes.Mul));
                 case "/" -> insertInstruction(new BinaryOperator(lhs, rhs, BinaryOperator.BinaryOpTypes.Div));
                 case "%" -> insertInstruction(new BinaryOperator(lhs, rhs, BinaryOperator.BinaryOpTypes.Mod));
+                case "**" -> generatePowerOperator(lhs, rhs);
                 default -> throw new IllegalStateException("Unexpected operator: " + op);
             };
         }
@@ -1045,6 +1046,23 @@ public class OptimizedAsmGenerator implements IAsmGenerator, IAstVisitor {
     private void parseContinueStmt(SyntaxNode node) {
         var context = forCtxStack.peek();
         insertInstruction(new JumpInst(context.stepBlock()));
+    }
+
+    private Value generatePowerOperator(Value lhs, Value rhs) {
+        if (!(rhs instanceof ConstantData power) || power.getValue() < 0) {
+            throw new IllegalStateException("Semantic analysis failed to validate operator **");
+        }
+
+        Value ret = new ConstantData(IntegerType.get(module.getContext(), 32), 1);
+        if (power.getValue() == 0) {
+            return ret;
+        }
+        Value base = insertInstruction(new BinaryOperator(lhs, rhs, BinaryOperator.BinaryOpTypes.Add));
+        for (int i = 0; i < power.getValue(); i++) {
+            ret = insertInstruction(new BinaryOperator(ret, base, BinaryOperator.BinaryOpTypes.Mul));
+        }
+
+        return ret;
     }
 
     /*

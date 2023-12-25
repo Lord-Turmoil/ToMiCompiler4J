@@ -769,15 +769,27 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
                     logError(ErrorTypes.UNKNOWN, "Invalid operation");
                 } else {
                     node.setIntAttribute("type", leftType.ordinal());
+                    var op = AstExt.getDirectChildNode(node, SyntaxTypes.TERMINATOR).getToken().lexeme;
                     if (left.getBoolAttribute("det") && right.getBoolAttribute("det")) {
                         node.setBoolAttribute("det", true);
 
                         int leftValue = left.getIntAttribute("value");
                         int rightValue = right.getIntAttribute("value");
-                        var op = AstExt.getDirectChildNode(node, SyntaxTypes.TERMINATOR).getToken().lexeme;
                         int value = AstExt.evaluateBinary(op, leftValue, rightValue);
 
                         node.setIntAttribute("value", value);
+                    }
+
+                    // Validate operand of operator **.
+                    if ("**".equals(op)) {
+                        if (right.getBoolAttribute("det")) {
+                            int rightValue = right.getIntAttribute("value");
+                            if (rightValue < 0) {
+                                logError(ErrorTypes.UNKNOWN, "Right operand of ** must be non-negative");
+                            }
+                        } else {
+                            logError(ErrorTypes.UNKNOWN, "Right operand of ** must be deterministic");
+                        }
                     }
                 }
             }

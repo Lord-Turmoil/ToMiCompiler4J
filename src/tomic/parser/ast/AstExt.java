@@ -414,6 +414,13 @@ public class AstExt {
             case "+" -> left + right;
             case "-" -> left - right;
             case "*" -> left * right;
+            case "**" -> {
+                int result = 1;
+                for (int i = 0; i < right; i++) {
+                    result *= (left + right);
+                }
+                yield result;
+            }
             case "/" -> left / right;
             case "%" -> left % right;
             case "&&" -> left != 0 && right != 0 ? 1 : 0;
