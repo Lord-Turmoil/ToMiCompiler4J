@@ -1327,6 +1327,24 @@ public class ResilientSyntacticParser implements ISyntacticParser {
         int checkpoint = lexicalParser.setCheckPoint();
         var root = tree.newNonTerminalNode(SyntaxTypes.FOR_INIT_STMT);
 
+        if (getLookahead().is(VAR_TYPE_FIRST)) {
+            var type = parseBType();
+            if (type == null) {
+                logFailedToParse(SyntaxTypes.BTYPE);
+                postParseError(checkpoint, root);
+                return null;
+            }
+            root.insertEndChild(type);
+            var varDef = parseVarDef();
+            if (varDef == null) {
+                logFailedToParse(SyntaxTypes.VAR_DEF);
+                postParseError(checkpoint, root);
+                return null;
+            }
+            root.insertEndChild(varDef);
+            return root;
+        }
+
         // LVal
         var lVal = parseLVal();
         if (lVal == null) {

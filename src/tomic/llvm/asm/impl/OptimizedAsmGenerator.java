@@ -1001,7 +1001,11 @@ public class OptimizedAsmGenerator implements IAsmGenerator, IAstVisitor {
         // ForInit
         var initNode = AstExt.getDirectChildNode(node, SyntaxTypes.FOR_INIT_STMT);
         if (initNode != null) {
-            parseAssignStmt(initNode);
+            if (initNode.getFirstChild().is(SyntaxTypes.BTYPE)) {
+                parseVariableDef(initNode.getLastChild());
+            } else {
+                parseAssignStmt(initNode);
+            }
         }
         currentBlock.insertInstruction(new JumpInst(entryBlock));
 

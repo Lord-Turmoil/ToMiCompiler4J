@@ -81,7 +81,9 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
             case ASSIGNMENT_STMT -> exitAssignmentStmt(node);
             case LVAL -> exitLVal(node);
             case COND -> exitCond(node);
-            case FOR_INIT_STMT, FOR_STEP_STMT -> exitForInnerStmt(node);
+            case FOR_STMT -> exitForStmt(node);
+            case FOR_INIT_STMT -> exitForInitStmt(node);
+            case FOR_STEP_STMT -> exitForStepStmt(node);
             case EXP -> exitExp(node);
             case ADD_EXP, MUL_EXP, OR_EXP, AND_EXP, EQ_EXP, REL_EXP -> defaultExitExp(node);
             case CONST_EXP -> exitConstExp(node);
@@ -638,11 +640,27 @@ public class DefaultSemanticAnalyzer implements ISemanticAnalyzer, IAstVisitor {
     }
 
     private boolean enterForStmt(SyntaxNode node) {
+        // For loop itself is a scope.
+        currentBlock = getOrCreateBlock(node);
+
         node.setBoolAttribute("loop", true);
         return true;
     }
 
-    private boolean exitForInnerStmt(SyntaxNode node) {
+    private boolean exitForStmt(SyntaxNode node) {
+        currentBlock = currentBlock.getParent();
+        return true;
+    }
+
+    private boolean exitForInitStmt(SyntaxNode node) {
+        if (node.getFirstChild().is(SyntaxTypes.BTYPE)) {
+            return true;
+        }
+
+        return exitForStepStmt(node);
+    }
+
+    private boolean exitForStepStmt(SyntaxNode node) {
         var lVal = AstExt.getDirectChildNode(node, SyntaxTypes.LVAL);
         var type = SymbolValueTypes.values()[lVal.getIntAttribute("type")];
         if (type != SymbolValueTypes.INT) {
