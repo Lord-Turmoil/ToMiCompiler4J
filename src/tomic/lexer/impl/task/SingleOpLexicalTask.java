@@ -18,7 +18,7 @@ public class SingleOpLexicalTask extends LexicalTask {
 
     @Override
     public boolean beginsWith(int begin) {
-        return StringExt.contains("+-*/%", begin);
+        return StringExt.contains("+-/%", begin);
     }
 
     @Override

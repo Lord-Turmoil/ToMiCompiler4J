@@ -35,6 +35,7 @@ public enum TokenTypes {
     PLUS,           // +
     MINUS,          // -
     MULTIPLY,       // *
+    POWER,          // **
     DIVIDE,         // /
     MOD,            // %
     LESS,           // <

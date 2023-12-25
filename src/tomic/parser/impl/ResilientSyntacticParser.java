@@ -206,7 +206,7 @@ public class ResilientSyntacticParser implements ISyntacticParser {
     private static final Set<TokenTypes> VAR_TYPE_FIRST = Set.of(TokenTypes.INT);
     private static final Set<TokenTypes> FUNC_TYPE_FIRST = Set.of(TokenTypes.INT, TokenTypes.VOID);
     private static final Set<TokenTypes> ADD_EXP_AUX_FIRST = Set.of(TokenTypes.PLUS, TokenTypes.MINUS);
-    private static final Set<TokenTypes> MUL_EXP_AUX_FIRST = Set.of(TokenTypes.MULTIPLY, TokenTypes.DIVIDE, TokenTypes.MOD);
+    private static final Set<TokenTypes> MUL_EXP_AUX_FIRST = Set.of(TokenTypes.MULTIPLY, TokenTypes.DIVIDE, TokenTypes.MOD, TokenTypes.POWER);
     private static final Set<TokenTypes> UNARY_OP_FIRST = Set.of(TokenTypes.PLUS, TokenTypes.MINUS, TokenTypes.NOT);
     private static final Set<TokenTypes> OR_EXP_AUX_FIRST = Set.of(TokenTypes.OR);
     private static final Set<TokenTypes> AND_EXP_AUX_FIRST = Set.of(TokenTypes.AND);

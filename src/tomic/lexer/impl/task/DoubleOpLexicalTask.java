@@ -19,7 +19,7 @@ public class DoubleOpLexicalTask extends LexicalTask {
 
     @Override
     public boolean beginsWith(int begin) {
-        return StringExt.contains("&|=<>!", begin);
+        return StringExt.contains("&|=<>!*", begin);
     }
 
     @Override
@@ -48,6 +48,14 @@ public class DoubleOpLexicalTask extends LexicalTask {
             case '<', '>', '!' -> {
                 next = reader.read();
                 if (next == '=') {
+                    lexeme.append((char) next);
+                } else if (next != Constants.EOF) {
+                    reader.rewind();
+                }
+            }
+            case '*' -> {
+                next = reader.read();
+                if (next == '*') {
                     lexeme.append((char) next);
                 } else if (next != Constants.EOF) {
                     reader.rewind();

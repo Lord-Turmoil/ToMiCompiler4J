@@ -74,6 +74,7 @@ public class DefaultTokenMapper implements ITokenMapper {
         lexemeToType.put("+", TokenTypes.PLUS);
         lexemeToType.put("-", TokenTypes.MINUS);
         lexemeToType.put("*", TokenTypes.MULTIPLY);
+        lexemeToType.put("**", TokenTypes.POWER);
         lexemeToType.put("/", TokenTypes.DIVIDE);
         lexemeToType.put("%", TokenTypes.MOD);
         lexemeToType.put("<", TokenTypes.LESS);
