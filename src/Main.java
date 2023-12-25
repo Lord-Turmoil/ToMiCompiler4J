@@ -11,6 +11,8 @@ import static tomic.utils.StringExt.isNullOrEmpty;
 
 public class Main {
     private static boolean showHelp = false;
+    private static boolean showVersion = false;
+
     public static void main(String[] args) {
         Config config = new Config();
         if (!parseArgs(args.length, args, config)) {
@@ -19,7 +21,9 @@ public class Main {
 
         if (showHelp) {
             printHelp();
-        } else {
+        } else if (showVersion) {
+            printVersion();
+        } else{
             new ToMiCompiler().configure(config).compile();
         }
     }
@@ -113,6 +117,7 @@ public class Main {
             }
             case "verbose-llvm" -> config.enableVerboseLlvm = true;
             case "help" -> showHelp = true;
+            case "version" -> showVersion = true;
             default -> {
                 System.err.println("Unknown parameter: --" + opt);
                 return false;
@@ -128,6 +133,8 @@ public class Main {
                       --enable-error[=filename] --verbose-error
                       --emit-ast[=filename] --complete-ast
                       --emit-llvm[=filename]
+                      --help
+                      --version
                 
               --target, -t:         specify the target type
               --enable-logger, -l:  enable logger
@@ -137,10 +144,20 @@ public class Main {
               --complete-ast, -c:   complete ast
               --emit-llvm, -i:      emit llvm ir
               --help, -h:           show help
+              --version:            show version
                 )";
+                
+              Abbr options cannot omit filename parameter.
             """;
 
     private static void printHelp() {
         System.out.println(HELP);
+    }
+
+    private static void printVersion() {
+        System.out.println("Tony's Mini Compiler for Java (ToMiC4J) [Version 1.1.0]");
+        System.out.println("Copyright (C) Tony's Studio 2023. All rights reserved.");
+        System.out.println("\tLLVM IR version: 1.3.2");
+        System.out.println("\tMIPS Assembly version: 1.3.2+");
     }
 }
